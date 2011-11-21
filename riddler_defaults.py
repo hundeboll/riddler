@@ -2,7 +2,7 @@ nodes_file = "network_test"
 data_file = "test.pickle"
 export_file = "test_socket"
 
-test_protocol = 'tcp'
+test_protocol = 'udp'
 test_time = 20
 test_loops = 3
 sample_interval = 1

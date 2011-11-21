@@ -84,7 +84,7 @@ class client(threading.Thread):
     def udp_finish(self):
         for x in range(10):
             try:
-                self.socket.settimeout(.25)
+                self.socket.settimeout(.5)
                 self.socket.send("\n")
                 count = self.socket.recv(1024)
                 result = int(count)*1500*8/1024/self.run_info['test_time']
@@ -122,7 +122,7 @@ class server(threading.Thread):
 
     def run(self):
         if self.protocol == 'tcp':
-            self.server = ThreadedTCPServer((self.args.mesh_host, self.args.mesh_port), tcp_handler, bind_and_activate=False)
+            self.server = SocketServer.TCPServer((self.args.mesh_host, self.args.mesh_port), tcp_handler, bind_and_activate=False)
         elif self.protocol == 'udp':
             self.server = SocketServer.UDPServer((self.args.mesh_host, self.args.mesh_port), udp_handler, bind_and_activate=False)
 
@@ -191,7 +191,7 @@ class udp_handler(SocketServer.BaseRequestHandler):
 
     def handle_finish(self, address, i):
         # If another newline is received, client did not receive our report
-        for x in range(10):
+        for x in range(20):
             try:
                 self.request[1].sendto(str(i), address)
                 data = self.request[1].recvfrom(1024)

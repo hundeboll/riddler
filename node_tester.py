@@ -89,12 +89,14 @@ class client(threading.Thread):
                 count = self.socket.recv(1024)
                 result = int(count)*1500*8/1024/self.run_info['test_time']
                 self.report_result(result)
-                break
+                return
             except socket.timeout:
                 continue
             except socket.error as e:
                 self.report_error(e)
                 break
+
+        self.report_error("No report from {0} after 10 retries".format(self.node['name']))
 
     def stop(self):
         self.end.set()

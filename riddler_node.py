@@ -7,7 +7,7 @@ import riddler_interface as interface
 nodes = []
 
 class node(threading.Thread):
-    def __init__(self, name, host, port):
+    def __init__(self, name, host, port=8899):
         super(node, self).__init__(None)
         self.name = name
         self.host = host
@@ -76,7 +76,7 @@ class node(threading.Thread):
     def add_source(self, node):
         self.sources.append(node)
 
-    def set_mesh(self, host, port):
+    def set_mesh(self, host, port=8877):
         self.mesh_host = host
         self.mesh_port = port
 

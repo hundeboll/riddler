@@ -90,7 +90,6 @@ class sampler(threading.Thread):
                 key = "nc " + match[0][0]
                 sample[key] = int(match[0][1])
 
-        print sample
         self.append_sample(sample)
 
     def sample_iw(self):

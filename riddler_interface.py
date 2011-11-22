@@ -1,6 +1,8 @@
 import pickle
 import struct
 import socket
+import sys
+import subprocess
 
 PING_REQUEST, PING_REPLY, PREPARE_RUN, START_RUN, FINISH_RUN, RUN_RESULT, RUN_ERROR, SAMPLE, SAMPLE_ERROR = range(9)
 CLIENT_SAMPLE = range(1)
@@ -62,3 +64,22 @@ class interface:
         self.cmd = cmd
         self.val = val
         self.desc = desc
+
+
+def exec_cmd(cmd):
+    if sys.hexversion < 0x02070000:
+        return self.compat_exec(cmd)
+
+    try:
+        return subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        self.report_error(e.output)
+        return False
+
+def compat_exec(cmd):
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = p.communicate()
+    if p.returncode:
+        self.report_error(stderr)
+        return False
+    return stdout

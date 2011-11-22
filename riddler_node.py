@@ -86,7 +86,10 @@ class node(threading.Thread):
     def connect(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(1)
-        self.socket.connect((self.host, self.port))
+        try:
+            self.socket.connect((self.host, self.port))
+        except socket.error as e:
+            print("Connection to {0} failed: {1}".format(self.name, e))
         self.start()
 
     def ping(self):

@@ -34,7 +34,9 @@ class sampler(threading.Thread):
             self.sample_ip()
             self.sample_cpu()
             self.report_samples()
-            time.sleep(self.run_info['sample_interval'] - (time.time() - start))
+            delay = self.run_info['sample_interval'] - (time.time() - start)
+            if delay > 0:
+                time.sleep(delay)
 
     def stop(self):
         self.end.set()
@@ -48,12 +50,12 @@ class sampler(threading.Thread):
 
     def report_samples(self):
         self.samples['timestamp'] = time.time()
-        if not interface.send_cmd(self.controller, interface.SAMPLE, self.samples):
+        if not self.controller.report_cmd(interface.SAMPLE, self.samples):
             self.stop_sampling()
         self.samples = {}
 
     def report_error(self, error):
-        if not interface.send_cmd(self.controller, interface.SAMPLE_ERROR, error):
+        if not self.controller.report_cmd(interface.SAMPLE_ERROR, error):
             self.stop_sampling()
 
     def append_sample(self, sample):

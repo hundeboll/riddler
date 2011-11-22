@@ -24,7 +24,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
     def setup(self):
         self.tester_server = None
         self.lock = threading.Lock()
-        self.sampler = sampler.sampler(self.request, self.server.args)
+        self.sampler = sampler.sampler(self, self.server.args)
         self.setup = setup.setup()
 
     def finish(self):
@@ -80,3 +80,8 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         ret = interface.send(self.request, obj)
         self.lock.release()
         return ret
+
+    def report_cmd(self, cmd, val=None):
+        self.lock.acquire()
+        ret = interface.send_cmd(self.request, cmd, val)
+        self.lock.release()

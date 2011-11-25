@@ -18,6 +18,7 @@ class server:
         try:
             self.server.serve_forever()
         except socket.error as e:
+            print(e)
             pass
 
 class tcp_handler(SocketServer.BaseRequestHandler):
@@ -28,9 +29,6 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         self.setup = setup.setup()
 
     def finish(self):
-        if self.tester_server:
-            self.tester_server.stop()
-
         if self.sampler:
             self.sampler.stop()
 
@@ -45,7 +43,6 @@ class tcp_handler(SocketServer.BaseRequestHandler):
                 print("Connection to controller lost: {0}".format(e))
                 break
             except KeyboardInterrupt:
-                self.server.server_close()
                 break
 
     def handle_cmd(self, obj):
@@ -85,3 +82,4 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         self.lock.acquire()
         ret = interface.send_cmd(self.request, cmd, val)
         self.lock.release()
+        return ret

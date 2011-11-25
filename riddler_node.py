@@ -108,6 +108,7 @@ class node(threading.Thread):
         self.run_error = False
         self.run_result = None
         self.run_finished.clear()
+        self.run_info = run_info
         run_info['dests'] = self.get_dests()
         interface.send_cmd(self.socket, interface.START_RUN, run_info)
 
@@ -135,6 +136,7 @@ class node(threading.Thread):
         print obj.val
         self.run_result = obj.val
         self.run_finished.set()
+        self.client.export_result(self.name, self.run_info, obj.val)
 
     def handle_run_error(self, obj):
         self.run_error = True

@@ -11,7 +11,6 @@ class client(threading.Thread):
         self.dest_node = dest_node
         self.run_info = run_info
         self.end = threading.Event()
-        self.timer = threading.Timer(run_info['test_time'], self.stop)
         self.daemon = True
         self.start()
 
@@ -26,8 +25,11 @@ class client(threading.Thread):
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p]
 
         output = interface.exec_cmd(cmd)
+
         if output:
             self.parse_output(output)
+        else:
+            self.report_error("No output received from command {0}".format(cmd))
 
     def parse_output(self, output):
         output = output.split("\n")
@@ -39,13 +41,9 @@ class client(threading.Thread):
         rate = int(vals[8])/1024
         self.report_result(rate)
 
-    def stop(self):
-        pass
-
     def report_result(self, rate):
         obj = interface.interface(interface.RUN_RESULT, {'throughput': rate, 'dest': self.dest_node['name']})
-        if not self.controller.report(obj):
-            self.stop()
+        self.controller.report(obj)
 
     def report_error(self, error):
         obj = interface.interface(interface.RUN_ERROR, error)
@@ -69,6 +67,3 @@ class server(threading.Thread):
             cmd = ["iperf", "-s", "-u", "-p", p]
 
         output = interface.exec_cmd(cmd)
-
-    def stop(self):
-        pass

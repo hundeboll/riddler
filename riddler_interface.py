@@ -5,7 +5,7 @@ import sys
 import subprocess
 
 PING_REQUEST, PING_REPLY, PREPARE_RUN, START_RUN, FINISH_RUN, RUN_RESULT, RUN_ERROR, SAMPLE, SAMPLE_ERROR = range(9)
-CLIENT_SAMPLE = range(1)
+CLIENT_NODES, CLIENT_RESULT, CLIENT_SAMPLE, CLIENT_RUN_INFO = range(4)
 
 def tostruct(obj):
     return struct.pack("!L", len(obj))
@@ -60,26 +60,27 @@ def send_cmd(sock, cmd, val=None):
     return send(sock, obj)
 
 class interface:
-    def __init__(self, cmd, val=None, desc=None):
+    def __init__(self, cmd, val=None, run_info=None, node=None):
         self.cmd = cmd
         self.val = val
-        self.desc = desc
+        self.run_info = run_info
+        self.node = node
 
 
 def exec_cmd(cmd):
     if sys.hexversion < 0x02070000:
-        return self.compat_exec(cmd)
+        return compat_exec(cmd)
 
     try:
         return subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        self.report_error(e.output)
+        print(e)
         return False
 
 def compat_exec(cmd):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (stdout, stderr) = p.communicate()
     if p.returncode:
-        self.report_error(stderr)
+        print(stderr)
         return False
     return stdout

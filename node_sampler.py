@@ -1,7 +1,8 @@
+import sys
+import os
 import threading
 import time
 import subprocess
-import sys
 import riddler_interface as interface
 import re
 
@@ -61,28 +62,13 @@ class sampler(threading.Thread):
     def append_sample(self, sample):
         self.samples.update(sample)
 
-    def exec_cmd(self, cmd):
-        if sys.hexversion < 0x02070000:
-            return self.compat_exec(cmd)
-
-        try:
-            return subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            self.report_error(e.output)
-            return False
-
-    def compat_exec(self, cmd):
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = p.communicate()
-        if p.returncode:
-            self.report_error(stderr)
-            return False
-        return stdout
-
     def sample_nc(self):
         sample = {}
+        if not os.path.exists(nc_path):
+            return
+
         cmd = ["cat", nc_path]
-        output = self.exec_cmd(cmd)
+        output = interface.exec_cmd(cmd)
         if not output:
             return
 
@@ -97,7 +83,7 @@ class sampler(threading.Thread):
     def sample_iw(self):
         sample = {}
         cmd = ["iw", "dev", self.args.wifi_iface, "station", "dump"]
-        output = self.exec_cmd(cmd)
+        output = interface.exec_cmd(cmd)
         if not output:
             return
 
@@ -111,7 +97,7 @@ class sampler(threading.Thread):
 
     def sample_ip(self):
         cmd = ["ip", "-s", "-s", "link", "show", self.args.wifi_iface]
-        output = self.exec_cmd(cmd)
+        output = interface.exec_cmd(cmd)
         if not output:
             return
         n = re.findall("\s+(\d+)", output)
@@ -141,7 +127,7 @@ class sampler(threading.Thread):
 
     def sample_cpu(self):
         cmd = ["cat", "/proc/stat"]
-        cpu = self.exec_cmd(cmd)
+        cpu = interface.exec_cmd(cmd)
         if not cpu:
             return
 

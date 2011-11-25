@@ -66,6 +66,9 @@ class riddler:
         for node in self.nodes:
             node.client = self.client
 
+        for node in self.nodes:
+            self.client.server.nodes.append(node)
+
     def connect_nodes(self):
         for node in self.nodes:
             node.connect()

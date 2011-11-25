@@ -3,11 +3,11 @@ data_file = "test.pickle"
 export_file = "test_socket"
 
 test_protocol = 'udp'
-test_time = 10
-test_loops = 2
+test_time = 5
+test_loops = 5
 sample_interval = 1
 
-rate_start = 1000
+rate_start = 4000
 rate_stop = 5000
 rate_step = 1000
 

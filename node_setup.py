@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 bat_path = "/sys/class/net/bat0/mesh/"
@@ -7,6 +8,9 @@ purge_file = "nc_purge"
 
 class setup:
     def apply(self, run_info):
+        if not os.path.exists(bat_path):
+            return
+
         nc = 1 if run_info['coding'] else 0
         self.write(bat_path + nc_file, nc)
         self.write(bat_path + hold_file, run_info['hold'])

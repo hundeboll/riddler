@@ -16,22 +16,32 @@ class client(threading.Thread):
         self.server.server_bind()
         self.server.server_activate()
         self.server.clients = []
+        self.server.nodes = []
         self.start()
 
     def stop(self):
-        print("Shutdown export")
         if self.server:
             self.server.shutdown()
 
     def run(self):
-        print("Starting exporter")
         self.server.serve_forever()
-        print("Done exporting")
+
+    def export_run_info(self, run_info):
+        for client in self.server.clients:
+            client.lock.acquire()
+            client.export_run_info(run_info)
+            client.lock.release()
 
     def export_sample(self, sample):
         for client in self.server.clients:
             client.lock.acquire()
             client.export_sample(sample)
+            client.lock.release()
+
+    def export_result(self, node, run_info, result):
+        for client in self.server.clients:
+            client.lock.acquire()
+            client.export_result(node, run_info, result)
             client.lock.release()
 
 
@@ -43,6 +53,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         print("Connected")
         self.lock = threading.Lock()
         self.server.clients.append(self)
+        self.export_nodes(self.server.nodes)
 
     def finish(self):
         print("Done")
@@ -67,3 +78,11 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     def export_sample(self, sample):
         interface.send_cmd(self.request, interface.CLIENT_SAMPLE, sample)
+
+    def export_result(self, node, run_info, result):
+        obj = interface.interface(interface.CLIENT_RESULT, result, node=node, run_info=run_info)
+        interface.send(self.request, obj)
+
+    def export_nodes(self, nodes):
+        nodes = [node.name for node in nodes]
+        interface.send_cmd(self.request, interface.CLIENT_NODES, nodes)

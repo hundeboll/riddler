@@ -26,16 +26,10 @@ class client(threading.Thread):
     def run(self):
         self.server.serve_forever()
 
-    def export_run_info(self, run_info):
+    def export_sample(self, node, sample):
         for client in self.server.clients:
             client.lock.acquire()
-            client.export_run_info(run_info)
-            client.lock.release()
-
-    def export_sample(self, sample):
-        for client in self.server.clients:
-            client.lock.acquire()
-            client.export_sample(sample)
+            client.export_sample(node, sample)
             client.lock.release()
 
     def export_result(self, node, run_info, result):
@@ -50,14 +44,13 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 
 class tcp_handler(SocketServer.BaseRequestHandler):
     def setup(self):
-        print("Connected")
         self.lock = threading.Lock()
         self.server.clients.append(self)
         self.export_nodes(self.server.nodes)
 
     def finish(self):
-        print("Done")
         self.server.clients.remove(self)
+        self.request.close()
 
     def handle(self):
         # self.request is the TCP socket connected to the client
@@ -76,13 +69,12 @@ class tcp_handler(SocketServer.BaseRequestHandler):
                 print("Export socket closed: {0}".format(e))
                 break
 
-    def export_sample(self, sample):
-        interface.send_cmd(self.request, interface.CLIENT_SAMPLE, sample)
+    def export_sample(self, node, sample):
+        interface.send_client(self.request, interface.CLIENT_SAMPLE, node=node, sample=sample)
 
     def export_result(self, node, run_info, result):
-        obj = interface.interface(interface.CLIENT_RESULT, result, node=node, run_info=run_info)
-        interface.send(self.request, obj)
+        interface.send_client(self.request, interface.CLIENT_RESULT, result=result, node=node, run_info=run_info)
 
     def export_nodes(self, nodes):
         nodes = [node.name for node in nodes]
-        interface.send_cmd(self.request, interface.CLIENT_NODES, nodes)
+        interface.send_client(self.request, interface.CLIENT_NODES, nodes=nodes)

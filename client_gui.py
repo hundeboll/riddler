@@ -18,12 +18,12 @@ class main_window(QMainWindow):
         super(main_window, self).__init__(parent)
         self.setWindowTitle("Riddler Client")
 
-        self.test_monitor = test_monitor.monitor()
-        self.live_monitor = live_monitor.monitor()
+        self.test_monitor = test_monitor.monitor(parent=self)
+        self.live_monitor = live_monitor.monitor(parent=self)
 
         tabs = QTabWidget()
-        tabs.addTab(self.live_monitor, self.tr("Live Monitor"))
-        tabs.addTab(self.test_monitor, self.tr("Test Monitor"))
+        tabs.addTab(self.live_monitor.gui, self.tr("Live Monitor"))
+        tabs.addTab(self.test_monitor.gui, self.tr("Test Monitor"))
 
         vbox = QVBoxLayout()
         vbox.addWidget(tabs)

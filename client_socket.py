@@ -52,17 +52,12 @@ class sock(threading.Thread):
             print("Received unknown command: {0}".format(obj.cmd))
 
     def handle_nodes(self, obj):
-        for node in obj.val:
+        for node in obj.nodes:
             self.gui.live_monitor.add_node(node)
             self.gui.test_monitor.add_node(node)
 
     def handle_sample(self, obj):
-        node = obj.val['node']
-        self.gui.live_monitor.add_sample(node, obj.val)
+        self.gui.live_monitor.add_sample(obj.node, obj.sample)
 
     def handle_result(self, obj):
-        self.gui.test_monitor.add_result(obj.node, obj.run_info, obj.val)
-
-    def handle_run_info(self, obj):
-        node = obj.val['node']
-        self.gui.test_monitor.add_run_info(node, obj.val)
+        self.gui.test_monitor.add_result(obj.node, obj.run_info, obj.result)

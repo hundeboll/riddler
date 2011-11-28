@@ -51,12 +51,14 @@ class sampler(threading.Thread):
 
     def report_samples(self):
         self.samples['timestamp'] = time.time()
-        if not self.controller.report_cmd(interface.SAMPLE, self.samples):
+        obj = interface.node(interface.SAMPLE, sample=self.samples)
+        if not self.controller.report(obj):
             self.stop_sampling()
         self.samples = {}
 
     def report_error(self, error):
-        if not self.controller.report_cmd(interface.SAMPLE_ERROR, error):
+        obj = interface.node(interface.SAMPLE_ERROR, error = error)
+        if not self.controller.report(obj):
             self.stop_sampling()
 
     def append_sample(self, sample):

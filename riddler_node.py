@@ -51,10 +51,7 @@ class node(threading.Thread):
         self.socket.close()
 
     def handle(self, obj):
-        if obj.cmd is interface.PING_REPLY:
-            self.handle_ping_reply(obj)
-
-        elif obj.cmd is interface.RUN_RESULT:
+        if obj.cmd is interface.RUN_RESULT:
             self.handle_run_result(obj)
 
         elif obj.cmd is interface.RUN_ERROR:
@@ -92,16 +89,10 @@ class node(threading.Thread):
             print("Connection to {0} failed: {1}".format(self.name, e))
         self.start()
 
-    def ping(self):
-        t = time.time()
-        self.pings[t] = t
-        obj = interface.interface(interface.PING_REQUEST, t)
-        interface.send(self.socket, obj)
-
     def prepare_run(self, protocol):
         if not self.sources:
             return
-        interface.send_cmd(self.socket, interface.PREPARE_RUN, protocol)
+        interface.send_node(self.socket, interface.PREPARE_RUN, protocol=protocol)
 
     def start_run(self, run_info):
         self.samples = []
@@ -110,7 +101,7 @@ class node(threading.Thread):
         self.run_finished.clear()
         self.run_info = run_info
         run_info['dests'] = self.get_dests()
-        interface.send_cmd(self.socket, interface.START_RUN, run_info)
+        interface.send_node(self.socket, interface.START_RUN, run_info=run_info)
 
     def wait_run(self):
         if not self.dests:
@@ -123,8 +114,7 @@ class node(threading.Thread):
         return self.run_error
 
     def finish_run(self):
-        obj = interface.interface(interface.FINISH_RUN)
-        interface.send(self.socket, obj)
+        interface.send_node(self.socket, interface.FINISH_RUN)
 
     def get_result(self):
         return self.run_result
@@ -133,28 +123,19 @@ class node(threading.Thread):
         return self.samples
 
     def handle_run_result(self, obj):
-        print obj.val
-        self.run_result = obj.val
+        print obj.result
+        self.run_result = obj.result
         self.run_finished.set()
-        self.client.export_result(self.name, self.run_info, obj.val)
+        self.client.export_result(self.name, self.run_info, obj.result)
 
     def handle_run_error(self, obj):
         self.run_error = True
-        print("Run failed on {0}: {1}".format(self.name, obj.val))
+        print("Run failed on {0}: {1}".format(self.name, obj.error))
         self.run_finished.set()
 
     def handle_sample(self, obj):
-        self.samples.append(obj.val)
-        obj.val['node'] = self.name
-        self.client.export_sample(obj.val)
+        self.samples.append(obj.sample)
+        self.client.export_sample(self.name, obj.sample)
 
     def handle_sample_error(self, obj):
-        print("Sampling failed at {0}: {1}".format(self.name, obj.val))
-
-    def handle_ping_reply(self, obj):
-        now = time.time()
-        t = obj.val
-        if not self.pings.has_key(t):
-            return
-
-        print("Received ping from {0}: {1:5.3f}".format(self.name, now - t))
+        print("Sampling failed at {0}: {1}".format(self.name, obj.error))

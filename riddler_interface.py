@@ -7,6 +7,25 @@ import subprocess
 PING_REQUEST, PING_REPLY, PREPARE_RUN, START_RUN, FINISH_RUN, RUN_RESULT, RUN_ERROR, SAMPLE, SAMPLE_ERROR = range(9)
 CLIENT_NODES, CLIENT_RESULT, CLIENT_SAMPLE, CLIENT_RUN_INFO = range(4)
 
+class node:
+    def __init__(self, cmd, protocol=None, result=None, run_info=None, node=None, error=None, sample=None):
+        self.protocol = protocol
+        self.cmd = cmd
+        self.result = result
+        self.node = node
+        self.run_info = run_info
+        self.sample = sample
+        self.error = error
+
+class client:
+    def __init__(self, cmd, run_info=None, node=None, nodes=None, result=None, sample=None):
+        self.cmd = cmd
+        self.run_info = run_info
+        self.node = node
+        self.nodes = nodes
+        self.result = result
+        self.sample = sample
+
 def tostruct(obj):
     return struct.pack("!L", len(obj))
 
@@ -55,17 +74,13 @@ def recv(sock):
         print("Unable to unpickle: {0}".format(e))
         return None
 
-def send_cmd(sock, cmd, val=None):
-    obj = interface(cmd, val)
+def send_node(sock, cmd, protocol=None, result=None, run_info=None, _node=None, sample=None):
+    obj = node(cmd, protocol=protocol, result=result, run_info=run_info, node=_node, sample=sample)
     return send(sock, obj)
 
-class interface:
-    def __init__(self, cmd, val=None, run_info=None, node=None):
-        self.cmd = cmd
-        self.val = val
-        self.run_info = run_info
-        self.node = node
-
+def send_client(sock, cmd, result=None, run_info=None, node=None, nodes=None, sample=None):
+    obj = client(cmd, result=result, run_info=run_info, node=node, nodes=nodes, sample=sample)
+    return send(sock, obj)
 
 def exec_cmd(cmd):
     if sys.hexversion < 0x02070000:

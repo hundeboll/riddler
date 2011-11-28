@@ -46,18 +46,14 @@ class tcp_handler(SocketServer.BaseRequestHandler):
                 break
 
     def handle_cmd(self, obj):
-        if obj.cmd is interface.PING_REQUEST:
-            obj.cmd = interface.PING_REPLY
-            interface.send(self.request, obj)
-
-        elif obj.cmd is interface.PREPARE_RUN:
+        if obj.cmd is interface.PREPARE_RUN:
             print("Prepare run")
             if not self.tester_server:
-                self.tester_server = tester.server(self.server.args, obj.val)
+                self.tester_server = tester.server(self.server.args, obj.protocol)
 
         elif obj.cmd is interface.START_RUN:
             print("Start run")
-            run_info = obj.val
+            run_info = obj.run_info
             self.setup.apply(run_info)
             self.sampler.start_sampling(run_info)
             self.tester_clients = []
@@ -75,11 +71,5 @@ class tcp_handler(SocketServer.BaseRequestHandler):
     def report(self, obj):
         self.lock.acquire()
         ret = interface.send(self.request, obj)
-        self.lock.release()
-        return ret
-
-    def report_cmd(self, cmd, val=None):
-        self.lock.acquire()
-        ret = interface.send_cmd(self.request, cmd, val)
         self.lock.release()
         return ret

@@ -39,14 +39,15 @@ class client(threading.Thread):
             line = output[0]
         vals = line.split(",")
         rate = int(vals[8])/1024
-        self.report_result(rate)
+        result = {'throughput': rate, 'dest': self.dest_node['name']}
+        self.report_result(result)
 
-    def report_result(self, rate):
-        obj = interface.interface(interface.RUN_RESULT, {'throughput': rate, 'dest': self.dest_node['name']})
+    def report_result(self, result):
+        obj = interface.node(interface.RUN_RESULT, result=result)
         self.controller.report(obj)
 
     def report_error(self, error):
-        obj = interface.interface(interface.RUN_ERROR, error)
+        obj = interface.node(interface.RUN_ERROR, error=error)
         self.controller.report(obj)
 
 

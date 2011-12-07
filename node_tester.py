@@ -19,6 +19,7 @@ class client(threading.Thread):
         t = str(self.run_info['test_time'])
         p = str(self.dest_node['port'])
         r = str(self.run_info['rate']*1024)
+
         if self.run_info['test_protocol'] == 'tcp':
             cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p]
         elif self.run_info['test_protocol'] == 'udp':
@@ -38,8 +39,13 @@ class client(threading.Thread):
         elif self.run_info['test_protocol'] == "tcp":
             line = output[0]
         vals = line.split(",")
-        rate = int(vals[8])/1024
-        result = {'throughput': rate, 'dest': self.dest_node['name']}
+        result = {
+                'dest':         self.dest_node['name'],
+                'transfered':   int(vals[7]),           # bits
+                'throughput':   int(vals[8])/1024,      # kbit/s
+                'jitter':       float(vals[9]),         # seconds
+                'lost':         int(vals[10]),          # packets
+                }
         self.report_result(result)
 
     def report_result(self, result):

@@ -9,12 +9,17 @@ import node_setup as setup
 
 class server:
     def __init__(self, args):
-        self.server = SocketServer.TCPServer((args.host, args.port), tcp_handler, bind_and_activate=False)
+        self.args = args
+
+    def create(self):
+        self.server = SocketServer.TCPServer((self.args.host, self.args.port), tcp_handler, bind_and_activate=False)
         self.server.allow_reuse_address = True
         self.server.timeout = 1
-        self.server.args = args
+        self.server.args = self.args
         self.server.server_bind()
         self.server.server_activate()
+
+    def serve(self):
         try:
             self.server.serve_forever()
         except socket.error as e:

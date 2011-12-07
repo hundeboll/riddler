@@ -9,7 +9,7 @@ class controller(threading.Thread):
         self.name = "controller"
         self.args = args
         self.nodes = nodes
-        self.data = data.data(nodes)
+        self.data = data.data(nodes, args.test_sweep)
         self.test_finished = threading.Event()
         self.end = threading.Event()
         self.daemon = True

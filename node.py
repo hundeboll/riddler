@@ -27,6 +27,8 @@ args = parser.parse_args()
 class node:
     def __init__(self):
         self.server = server.server(args)
+        self.server.create()
+        self.server.serve()
 
 if __name__ == "__main__":
     try:

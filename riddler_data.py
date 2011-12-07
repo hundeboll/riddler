@@ -2,7 +2,6 @@ import time
 import numpy
 import cPickle as pickle
 
-
 class run_data:
     def __init__(self, run_info):
         self.run_info = run_info
@@ -58,8 +57,9 @@ class node_data:
 
 
 class data:
-    def __init__(self, nodes):
+    def __init__(self, nodes, test_sweep):
         self.nodes = map(lambda n: n.name, nodes)
+        self.sweep = test_sweep
         self.run_list = []
 
         self.data = {}

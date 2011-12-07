@@ -1,8 +1,8 @@
 #!/usr/bin/env python2
 
 import cPickle as pickle
-import pylab
-import matplotlib.gridspec as gridspec
+import plot_data as data
+import plot_graph as graph
 
 c = {
     "aluminium1":   "#eeeeec",
@@ -34,41 +34,25 @@ c = {
     "skyblue3":     "#204a87",
 }
 
-data = pickle.load(open("test.pickle"))
-
 class plot:
     def __init__(self, filename):
-        self.data = pickle.load(open(filename))
-        self.rates = self.data.get_param_range('rate')
-        self.coding = self.data.get_param_range('coding')
-        self.hold_times = self.data.get_param_range('hold')
-        self.purge_times = self.data.get_param_range('purge')
+        d = pickle.load(open(filename))
+        self.data = data.data(d)
+        self.data.read_params()
+        self.graph = graph.graph()
 
-    def setup_fig(self, title, xlabel, ylabel):
-        fig = pylab.figure()
-        ax = fig.add_subplot(111)
-        ax.grid(True)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.set_title(title)
-        return ax
+    def plot(self):
+        print self.data.sweep
+        self.plot_throughput()
 
-    def finish_fig(self, ax):
-        ax.legend(loc='upper left', shadow=True)
+        self.graph.show()
 
-    def plot_throughput(self, node):
-        ax = self.setup_fig("Throughput for {0}".format(node), "Total Offered Load [kbit/s]", "Measured Throughput")
-        for hold in self.hold_times:
-            for purge in self.purge_times:
-                for coding in self.coding:
-                    conditions = {'coding': coding, 'hold': hold, 'purge': purge}
-                    data = self.data.results(node, conditions, field='throughput')
-                    label = "Coding: {0}, Hold: {1}ms, Purge: {2}ms".format("On" if coding else "Off", hold, purge)
-                    ax.plot(self.rates, data, linewidth=2, label=label)
-        self.finish_fig(ax)
-
+    def plot_throughput(self):
+        for node in self.data.nodes:
+            for coding in self.data.coding:
+                rates,data = self.data.throughput_test(node, coding)
+                self.graph.plot_throughput(node, rates, data, coding)
 
 if __name__ == "__main__":
     p = plot("test.pickle")
-    p.plot_throughput('alice')
-    pylab.show()
+    p.plot()

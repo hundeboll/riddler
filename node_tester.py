@@ -52,7 +52,7 @@ class client(threading.Thread):
                     }
         except IndexError as e:
             print("Failed to parse result: {0}".format(e))
-            self.report_error(e)
+            self.report_error(output)
             return None
 
     def parse_udp_output(self, output):
@@ -68,7 +68,7 @@ class client(threading.Thread):
                     }
         except IndexError as e:
             print("Failed to parse result: {0}".format(e))
-            self.report_error(e)
+            self.report_error(output)
             return None
 
     def report_result(self, result):

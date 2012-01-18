@@ -38,27 +38,38 @@ class client(threading.Thread):
         elif self.run_info['protocol'] == 'udp':
             result = self.parse_udp_output(output)
 
-        self.report_result(result)
+        if result:
+            self.report_result(result)
 
     def parse_tcp_output(self, output):
         output = output.strip()
         vals = output.split(",")
-        return {
-                'dest':         self.dest_node['name'],
-                'transfered':   int(vals[7]),           # bits
-                'throughput':   int(vals[8])/1024,      # kbit/s
-                }
+        try:
+            return {
+                    'dest':         self.dest_node['name'],
+                    'transfered':   int(vals[7]),           # bits
+                    'throughput':   int(vals[8])/1024,      # kbit/s
+                    }
+        except IndexError as e:
+            print("Failed to parse result: {0}".format(e))
+            self.report_error(e)
+            return None
 
     def parse_udp_output(self, output):
         output = output.strip()
         vals = output.split(",")
-        return {
-                'dest':         self.dest_node['name'],
-                'transfered':   int(vals[7]),           # bits
-                'throughput':   int(vals[8])/1024,      # kbit/s
-                'jitter':       float(vals[9]),         # seconds
-                'lost':         int(vals[10]),          # packets
-                }
+        try:
+            return {
+                    'dest':         self.dest_node['name'],
+                    'transfered':   int(vals[7]),           # bits
+                    'throughput':   int(vals[8])/1024,      # kbit/s
+                    'jitter':       float(vals[9]),         # seconds
+                    'lost':         int(vals[10]),          # packets
+                    }
+        except IndexError as e:
+            print("Failed to parse result: {0}".format(e))
+            self.report_error(e)
+            return None
 
     def report_result(self, result):
         obj = interface.node(interface.RUN_RESULT, result=result)

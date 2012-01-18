@@ -24,7 +24,11 @@ class power(threading.Thread):
         while not self.end.is_set():
             if not self.measure.wait(1):
                 continue
-            print("Reading serial")
+
+            # This is where the reading of the serial link
+            # should be done. Save the measurements into a
+            # class variable ( e.g. self.measures.append(meas) ).
+
             time.sleep(1)
 
     def start_measure(self):
@@ -41,6 +45,10 @@ class power(threading.Thread):
         return True
 
     def read_power(self):
+        # This is where the power measurements are returned to
+        # the sampler class. Return only one value and reset the
+        # stored data in this class ( e.g. self.measures = [] ).
+
         return 0;
 
 

@@ -2,7 +2,7 @@ import riddler_node as node
 
 alice = node.node("alice", "localhost")
 
-bob = node.node("bob", "localhost", 9987)
+bob = node.node("bob", "localhost", 9988)
 
 """
 alice = node.node("alice", "panda0.personal.es.aau.dk", 9988)

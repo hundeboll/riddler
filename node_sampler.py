@@ -21,7 +21,7 @@ class sampler(threading.Thread):
         self.total_idle = None
         self.samples = {}
 
-        self.power_meas = power.power(args)
+        self.power = power.power(args)
 
         self.end = threading.Event()
         self.sampling = threading.Event()
@@ -51,9 +51,11 @@ class sampler(threading.Thread):
         return True
 
     def start_sampling(self):
+        self.power.start_measure()
         self.sampling.set()
 
     def stop_sampling(self):
+        self.power.stop_measure()
         self.sampling.clear()
 
     def report_samples(self):
@@ -155,5 +157,5 @@ class sampler(threading.Thread):
 
     def sample_power(self):
         sample = {}
-        sample['power'] = self.power_meas.read_power()
+        sample['power'] = self.power.read_power()
         self.append_sample(sample)

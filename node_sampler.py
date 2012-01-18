@@ -4,6 +4,7 @@ import threading
 import time
 import subprocess
 import riddler_interface as interface
+import node_power as power
 import re
 
 nc_path = "/sys/kernel/debug/batman_adv/bat0/nc_stats"
@@ -20,6 +21,8 @@ class sampler(threading.Thread):
         self.total_idle = None
         self.samples = {}
 
+        self.power_meas = power.power(args)
+
         self.end = threading.Event()
         self.sampling = threading.Event()
         self.start()
@@ -34,6 +37,7 @@ class sampler(threading.Thread):
             self.sample_iw()
             self.sample_ip()
             self.sample_cpu()
+            self.sample_power()
             self.report_samples()
             delay = self.run_info['sample_interval'] - (time.time() - start)
             if delay > 0:
@@ -147,4 +151,9 @@ class sampler(threading.Thread):
         total = self.total_cpu - last_cpu
         idle = self.total_idle - last_idle
         sample = {'cpu': int(100*(total - idle)/total)}
+        self.append_sample(sample)
+
+    def sample_power(self):
+        sample = {}
+        sample['power'] = self.power_meas.read_power()
         self.append_sample(sample)

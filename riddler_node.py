@@ -14,7 +14,6 @@ class node(threading.Thread):
         self.port = port
         self.mesh_host = ""
         self.mesh_port = 8877
-        self.pings = {}
         self.dests = []
         self.sources = []
         self.samples = []
@@ -23,6 +22,8 @@ class node(threading.Thread):
         nodes.append(self)
 
         self.end = threading.Event()
+        self.info = threading.Event()
+        self.ready = threading.Event()
         self.run_finished = threading.Event()
         self.daemon = True
 
@@ -39,7 +40,7 @@ class node(threading.Thread):
                     print("None from {0}".format(self.name))
                     break
             except KeyboardInterrupt:
-                return
+                break
             except socket.timeout:
                 continue
             except socket.error as e:
@@ -47,11 +48,16 @@ class node(threading.Thread):
                 self.socket = None
                 return
 
-
         self.socket.close()
 
     def handle(self, obj):
-        if obj.cmd is interface.RUN_RESULT:
+        if obj.cmd is interface.NODE_INFO:
+            self.handle_node_info(obj)
+
+        elif obj.cmd is interface.NODE_READY:
+            self.handle_node_ready(obj)
+
+        elif obj.cmd is interface.RUN_RESULT:
             self.handle_run_result(obj)
 
         elif obj.cmd is interface.RUN_ERROR:
@@ -63,6 +69,9 @@ class node(threading.Thread):
         elif obj.cmd is interface.SAMPLE_ERROR:
             self.handle_sample_error(obj)
 
+        elif obj.cmd is interface.PREPARE_ERROR:
+            self.handle_setup_error(obj)
+
         else:
             print("Received unknown command from {0}: {1}".format(self.name, obj.cmd))
 
@@ -72,10 +81,6 @@ class node(threading.Thread):
 
     def add_source(self, node):
         self.sources.append(node)
-
-    def set_mesh(self, host, port=8877):
-        self.mesh_host = host
-        self.mesh_port = port
 
     def get_dests(self):
         return map(lambda n: {'name': n.name, 'host': n.mesh_host, 'port': n.mesh_port}, self.dests)
@@ -89,19 +94,27 @@ class node(threading.Thread):
             print("Connection to {0} failed: {1}".format(self.name, e))
         self.start()
 
-    def prepare_run(self, protocol):
-        if not self.sources:
-            return
-        interface.send_node(self.socket, interface.PREPARE_RUN, protocol=protocol)
+    def wait_node_info(self):
+        self.info.wait()
 
-    def start_run(self, run_info):
+    def prepare_run(self, run_info):
         self.samples = []
+        self.run_info = run_info
         self.run_error = False
         self.run_result = None
         self.run_finished.clear()
-        self.run_info = run_info
-        run_info['dests'] = self.get_dests()
-        interface.send_node(self.socket, interface.START_RUN, run_info=run_info)
+
+        if not self.sources:
+            return
+        interface.send_node(self.socket, interface.PREPARE_RUN, dests=self.get_dests(), run_info=run_info)
+
+    def wait_ready(self):
+        while True:
+            if self.ready.wait(1):
+                break;
+
+    def start_run(self):
+        interface.send_node(self.socket, interface.START_RUN)
 
     def wait_run(self):
         if not self.dests:
@@ -122,6 +135,15 @@ class node(threading.Thread):
     def get_samples(self):
         return self.samples
 
+    def handle_node_info(self, obj):
+        print("Received node info from {}".format(self.name))
+        self.mesh_host = obj.mesh_host
+        self.mesh_port = obj.mesh_port
+        self.info.set()
+
+    def handle_node_ready(self, obj):
+        self.ready.set()
+
     def handle_run_result(self, obj):
         print obj.result
         self.run_result = obj.result
@@ -139,3 +161,6 @@ class node(threading.Thread):
 
     def handle_sample_error(self, obj):
         print("Sampling failed at {0}: {1}".format(self.name, obj.error))
+
+    def handle_setup_error(self, obj):
+        print("Setup failed at {0}: {1}".format(self.name, obj.error))

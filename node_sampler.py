@@ -42,8 +42,11 @@ class sampler(threading.Thread):
     def stop(self):
         self.end.set()
 
-    def start_sampling(self, run_info):
+    def set_run_info(self, run_info):
         self.run_info = run_info
+        return True
+
+    def start_sampling(self):
         self.sampling.set()
 
     def stop_sampling(self):

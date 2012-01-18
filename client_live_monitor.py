@@ -75,7 +75,8 @@ class monitor_gui(QWidget):
         self.draw_lock.release()
 
     def cpu_fig(self):
-        self.cpu_fig = Figure(facecolor=(1,1,1), edgecolor=(0,0,0))
+        c = self.palette().button().color()
+        self.cpu_fig = Figure(facecolor=(c.redF(), c.greenF(), c.blueF()), edgecolor=(0,0,0))
         self.cpu_ax = self.cpu_fig.add_subplot(self.gs[0,1])
         self.cpu_ax.set_title("CPU Usage")
         self.cpu_ax.set_ylabel("Usage [%]")
@@ -86,7 +87,8 @@ class monitor_gui(QWidget):
         self.cpu_lines = {}
 
     def tx_fig(self):
-        self.tx_fig = Figure(facecolor=(1,1,1), edgecolor=(0,0,0))
+        c = self.palette().button().color()
+        self.tx_fig = Figure(facecolor=(c.redF(), c.greenF(), c.blueF()), edgecolor=(0,0,0))
         self.tx_ax = self.tx_fig.add_subplot(self.gs[0,1])
         self.tx_ax.set_title("TX Rate")
         self.tx_ax.set_ylabel("Rate [kbit/s]")

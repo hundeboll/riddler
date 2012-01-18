@@ -1,24 +1,55 @@
+#
+# General settings
+#
 nodes_file = "network_test"
 data_file = "test.pickle"
 export_file = "test_socket"
+client_host = ""
+client_port = 6677
 
-test_swipe = 'rates'
-test_protocol = 'udp'
-test_time = 10
-test_loops = 3
-sample_interval = 1
+#
+# Test settings
+#
+test_profile = 'tcp_algos'  # Profiles to run (udp_rates, tcp_algos, hold_times, or power_meas).
+test_time = 10          # Time for each loop to run
+test_loops = 2          # Number of repetitions for each run
+sample_interval = 1     # Seconds between each node sample
 
-rate_start = 2400
-rate_stop = 3400
-rate_step = 200
+#
+# Settings for udp_rates, tcp_algos, power_meas
+#
+hold_time = 10
+purge_time = 100
 
+#
+# Settings for udp_rates, hold_times, power_meas
+#
+rate_start = 2500       # Initial rate of each swipe in kbit/s
+rate_stop = 3000        # Last rate of each swipe in kbit/s
+rate_step = 100         # Rate increment for each run in kbit/s
+
+#
+# Settings for hold_times
+#
 hold_start = 10
 hold_stop = 20
-hold_step = 0
+hold_step = 2
 
-purge_start = 100
-purge_stop = 100
-purge_step = 0
-
-toggle_coding = False
-coding = False
+#
+# Settings for tcp_algos
+#
+tcp_algos = [           # Algorithms to test
+                #'bic',
+                'cubic',
+                #'highspeed',
+                #'htcp',
+                #'hybla',
+                #'illinois',
+                #'lp',
+                'reno',
+                #'scalable',
+                'vegas',
+                'veno',
+                'westwood',
+                #'yeah',
+            ]

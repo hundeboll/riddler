@@ -1,5 +1,6 @@
 import threading
 import time
+import re
 import socket
 import SocketServer
 import riddler_interface as interface
@@ -12,41 +13,52 @@ class client(threading.Thread):
         self.run_info = run_info
         self.end = threading.Event()
         self.daemon = True
-        self.start()
 
     def run(self):
         h = self.dest_node['host']
         t = str(self.run_info['test_time'])
         p = str(self.dest_node['port'])
-        r = str(self.run_info['rate']*1024)
 
-        if self.run_info['test_protocol'] == 'tcp':
-            cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p]
-        elif self.run_info['test_protocol'] == 'udp':
-            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p]
+        if self.run_info['protocol'] == 'tcp':
+            cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p, '-fk']
+        elif self.run_info['protocol'] == 'udp':
+            r = str(self.run_info['rate']*1024)
+            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p, '-fk', "-xCDM"]
 
         output = interface.exec_cmd(cmd)
 
-        if output:
-            self.parse_output(output)
-        else:
+        if not output:
             self.report_error("No output received from command {0}".format(cmd))
+            return
+        elif "WARNING" in output:
+            self.report_error(output)
+            return
+        elif self.run_info['protocol'] == 'tcp':
+            result = self.parse_tcp_output(output)
+        elif self.run_info['protocol'] == 'udp':
+            result = self.parse_udp_output(output)
 
-    def parse_output(self, output):
-        output = output.split("\n")
-        if self.run_info['test_protocol'] == "udp":
-            line = output[1]
-        elif self.run_info['test_protocol'] == "tcp":
-            line = output[0]
-        vals = line.split(",")
-        result = {
+        self.report_result(result)
+
+    def parse_tcp_output(self, output):
+        output = output.strip()
+        vals = output.split(",")
+        return {
+                'dest':         self.dest_node['name'],
+                'transfered':   int(vals[7]),           # bits
+                'throughput':   int(vals[8])/1024,      # kbit/s
+                }
+
+    def parse_udp_output(self, output):
+        output = output.strip()
+        vals = output.split(",")
+        return {
                 'dest':         self.dest_node['name'],
                 'transfered':   int(vals[7]),           # bits
                 'throughput':   int(vals[8])/1024,      # kbit/s
                 'jitter':       float(vals[9]),         # seconds
                 'lost':         int(vals[10]),          # packets
                 }
-        self.report_result(result)
 
     def report_result(self, result):
         obj = interface.node(interface.RUN_RESULT, result=result)
@@ -59,18 +71,32 @@ class client(threading.Thread):
 
 class server(threading.Thread):
     def __init__(self, args, protocol):
+        super(server, self).__init__(None)
         self.args = args
         self.protocol = protocol
-        super(server, self).__init__(None)
         self.end = threading.Event()
         self.daemon = True
         self.start()
+        time.sleep(1)
 
     def run(self):
+        h = self.args.mesh_host
         p =  str(self.args.mesh_port)
         if self.protocol == "tcp":
-            cmd = ["iperf", "-s", "-p", p]
+            self.cmd = ["iperf", "-s", "-B", h, "-p", p]
         elif self.protocol == "udp":
-            cmd = ["iperf", "-s", "-u", "-p", p]
+            self.cmd = ["iperf", "-s", "-u", "-B", h, "-p", p]
+
+        output = interface.exec_cmd(self.cmd)
+
+    def kill(self):
+        cmd = ["ps", "-ewo", "pid,cmd"]
+        needle = " ".join(self.cmd)
+        regex = "(\d+) {0}\n".format(needle)
 
         output = interface.exec_cmd(cmd)
+        pids = re.findall(regex, output)
+
+        for pid in pids:
+            cmd = ["kill", pid]
+            interface.exec_cmd(cmd)

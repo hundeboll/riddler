@@ -21,18 +21,15 @@ except ImportError:
 parser.add_argument("--rate_start")
 parser.add_argument("--rate_stop")
 parser.add_argument("--rate_step")
+parser.add_argument("--hold_time")
 parser.add_argument("--hold_start")
 parser.add_argument("--hold_stop")
 parser.add_argument("--hold_step")
-parser.add_argument("--purge_start")
-parser.add_argument("--purge_stop")
-parser.add_argument("--purge_step")
-parser.add_argument("--coding")
-parser.add_argument("--toggle_coding")
-parser.add_argument("--test_sweep")
-parser.add_argument("--test_protocol")
+parser.add_argument("--purge_time")
+parser.add_argument("--test_profile")
 parser.add_argument("--test_time")
 parser.add_argument("--test_loops")
+parser.add_argument("--tcp_algos")
 parser.add_argument("--sample_interval")
 parser.add_argument("--nodes_file")
 parser.add_argument("--data_file")
@@ -73,6 +70,7 @@ class riddler:
     def connect_nodes(self):
         for node in self.nodes:
             node.connect()
+            node.wait_node_info()
 
 
 if __name__ == "__main__":

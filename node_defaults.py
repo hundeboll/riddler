@@ -4,5 +4,5 @@
 wifi_iface = "wlan0"
 host = ""
 port = 8899
-mesh_host = ""
+mesh_host = "localhost"
 mesh_port = 8877

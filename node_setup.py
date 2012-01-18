@@ -1,40 +1,68 @@
 import os
 import subprocess
+import riddler_interface as interface
 
 bat_path = "/sys/class/net/bat0/mesh/"
 nc_file = "network_coding"
 hold_file = "nc_hold"
 purge_file = "nc_purge"
 
+tcp_path = "/proc/sys/net/ipv4/"
+current_algo = "tcp_congestion_control"
+available_algos = "tcp_available_congestion_control"
+
 class setup:
-    def apply(self, run_info):
+    def __init__(self):
+        self.error = None
+
+    def apply_setup(self, run_info):
+        if not self.setup_batman(run_info):
+            pass
+            #return False
+
+        if not self.setup_tcp(run_info):
+            return False
+
+        return True
+
+    def setup_batman(self, run_info):
         if not os.path.exists(bat_path):
-            return
+            self.error = "'{0}' does not exist".format(bat_path)
+            return False
 
         nc = 1 if run_info['coding'] else 0
         self.write(bat_path + nc_file, nc)
         self.write(bat_path + hold_file, run_info['hold'])
         self.write(bat_path + purge_file, run_info['purge'])
 
+        return True
+
+    def setup_tcp(self, run_info):
+        if not run_info['protocol'] == 'tcp':
+            return True
+
+        algo = run_info['tcp_algo']
+
+        # Load tcp congestion control algorithm if needed
+        if algo not in self.read(tcp_path + available_algos):
+            print("Loading module: tcp_{0}".format(algo))
+            cmd = ["modprobe", "-q", "tcp_{0}".format(algo)]
+
+        self.write(tcp_path + current_algo, algo)
+
+        if algo not in self.read(tcp_path + current_algo):
+            self.error = "Failed to set tcp algorithm: {0}".format(algo)
+            return False
+
+        return True
+
+    def read(self, path):
+        f = open(path, "r")
+        ret = f.read()
+        f.close()
+        return ret
+
     def write(self, path, value):
         f = open(path, "w")
         f.write(str(value))
         f.close()
-
-    def exec_cmd(self, cmd):
-        if sys.hexversion < 0x02070000:
-            return self.compat_exec(cmd)
-
-        try:
-            return subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            self.report_error(e.output)
-            return False
-
-    def compat_exec(self, cmd):
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout, stderr) = p.communicate()
-        if p.returncode:
-            self.report_error(stderr)
-            return False
-        return stdout

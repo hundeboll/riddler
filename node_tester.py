@@ -105,9 +105,11 @@ class server(threading.Thread):
         needle = " ".join(self.cmd)
         regex = "(\d+) {0}\n".format(needle)
 
+        print("Searching for pids: {0}".format(needle))
         output = interface.exec_cmd(cmd)
         pids = re.findall(regex, output)
 
         for pid in pids:
+            print("Killing server (pid {0})".format(pid))
             cmd = ["kill", pid]
             interface.exec_cmd(cmd)

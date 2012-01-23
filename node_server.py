@@ -28,8 +28,8 @@ class server:
 
 class tcp_handler(SocketServer.BaseRequestHandler):
     def setup(self):
-        self.tester_server = None
         self.tester_clients = []
+        self.tester_server = None
         self.lock = threading.Lock()
         self.sampler = sampler.sampler(self, self.server.args)
         self.setup = setup.setup()
@@ -66,7 +66,8 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             print("Finish run")
             if self.sampler:
                 self.sampler.stop_sampling()
-            self.tester_server = None
+            if self.tester_server:
+                self.tester_server.kill()
 
         else:
             print("Received unknown command: {0}".format(obj.cmd))
@@ -80,6 +81,8 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             self.report(interface.node(interface.PREPARE_ERROR, error=self.sampler.error))
 
         # (Re)start iperf server
+        if self.tester_server:
+            self.tester_server.kill()
         self.tester_server = tester.server(self.server.args, obj.run_info['protocol'])
 
         # Wait for previous iperf clients to finish

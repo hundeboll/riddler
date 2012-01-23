@@ -30,10 +30,10 @@ class controller(threading.Thread):
         if profile in ("udp_rates","power_meas"):
             self.test_rates()
 
-        elif profile is "tcp_algos":
+        elif profile == "tcp_algos":
             self.test_tcp_algos()
 
-        elif profile is "hold_times":
+        elif profile == "hold_times":
             self.test_hold_times()
 
         else:
@@ -61,6 +61,7 @@ class controller(threading.Thread):
                 for coding in self.codings:
                     self.set_run_info(loop=loop, hold=hold, purge=purge, coding=coding, tcp_algo=algo)
                     self.execute_run()
+                    time.sleep(5)
 
     def test_hold_times(self):
         purge = self.args.purge_time

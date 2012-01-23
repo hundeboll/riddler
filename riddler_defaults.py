@@ -10,7 +10,7 @@ client_port = 6677
 #
 # Test settings
 #
-test_profile = 'tcp_algos'  # Profiles to run (udp_rates, tcp_algos, hold_times, or power_meas).
+test_profile = 'udp_rates'  # Profiles to run (udp_rates, tcp_algos, hold_times, or power_meas).
 test_time = 10          # Time for each loop to run
 test_loops = 2          # Number of repetitions for each run
 sample_interval = 1     # Seconds between each node sample

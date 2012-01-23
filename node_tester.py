@@ -88,7 +88,6 @@ class server(threading.Thread):
         self.end = threading.Event()
         self.daemon = True
         self.start()
-        time.sleep(1)
 
     def run(self):
         h = self.args.mesh_host
@@ -98,6 +97,7 @@ class server(threading.Thread):
         elif self.protocol == "udp":
             self.cmd = ["iperf", "-s", "-u", "-B", h, "-p", p]
 
+        print("Starting {0} server".format(self.protocol))
         output = interface.exec_cmd(self.cmd)
 
     def kill(self):

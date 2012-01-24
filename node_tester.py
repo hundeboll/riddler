@@ -1,8 +1,7 @@
 import threading
+import subprocess
 import time
 import re
-import socket
-import SocketServer
 import riddler_interface as interface
 
 class client(threading.Thread):
@@ -23,20 +22,23 @@ class client(threading.Thread):
             cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p, '-fk']
         elif self.run_info['protocol'] == 'udp':
             r = str(self.run_info['rate']*1024)
-            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p, '-fk', "-xCDM"]
+            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p, '-fk', "-xDC"]
 
-        output = interface.exec_cmd(cmd)
+        print("Starting {0} client".format(self.run_info['protocol']))
+        self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.p.wait()
+        (stdout, stderr) = self.p.communicate()
 
-        if not output:
+        if stderr:
+            self.report_error("Iperf client error: {0}".format(stderr))
+            return
+        elif not stdout:
             self.report_error("No output received from command {0}".format(cmd))
             return
-        elif "WARNING" in output:
-            self.report_error(output)
-            return
         elif self.run_info['protocol'] == 'tcp':
-            result = self.parse_tcp_output(output)
+            result = self.parse_tcp_output(stdout)
         elif self.run_info['protocol'] == 'udp':
-            result = self.parse_udp_output(output)
+            result = self.parse_udp_output(stdout)
 
         if result:
             self.report_result(result)
@@ -85,6 +87,7 @@ class server(threading.Thread):
         super(server, self).__init__(None)
         self.args = args
         self.protocol = protocol
+        self.running = False
         self.end = threading.Event()
         self.daemon = True
         self.start()
@@ -98,18 +101,20 @@ class server(threading.Thread):
             self.cmd = ["iperf", "-s", "-u", "-B", h, "-p", p]
 
         print("Starting {0} server".format(self.protocol))
-        output = interface.exec_cmd(self.cmd)
+        self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.running = True
+        self.p.wait()
 
     def kill(self):
-        cmd = ["ps", "-ewo", "pid,cmd"]
-        needle = " ".join(self.cmd)
-        regex = "(\d+) {0}\n".format(needle)
+        try:
+            # Check if process is running at all
+            if not self.running:
+                return
 
-        print("Searching for pids: {0}".format(needle))
-        output = interface.exec_cmd(cmd)
-        pids = re.findall(regex, output)
+            # Politely ask server to quit
+            print("Terminating server (pid {0})".format(self.p.pid))
+            self.p.terminate()
+            self.running = False
 
-        for pid in pids:
-            print("Killing server (pid {0})".format(pid))
-            cmd = ["kill", pid]
-            interface.exec_cmd(cmd)
+        except OSError as e:
+            print("Killing server failed: {0}".format(e))

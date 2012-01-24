@@ -24,6 +24,7 @@ class node(threading.Thread):
         self.end = threading.Event()
         self.info = threading.Event()
         self.ready = threading.Event()
+        self.done = threading.Event()
         self.run_finished = threading.Event()
         self.daemon = True
 
@@ -56,6 +57,9 @@ class node(threading.Thread):
 
         elif obj.cmd is interface.NODE_READY:
             self.handle_node_ready(obj)
+
+        elif obj.cmd is interface.NODE_DONE:
+            self.handle_node_done(obj)
 
         elif obj.cmd is interface.RUN_RESULT:
             self.handle_run_result(obj)
@@ -113,6 +117,11 @@ class node(threading.Thread):
             if self.ready.wait(1):
                 break;
 
+    def wait_done(self):
+        while True:
+            if self.ready.wait(1):
+                break;
+
     def start_run(self):
         interface.send_node(self.socket, interface.START_RUN)
 
@@ -143,6 +152,9 @@ class node(threading.Thread):
 
     def handle_node_ready(self, obj):
         self.ready.set()
+
+    def handle_node_done(self, obj):
+        self.done.set()
 
     def handle_run_result(self, obj):
         print obj.result

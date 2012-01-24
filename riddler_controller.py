@@ -79,9 +79,11 @@ class controller(threading.Thread):
             if not self.wait_run():
                 print("Test failed, retrying.")
                 self.finish_run()
+                self.wait_done()
                 continue
 
             self.finish_run()
+            self.wait_done()
             self.save_results()
             self.save_samples()
             break
@@ -140,6 +142,10 @@ class controller(threading.Thread):
     def finish_run(self):
         for node in self.nodes:
             node.finish_run()
+
+    def wait_done(self):
+        for node in self.nodes:
+            node.wait_done()
 
     def save_results(self):
         for node in self.nodes:

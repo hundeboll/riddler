@@ -69,6 +69,9 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             if self.tester_server:
                 self.tester_server.kill()
 
+            # Report back to controller that we are done
+            self.report(interface.node(interface.NODE_DONE))
+
         else:
             print("Received unknown command: {0}".format(obj.cmd))
 

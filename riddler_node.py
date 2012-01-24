@@ -159,7 +159,6 @@ class node(threading.Thread):
         self.done.set()
 
     def handle_run_result(self, obj):
-        print obj.result
         self.run_result = obj.result
         self.run_finished.set()
         self.client.export_result(self.name, self.run_info, obj.result)

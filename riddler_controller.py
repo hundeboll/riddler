@@ -85,25 +85,35 @@ class controller(threading.Thread):
             self.wait_done()
             self.save_results()
             self.save_samples()
+            self.eta = self.eta - self.args.test_time
             break
 
     def init_ranges(self):
         args = self.args
         self.loops = range(args.test_loops)
 
-        if args.test_profile in ('udp_rates','hold_times','power_meas'):
-            self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
-            self.protocol = 'udp'
-
-        if args.test_profile in ('udp_rates','tcp_algos','power_meas'):
+        if args.test_profile in ('udp_rates', 'power_meas'):
             self.codings = [True, False]
+            self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
+            self.eta = len(self.rates) * args.test_loops * args.test_time * len(self.codings)
+            self.protocol = 'udp'
+            self.run_info_format = "\n#{loop:2d} | {rate:4d} kb/s | Coding: {coding:1b} | ETA: {eta:3d}m"
+            self.result_format = "{:10s} {throughput:5.1f} kb/s | {lost:4d}/{total:4d} ({ratio:4.1f}%)"
 
-        if args.test_profile in ('tcp_algos',):
-            self.protocol = 'tcp'
-
-        if args.test_profile in ('hold_times',):
+        if args.test_profile == 'hold_times':
+            self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
             self.hold_times = range(args.hold_start, args.hold_stop+1, args.hold_step)
+            self.eta = len(self.rates) * len(self.hold_times) * args.test_loops * args.test_time
+            self.protocol = 'udp'
+            self.run_info_format = "\n#{loop:2d} | {rate:4d} kb/s | ETA: {eta:3d}m"
+            self.result_format = "{:10s} {throughput:5.1f} kb/s | {lost:4d}/{total:4d} ({ratio:4.1f}%)"
 
+        if args.test_profile == 'tcp_algos':
+            self.protocol = 'tcp'
+            self.codings = [True, False]
+            self.eta = len(self.args.tcp_algos) * args.test_loops * args.test_time * len(self.codings)
+            self.result_format = "{:10s} {throughput:5.1f} kb/s | {transfered:5.1f} kB"
+            self.run_info_format = "\n#{loop:2d} | {tcp_algo:10s} | Coding: {coding:1b} | ETA: {eta:3d}m"
 
     def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None):
         self.run_info = {}
@@ -116,7 +126,7 @@ class controller(threading.Thread):
         self.run_info['hold'] = hold
         self.run_info['purge'] = purge
         self.run_info['coding'] = coding
-        print self.run_info
+        self.print_run_info(self.run_info)
         self.data.new_run(self.run_info)
 
     def prepare_run(self):
@@ -152,8 +162,15 @@ class controller(threading.Thread):
             if not result:
                 continue
             self.data.save_result(node.name, result)
+            self.print_result(node, result)
 
     def save_samples(self):
         for node in self.nodes:
             samples = node.get_samples()
             self.data.append_samples(node.name, samples)
+
+    def print_result(self, node, result):
+        print(self.result_format.format(node.name.title(), **result))
+
+    def print_run_info(self, run_info):
+        print(self.run_info_format.format(eta=self.eta/60, **run_info))

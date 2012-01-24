@@ -42,14 +42,7 @@ class setup:
             return True
 
         algo = run_info['tcp_algo']
-
-        # Load tcp congestion control algorithm if needed
-        if algo not in self.read(tcp_path + available_algos):
-            print("Loading module: tcp_{0}".format(algo))
-            cmd = ["modprobe", "-q", "tcp_{0}".format(algo)]
-
         self.write(tcp_path + current_algo, algo)
-
         if algo not in self.read(tcp_path + current_algo):
             self.error = "Failed to set tcp algorithm: {0}".format(algo)
             return False

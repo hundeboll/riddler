@@ -19,10 +19,10 @@ class client(threading.Thread):
         p = str(self.dest_node['port'])
 
         if self.run_info['protocol'] == 'tcp':
-            cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p, '-fk']
+            cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p]
         elif self.run_info['protocol'] == 'udp':
-            r = str(self.run_info['rate'])+"K"
-            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p, '-fk', "-xDC"]
+            r = str(self.run_info['rate']*1024)
+            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p, "-xDC"]
 
         print("Starting {0} client".format(self.run_info['protocol']))
         self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -67,7 +67,7 @@ class client(threading.Thread):
             return {
                     'dest':         self.dest_node['name'],
                     'transfered':   int(vals[7])/8/1024,    # kB
-                    'throughput':   int(vals[8]),           # kbit/s
+                    'throughput':   int(vals[8])/1024,      # kbit/s
                     }
         except IndexError as e:
             print("Failed to parse result: {0}".format(e))
@@ -77,11 +77,12 @@ class client(threading.Thread):
     def parse_udp_output(self, output):
         output = output.strip()
         vals = output.split(",")
+        t = self.run_info['test_time']
         try:
             return {
                     'dest':         self.dest_node['name'],
                     'transfered':   int(vals[7])/8/1024,    # kB
-                    'throughput':   int(vals[8]),           # kbit/s
+                    'throughput':   int(vals[7])*8/1024/t,  # kbit/s
                     'jitter':       float(vals[9]),         # seconds
                     'lost':         int(vals[10]),          # packets
                     'total':        int(vals[11]),          # packets

@@ -39,6 +39,9 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         if self.sampler:
             self.sampler.stop()
 
+        if self.tester_server:
+            self.tester_server.kill()
+
     def handle(self):
         while True:
             try:

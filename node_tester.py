@@ -27,7 +27,7 @@ class client(threading.Thread):
         print("Starting {0} client".format(self.run_info['protocol']))
         self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.running = True
-        threading.Timer(self.kill_client, self.run_info['test_time'] + 5)
+        self.timer = threading.Timer(self.kill_client, self.run_info['test_time'] + 5)
         self.p.wait()
         self.running = False
         (stdout, stderr) = self.p.communicate()

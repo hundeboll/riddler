@@ -131,6 +131,13 @@ class server(threading.Thread):
             # Politely ask server to quit
             print("Terminating server (pid {0})".format(self.p.pid))
             self.p.terminate()
+
+            if not self.p.poll():
+                self.p.terminate()
+
+            if not self.p.poll():
+                self.p.kill()
+
             self.running = False
 
         except OSError as e:

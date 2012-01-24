@@ -21,7 +21,7 @@ class client(threading.Thread):
         if self.run_info['protocol'] == 'tcp':
             cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p, '-fk']
         elif self.run_info['protocol'] == 'udp':
-            r = str(self.run_info['rate']*1024)
+            r = str(self.run_info['rate'])+"K"
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p, '-fk', "-xDC"]
 
         print("Starting {0} client".format(self.run_info['protocol']))

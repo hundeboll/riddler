@@ -61,7 +61,6 @@ class controller(threading.Thread):
                 for coding in self.codings:
                     self.set_run_info(loop=loop, hold=hold, purge=purge, coding=coding, tcp_algo=algo)
                     self.execute_run()
-                    time.sleep(5)
 
     def test_hold_times(self):
         purge = self.args.purge_time

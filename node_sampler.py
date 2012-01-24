@@ -7,7 +7,7 @@ import riddler_interface as interface
 import node_power as power
 import re
 
-nc_path = "/sys/kernel/debug/batman_adv/bat0/nc_stats"
+nc_path = "/sys/kernel/debug/batman_adv/bat0/bat_stats"
 
 class sampler(threading.Thread):
     def __init__(self, controller, args):

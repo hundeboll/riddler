@@ -66,8 +66,8 @@ class client(threading.Thread):
         try:
             return {
                     'dest':         self.dest_node['name'],
-                    'transfered':   int(vals[7])/1024,      # bytes
-                    'throughput':   int(vals[8])/1024,      # kbit/s
+                    'transfered':   int(vals[7])/8/1024,    # kB
+                    'throughput':   int(vals[8]),           # kbit/s
                     }
         except IndexError as e:
             print("Failed to parse result: {0}".format(e))
@@ -80,12 +80,12 @@ class client(threading.Thread):
         try:
             return {
                     'dest':         self.dest_node['name'],
-                    'transfered':   int(vals[7]),           # bits
-                    'throughput':   int(vals[8])/1024,      # kbit/s
+                    'transfered':   int(vals[7])/8/1024,    # kB
+                    'throughput':   int(vals[8]),           # kbit/s
                     'jitter':       float(vals[9]),         # seconds
                     'lost':         int(vals[10]),          # packets
                     'total':        int(vals[11]),          # packets
-                    'ratio':        float(vals[12]),          # percent
+                    'ratio':        float(vals[12]),        # percent
                     }
         except IndexError as e:
             print("Failed to parse result: {0}".format(e))

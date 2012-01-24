@@ -26,7 +26,10 @@ class client(threading.Thread):
 
         print("Starting {0} client".format(self.run_info['protocol']))
         self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.running = True
+        threading.Timer(self.kill_client, self.run_info['test_time'] + 5)
         self.p.wait()
+        self.running = False
         (stdout, stderr) = self.p.communicate()
 
         if stderr:
@@ -42,6 +45,17 @@ class client(threading.Thread):
 
         if result:
             self.report_result(result)
+
+    def kill_client(self):
+        if not self.running:
+            return
+        print("Client timed out")
+        self.p.terminate()
+
+        if not self.p.poll():
+            self.p.terminate()
+
+        self.running = False
 
     def parse_tcp_output(self, output):
         output = output.strip()

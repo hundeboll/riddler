@@ -49,7 +49,7 @@ class client(threading.Thread):
     def kill_client(self):
         if not self.running:
             return
-        print("Client timed out")
+        print("Terminating client (pid {0}".format(self.p.pid))
         self.p.terminate()
 
         if not self.p.poll():

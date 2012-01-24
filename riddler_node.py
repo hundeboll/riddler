@@ -107,6 +107,8 @@ class node(threading.Thread):
         self.run_error = False
         self.run_result = None
         self.run_finished.clear()
+        self.ready.clear()
+        self.done.clear()
 
         if not self.sources:
             return

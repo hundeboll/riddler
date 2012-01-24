@@ -39,6 +39,9 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         if self.sampler:
             self.sampler.stop()
 
+        for client in self.tester_clients:
+            client.kill_client()
+
         if self.tester_server:
             self.tester_server.kill()
 

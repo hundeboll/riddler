@@ -22,7 +22,7 @@ class client(threading.Thread):
             cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p, '-fk']
         elif self.run_info['protocol'] == 'udp':
             r = str(self.run_info['rate']*1024)
-            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p, '-fk', "-xDC", "-C"]
+            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p, '-fk', "-xDC"]
 
         print("Starting {0} client".format(self.run_info['protocol']))
         self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

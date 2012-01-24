@@ -36,7 +36,7 @@ class client(threading.Thread):
             self.report_error("Iperf client error: {0}".format(stderr))
             return
         elif not stdout:
-            self.report_error("No output received from command {0}".format(cmd))
+            self.report_error("No output from command {0}".format(" ".join(cmd)))
             return
         elif self.run_info['protocol'] == 'tcp':
             result = self.parse_tcp_output(stdout)

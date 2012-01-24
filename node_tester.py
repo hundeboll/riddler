@@ -49,11 +49,14 @@ class client(threading.Thread):
     def kill_client(self):
         if not self.running:
             return
-        print("Terminating client (pid {0}".format(self.p.pid))
+        print("Terminating client (pid {0})".format(self.p.pid))
         self.p.terminate()
 
         if not self.p.poll():
             self.p.terminate()
+
+        if not self.p.poll():
+            self.p.kill()
 
         self.running = False
 

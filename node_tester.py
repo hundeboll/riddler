@@ -10,6 +10,7 @@ class client(threading.Thread):
         self.controller = controller
         self.dest_node = dest_node
         self.run_info = run_info
+        self.running = False
         self.end = threading.Event()
         self.daemon = True
 

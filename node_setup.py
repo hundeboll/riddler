@@ -17,8 +17,7 @@ class setup:
 
     def apply_setup(self, run_info):
         if not self.setup_batman(run_info):
-            pass
-            #return False
+            return False
 
         if not self.setup_tcp(run_info):
             return False

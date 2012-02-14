@@ -84,6 +84,7 @@ class controller(threading.Thread):
     def execute_run(self):
         while True:
             time.sleep(self.args.test_sleep)
+            self.print_run_info(self.run_info)
             self.prepare_run()
 
             # Wait for run to finish and check the result
@@ -142,7 +143,6 @@ class controller(threading.Thread):
         self.run_info['hold'] = hold
         self.run_info['purge'] = purge
         self.run_info['coding'] = coding
-        self.print_run_info(self.run_info)
 
         # Update the data storage with the new run info
         self.data.new_run(self.run_info)

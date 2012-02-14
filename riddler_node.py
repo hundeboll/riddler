@@ -22,10 +22,7 @@ class node(threading.Thread):
         nodes.append(self)
 
         self.end = threading.Event()
-        self.info = threading.Event()
-        self.ready = threading.Event()
-        self.done = threading.Event()
-        self.run_finished = threading.Event()
+        self.reply = threading.Event()
         self.daemon = True
 
     # Tell the main loop to stop
@@ -104,7 +101,7 @@ class node(threading.Thread):
 
     # Wait for information about connected node
     def wait_node_info(self):
-        self.info.wait()
+        self.reply.wait()
 
     # Tell the node to prepare a new run
     def prepare_run(self, run_info):
@@ -112,20 +109,19 @@ class node(threading.Thread):
         self.run_info = run_info
         self.run_error = False
         self.run_result = None
-        self.run_finished.clear()
-        self.ready.clear()
-        self.done.clear()
+        self.reply.clear()
 
         interface.send_node(self.socket, interface.PREPARE_RUN, dests=self.get_dests(), run_info=run_info)
 
     # Wait for node to report back
     def wait_prepare(self):
         while True:
-            if self.ready.wait(1):
-                break;
+            if self.reply.wait(1):
+                break
 
     # Tell node to start a test run
     def start_run(self):
+        self.reply.clear()
         interface.send_node(self.socket, interface.START_RUN)
 
     # Wait for node to complete the test run
@@ -135,19 +131,20 @@ class node(threading.Thread):
             return False
 
         while True:
-            if self.run_finished.wait(1):
+            if self.reply.wait(1):
                 break
 
         return self.run_error
 
     # Tell node to clean up after test run
     def finish_run(self):
+        self.reply.clear()
         interface.send_node(self.socket, interface.FINISH_RUN)
 
     # Wait for node to clean up
     def wait_finish(self):
         while True:
-            if self.ready.wait(1):
+            if self.reply.wait(1):
                 break;
 
     # Return result of current run
@@ -163,27 +160,27 @@ class node(threading.Thread):
         print("Received node info from {}".format(self.name))
         self.mesh_host = obj.mesh_host
         self.mesh_port = obj.mesh_port
-        self.info.set()
+        self.reply.set()
 
     # Set ready event to inform waiting callers
     def handle_node_ready(self, obj):
-        self.ready.set()
+        self.reply.set()
 
     # Set done event to inform waiting callers
     def handle_node_done(self, obj):
-        self.done.set()
+        self.reply.set()
 
     # Save received result and set run event to inform waiting callers
     def handle_run_result(self, obj):
         self.run_result = obj.result
-        self.run_finished.set()
+        self.reply.set()
         self.client.export_result(self.name, self.run_info, obj.result)
 
     # Save received error and set run event to inform waiting callers
     def handle_run_error(self, obj):
         self.run_error = True
         print("Run failed on {0}: {1}".format(self.name, obj.error))
-        self.run_finished.set()
+        self.reply.set()
 
     # Save received measurement sample for later extraction
     def handle_sample(self, obj):

@@ -25,7 +25,7 @@ class client(threading.Thread):
             cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p]
         elif self.run_info['protocol'] == 'udp':
             r = str(self.run_info['rate']*1024)
-            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p, "-xDC"]
+            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-yC"]
 
         # Start a little watchdog to make sure we don't hang here forever
         self.timer = threading.Timer(self.kill_client, self.run_info['test_time'] + 5)
@@ -99,8 +99,8 @@ class client(threading.Thread):
     def parse_udp_output(self, output):
         t = self.run_info['test_time']
 
-        # Remove trailing newlines and get the comma separated values
-        output = output.strip()
+        # Select 2nd line and get the comma separated values
+        output = output.split()[1]
         vals = output.split(",")
 
         # Convert and format the results

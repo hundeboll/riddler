@@ -38,20 +38,35 @@ class plot:
     def __init__(self, filename):
         d = pickle.load(open(filename))
         self.data = data.data(d)
-        self.data.read_params()
         self.graph = graph.graph()
 
     def plot(self):
-        print self.data.sweep
-        self.plot_throughput()
+        sources,relays = self.data.typed_nodes()
+
+        if self.data.profile == 'udp_rates':
+            for node in sources:
+                self.plot_throughput_udp(node)
+                self.plot_received(node)
+            for node in relays:
+                self.plot_coded(node)
 
         self.graph.show()
 
-    def plot_throughput(self):
-        for node in self.data.nodes:
-            for coding in self.data.coding:
-                rates,data = self.data.throughput_test(node, coding)
-                self.graph.plot_throughput(node, rates, data, coding)
+    def plot_throughput_udp(self, node):
+        for coding in self.data.codings:
+            rates,data = self.data.throughput_udp(node, coding)
+            self.graph.plot_throughput(node, rates, data, coding)
+
+    def plot_coded(self, node):
+        try:
+            rates,coded,forwarded,total = self.data.coded(node)
+        except Exception as e:
+            pass
+
+    def plot_received(self, node):
+        for coding in self.data.codings:
+            rates,received = self.data.received(node, coding)
+            print received
 
 if __name__ == "__main__":
     p = plot("test.pickle")

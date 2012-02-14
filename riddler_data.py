@@ -10,10 +10,10 @@ class run_data:
         self.samples = []
         self.result = None
 
-    def data_has_field(self, field):
-        if not self.data:
+    def samples_has_field(self, field):
+        if not self.samples:
             return False
-        return self.data[0].has_key(field)
+        return self.samples[0].has_key(field)
 
     def result_has_field(self, field):
         if not self.result:
@@ -55,16 +55,26 @@ class node_data:
     def get_result(self, key, field):
         return self.data_sets[key].get_result(field)
 
+    def result_has_field(self, field):
+        data = next(self.data_sets.itervalues())
+        return data.result_has_field(field)
+
+    def samples_has_field(self, field):
+        data = next(self.data_sets.itervalues())
+        return data.samples_has_field(field)
+
 
 class data:
-    def __init__(self, nodes, test_sweep):
+    def __init__(self, nodes, test_profile):
         self.nodes = map(lambda n: n.name, nodes)
-        self.sweep = test_sweep
+        self.profile = test_profile
         self.run_list = []
 
         self.data = {}
-        for node in self.nodes:
-            self.data[node] = node_data(node)
+        self.paths = {}
+        for node in nodes:
+            self.data[node.name] = node_data(node.name)
+            self.paths[node.name] = map(lambda n: n.name, node.dests)
 
     def run_key(self, run_info):
         run_info['key'] = reduce(lambda s,i: s + i[0] + ": " + str(i[1]) + " ", run_info.iteritems(), "")
@@ -98,6 +108,13 @@ class data:
     def get_samples_avg(self, node, keys, field):
         return [self._get_samples_avg(node, key, field) for key in keys]
 
+    def _get_samples_num(self, node, key, field):
+        samples = self._get_samples(node, key, field)
+        return samples[-1] - samples[0]
+
+    def get_samples_num(self, node, keys, field):
+        return [self._get_samples_num(node, key, field) for key in keys]
+
     def get_result(self, node, key, field):
         return self.data[node].get_result(key, field)
 
@@ -129,6 +146,22 @@ class data:
             s.append(self.get_samples_avg(node, keys, field))
 
         return numpy.average(s, axis=0)
+
+    def samples_num(self, node, conditions, field):
+        loops = self.get_param_range('loop')
+        s = []
+        for loop in loops:
+            conditions['loop'] = loop
+            keys = self.get_keys(conditions, 'rate')
+            s.append(self.get_samples_num(node, keys, field))
+
+        return numpy.average(s, axis=0)
+
+    def result_has_field(self, node, field):
+        return self.data[node].result_has_field(field)
+
+    def samples_has_field(self, node, field):
+        return self.data[node].result_has_field(field)
 
 def dump_data(data, filename):
     f = open(filename, 'w')

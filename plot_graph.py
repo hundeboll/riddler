@@ -2,6 +2,9 @@ import pylab
 import matplotlib.gridspec as gridspec
 
 class graph:
+    def __init__(self):
+        self.throughputs = {}
+
     def show(self):
         pylab.show()
 
@@ -18,9 +21,13 @@ class graph:
         ax.legend(loc='upper left', shadow=True)
 
     def plot_throughput(self, node, rates, data, coding):
-        if not hasattr(self, 'throughput'):
-            self.throughput = self.setup_fig("Throughput for {0}".format(node), "Total Offered Load [kbit/s]", "Measured Throughput")
+        if not self.throughputs.has_key(node):
+            fig = self.setup_fig("Throughput for {0}".format(node.title()),
+                    "Total Offered Load [kbit/s]", "Measured Throughput")
+            self.throughputs[node] = fig
+        else:
+            fig = self.throughputs[node]
 
         label = "With Coding" if coding else "Without Coding"
-        self.throughput.plot(rates, data, linewidth=2, label=label)
-        self.finish_fig(self.throughput)
+        fig.plot(rates, data, linewidth=2, label=label)
+        self.finish_fig(fig)

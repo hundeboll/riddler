@@ -28,6 +28,7 @@ parser.add_argument("--hold_step", type=int)
 parser.add_argument("--purge_time", type=int)
 parser.add_argument("--test_profile")
 parser.add_argument("--test_time", type=int)
+parser.add_argument("--test_sleep", type=int)
 parser.add_argument("--test_loops", type=int)
 parser.add_argument("--tcp_algos")
 parser.add_argument("--sample_interval", type=int)
@@ -61,15 +62,19 @@ class riddler:
         except ImportError:
             print("Unable to load nodes file: {0}".format(nodes_file))
 
+        # Add client object to each node
         for node in self.nodes:
             node.client = self.client
 
+        # Add node objects to client server
         for node in self.nodes:
             self.client.server.nodes.append(node)
 
     def connect_nodes(self):
         for node in self.nodes:
             node.connect()
+
+            # Wait for node to send back info
             node.wait_node_info()
 
 

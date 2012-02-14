@@ -27,6 +27,7 @@ class server:
             pass
 
 class tcp_handler(SocketServer.BaseRequestHandler):
+    # Prepare objects upon a new connection
     def setup(self):
         self.tester_clients = []
         self.tester_server = None
@@ -35,6 +36,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         self.setup = setup.setup()
         self.send_node_info()
 
+    # Stop running threads before connection closes
     def finish(self):
         if self.sampler:
             self.sampler.stop()
@@ -45,6 +47,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         if self.tester_server:
             self.tester_server.kill()
 
+    # Read data from controller
     def handle(self):
         while True:
             try:
@@ -58,6 +61,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             except KeyboardInterrupt:
                 break
 
+    # Handle commands/data from controller
     def handle_cmd(self, obj):
         if obj.cmd is interface.PREPARE_RUN:
             self.prepare_run(obj)
@@ -81,11 +85,14 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         else:
             print("Received unknown command: {0}".format(obj.cmd))
 
+    # Prepare this node for a new test run
     def prepare_run(self, obj):
         print("Prepare run")
+        # Apply received configurations
         if not self.setup.apply_setup(obj.run_info):
             self.report(interface.node(interface.PREPARE_ERROR, error=self.setup.error))
 
+        # Inform the sampler about the new run
         if not self.sampler.set_run_info(obj.run_info):
             self.report(interface.node(interface.PREPARE_ERROR, error=self.sampler.error))
 
@@ -98,7 +105,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         for client in self.tester_clients:
             client.join()
 
-        # Prepare new client threads
+        # Prepare new iperf client threads
         self.tester_clients = []
         for node in obj.dests:
             self.tester_clients.append(tester.client(self, node, obj.run_info))
@@ -106,12 +113,14 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         # Report back to controller that we are ready
         self.report(interface.node(interface.NODE_READY))
 
+    # Thread safe sender function
     def report(self, obj):
         self.lock.acquire()
         ret = interface.send(self.request, obj)
         self.lock.release()
         return ret
 
+    # Send our own information to the controller
     def send_node_info(self):
         args = self.server.args
         obj = interface.node(interface.NODE_INFO, mesh_host=args.mesh_host, mesh_port=args.mesh_port)

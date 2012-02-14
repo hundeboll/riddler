@@ -10,6 +10,7 @@ class client(threading.Thread):
         self.name = "exporter"
         self.args = args
 
+        # Start listening threaded TCP server and wait for clients
         self.server = ThreadedTCPServer((args.client_host, args.client_port), tcp_handler, bind_and_activate=False)
         self.server.allow_reuse_address = True
         self.server.timeout = 1
@@ -19,19 +20,23 @@ class client(threading.Thread):
         self.server.nodes = []
         self.start()
 
+    # Stop the TCP server
     def stop(self):
         if self.server:
             self.server.shutdown()
 
+    # Start the server in a separate thread
     def run(self):
         self.server.serve_forever()
 
+    # Send a sample to each connected client
     def export_sample(self, node, sample):
         for client in self.server.clients:
             client.lock.acquire()
             client.export_sample(node, sample)
             client.lock.release()
 
+    # Send a result to each connected client
     def export_result(self, node, run_info, result):
         for client in self.server.clients:
             client.lock.acquire()
@@ -43,11 +48,13 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
     pass
 
 class tcp_handler(SocketServer.BaseRequestHandler):
+    # Prepare the class for a new connection
     def setup(self):
         self.lock = threading.Lock()
         self.server.clients.append(self)
         self.export_nodes(self.server.nodes)
 
+    # Remove self from the list of connected clients on closed connection
     def finish(self):
         self.server.clients.remove(self)
         self.request.close()
@@ -56,25 +63,25 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         # self.request is the TCP socket connected to the client
         while True:
             try:
+                # We currently don't expect anything from the client
                 data = self.request.recv(1024).strip()
                 if not data:
                     break
-                print "{} wrote:".format(self.client_address[0])
-                print data
-                # just send back the same data, but upper-cased
-                self.request.send(data.upper())
             except socket.timeout:
                 continue
             except socket.error as e:
                 print("Export socket closed: {0}".format(e))
                 break
 
+    # Send sample to client
     def export_sample(self, node, sample):
         interface.send_client(self.request, interface.CLIENT_SAMPLE, node=node, sample=sample)
 
+    # Send result to client
     def export_result(self, node, run_info, result):
         interface.send_client(self.request, interface.CLIENT_RESULT, result=result, node=node, run_info=run_info)
 
+    # Send list of nodes to client
     def export_nodes(self, nodes):
         nodes = [node.name for node in nodes]
         interface.send_client(self.request, interface.CLIENT_NODES, nodes=nodes)

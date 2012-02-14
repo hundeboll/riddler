@@ -14,25 +14,33 @@ class client(threading.Thread):
         self.end = threading.Event()
         self.daemon = True
 
+    # Run the specified test in a separate thread
     def run(self):
         h = self.dest_node['host']
         t = str(self.run_info['test_time'])
         p = str(self.dest_node['port'])
 
+        # Craft the iperf command depending on the given protocol
         if self.run_info['protocol'] == 'tcp':
             cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p]
         elif self.run_info['protocol'] == 'udp':
             r = str(self.run_info['rate']*1024)
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-yc", "-p", p, "-xDC"]
 
+        # Start a little watchdog to make sure we don't hang here forever
+        self.timer = threading.Timer(self.kill_client, self.run_info['test_time'] + 5)
+
+        # Start the client in a separate process and wait for it to finish
         print("Starting {0} client".format(self.run_info['protocol']))
         self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.running = True
-        self.timer = threading.Timer(self.kill_client, self.run_info['test_time'] + 5)
         self.p.wait()
         self.running = False
+
+        # Read the output from iperf
         (stdout, stderr) = self.p.communicate()
 
+        # Check and parse the output
         if stderr:
             self.report_error("Iperf client error: {0}".format(stderr))
             return
@@ -44,26 +52,38 @@ class client(threading.Thread):
         elif self.run_info['protocol'] == 'udp':
             result = self.parse_udp_output(stdout)
 
+        # Send back our result
         if result:
             self.report_result(result)
 
+    # Brutally kill a running subprocesses
     def kill_client(self):
+        # Make sure even have a running subprocess
         if not self.running:
             return
+
+        # Ask politely first
         print("Terminating client (pid {0})".format(self.p.pid))
         self.p.terminate()
 
+        # Ask again, if necessary
         if not self.p.poll():
             self.p.terminate()
 
+        # No more patience, kill the damn thing
         if not self.p.poll():
             self.p.kill()
 
+        # We are done
         self.running = False
 
+    # Screen scrape the output from a iperf TCP client
     def parse_tcp_output(self, output):
+        # Remove trailing newlines and get the comma separated values
         output = output.strip()
         vals = output.split(",")
+
+        # Now convert and format the results
         try:
             return {
                     'dest':         self.dest_node['name'],
@@ -75,10 +95,15 @@ class client(threading.Thread):
             self.report_error(output)
             return None
 
+    # Screen scrape the output from a iperf UDP client
     def parse_udp_output(self, output):
+        t = self.run_info['test_time']
+
+        # Remove trailing newlines and get the comma separated values
         output = output.strip()
         vals = output.split(",")
-        t = self.run_info['test_time']
+
+        # Convert and format the results
         try:
             return {
                     'dest':         self.dest_node['name'],
@@ -94,10 +119,12 @@ class client(threading.Thread):
             self.report_error(output)
             return None
 
+    # Send back a result to the controller
     def report_result(self, result):
         obj = interface.node(interface.RUN_RESULT, result=result)
         self.controller.report(obj)
 
+    # Send back an error to the controller
     def report_error(self, error):
         obj = interface.node(interface.RUN_ERROR, error=error)
         self.controller.report(obj)
@@ -113,19 +140,24 @@ class server(threading.Thread):
         self.daemon = True
         self.start()
 
+    # Run a iperf server in a separate thread
     def run(self):
         h = self.args.mesh_host
         p =  str(self.args.mesh_port)
+
+        # Craft the iperf command based on the protocol
         if self.protocol == "tcp":
             self.cmd = ["iperf", "-s", "-B", h, "-p", p]
         elif self.protocol == "udp":
             self.cmd = ["iperf", "-s", "-u", "-B", h, "-p", p]
 
+        # Start the iperf server in a separate process and wait for it be killed
         print("Starting {0} server".format(self.protocol))
         self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.running = True
         self.p.wait()
 
+    # Kill a running iperf server
     def kill(self):
         try:
             # Check if process is running at all
@@ -136,12 +168,15 @@ class server(threading.Thread):
             print("Terminating server (pid {0})".format(self.p.pid))
             self.p.terminate()
 
+            # Ask again if necessary
             if not self.p.poll():
                 self.p.terminate()
 
+            # No more patience, kill the damn thing
             if not self.p.poll():
                 self.p.kill()
 
+            # We are done here
             self.running = False
 
         except OSError as e:

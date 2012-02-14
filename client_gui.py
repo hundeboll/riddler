@@ -24,9 +24,6 @@ class main_window(QMainWindow):
         tabs = QTabWidget()
         tabs.addTab(self.live_monitor.gui, self.tr("Live Monitor"))
         tabs.addTab(self.test_monitor.gui, self.tr("Test Monitor"))
-        print self.palette().window().color()
-        print tabs.palette().window().color()
-        print tabs.currentWidget().palette().window().color()
 
         vbox = QVBoxLayout()
         vbox.addWidget(tabs)

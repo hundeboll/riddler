@@ -11,6 +11,7 @@ class client(threading.Thread):
         self.dest_node = dest_node
         self.run_info = run_info
         self.running = False
+        self.timer = threading.Timer(run_info['test_time']*2, self.kill_client)
         self.end = threading.Event()
         self.daemon = True
 
@@ -28,7 +29,7 @@ class client(threading.Thread):
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-yC"]
 
         # Start a little watchdog to make sure we don't hang here forever
-        self.timer = threading.Timer(self.kill_client, self.run_info['test_time'] + 5)
+        self.timer.start()
 
         # Start the client in a separate process and wait for it to finish
         print("Starting {0} client".format(self.run_info['protocol']))

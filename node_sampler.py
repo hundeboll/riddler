@@ -195,5 +195,8 @@ class sampler(threading.Thread):
     # Read power measurements from the separate thread
     def sample_power(self):
         sample = {}
-        sample['power'] = self.power.read_power()
+        self.power.process_data()
+        sample['power_watt'] = self.power.read_power()
+        sample['power_amp'] = self.power.read_amp()
+        sample['power_volt'] = self.power.read_volt()
         self.append_sample(sample)

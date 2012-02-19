@@ -108,7 +108,8 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         # Prepare new iperf client threads
         self.tester_clients = []
         for node in obj.dests:
-            self.tester_clients.append(tester.client(self, node, obj.run_info))
+            client = tester.client(self, node, obj.run_info)
+            self.tester_clients.append(client)
 
         # Report back to controller that we are ready
         self.report(interface.node(interface.NODE_READY))

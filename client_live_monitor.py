@@ -138,6 +138,7 @@ class monitor:
         self.add_cpu(node, sample['cpu'])
         self.add_tx(node, sample['iw tx bytes'])
         self.add_rx(node, sample['iw rx bytes'])
+        print("{0}: {1}".format(node, sample['power_amp']))
 
     def add_cpu(self, node, cpu):
         self.cpu_y[node].pop(0)

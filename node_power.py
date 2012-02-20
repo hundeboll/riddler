@@ -20,6 +20,7 @@ class power(threading.Thread):
         self.measure_volt = []
         self.avg_amp = None
         self.avg_volt = None
+        self.avg_pwr = None
 
         self.open_serial()
 
@@ -102,7 +103,7 @@ class power(threading.Thread):
 
     # Read the average volt level since last read
     def read_volt(self):
-        return avg_volt
+        return self.avg_volt
 
 
 if __name__ == "__main__":

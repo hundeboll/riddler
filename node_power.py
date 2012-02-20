@@ -36,6 +36,9 @@ class power(threading.Thread):
             if not self.measure.wait(1):
                 continue
 
+            if not self.ser:
+                continue
+
             # Read from arduino
             data = self.ser.readline()
             if not data:
@@ -58,6 +61,8 @@ class power(threading.Thread):
 
     # Prepare configured serial device for measuring
     def open_serial(self):
+        self.ser = None
+
         # Check if device exists
         if (os.name == "posix") and not os.path.exists(self.args.power_dev):
                 self.error = "Power device '{0}' does not exist".format(self.args.power_dev)
@@ -78,6 +83,10 @@ class power(threading.Thread):
         self.measure_volt = []
         self.data_lock.release()
 
+        # Make sure we got some data
+        if not f_amp or not f_volt:
+            return
+
         # Calculate average values
         self.avg_amp = sum(f_amp)/len(f_amp)
         self.avg_volt = sum(f_volt)/len(f_volt)
@@ -85,15 +94,15 @@ class power(threading.Thread):
 
     # Read the total power usage since last read
     def read_power(self):
-        return self.avg_pwr;
+        return self.avg_pwr
 
     # Read the average ampere level since last read
     def read_amp(self):
-        return self.avg_amp;
+        return self.avg_amp
 
     # Read the average volt level since last read
     def read_volt(self):
-        return avg_volt;
+        return avg_volt
 
 
 if __name__ == "__main__":

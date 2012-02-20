@@ -54,7 +54,8 @@ class power(threading.Thread):
 
     # Signal main loop to start measuring
     def start_measure(self):
-        self.ser.flushInput()
+        if self.ser:
+            self.ser.flushInput()
         self.measure.set()
 
     # Signal main loop to stop measuring

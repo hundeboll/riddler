@@ -69,7 +69,7 @@ class power(threading.Thread):
                 return False
 
         # Open device and wait for it to settle
-        self.ser = serial.Serial(args.power_dev, 9600, timeout=1)
+        self.ser = serial.Serial(self.args.power_dev, 9600, timeout=1)
         time.sleep(5) # FIXME: Arduino need ~5sec to start serial
         return True
 

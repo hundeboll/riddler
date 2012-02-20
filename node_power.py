@@ -69,6 +69,7 @@ class power(threading.Thread):
         # Check if device exists
         if (os.name == "posix") and not os.path.exists(self.args.power_dev):
                 self.error = "Power device '{0}' does not exist".format(self.args.power_dev)
+                print(self.error)
                 return False
 
         # Open device and wait for it to settle

@@ -35,9 +35,12 @@ class setup:
             return False
 
         # Write the configuration
-        self.write(bat_path + nc_file, nc)
-        self.write(bat_path + hold_file, run_info['hold'])
-        self.write(bat_path + purge_file, run_info['purge'])
+        if os.path.exists(bat_path + nc_file):
+            self.write(bat_path + nc_file, nc)
+        if os.path.exists(bat_path + hold_file):
+            self.write(bat_path + hold_file, run_info['hold'])
+        if os.path.exists(bat_path + purge_file):
+            self.write(bat_path + purge_file, run_info['purge'])
 
         return True
 

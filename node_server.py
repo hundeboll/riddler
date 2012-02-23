@@ -80,8 +80,9 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
             # If no clients exists, we don't want the controller to
             # wait for us, so we send an empty result immediately.
-            obj = interface.node(interface.RUN_RESULT, result=None)
-            self.report(obj)
+            if not self.tester_clients:
+                obj = interface.node(interface.RUN_RESULT, result=None)
+                self.report(obj)
 
         elif obj.cmd is interface.FINISH_RUN:
             print("Finish run")

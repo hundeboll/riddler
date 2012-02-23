@@ -13,7 +13,7 @@ class client(threading.Thread):
         # Start listening threaded TCP server and wait for clients
         self.server = ThreadedTCPServer((args.client_host, args.client_port), tcp_handler, bind_and_activate=False)
         self.server.allow_reuse_address = True
-        self.server.timeout = 1
+        self.server.timeout = .1
         self.server.server_bind()
         self.server.server_activate()
         self.server.clients = []

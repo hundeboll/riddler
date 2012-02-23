@@ -27,40 +27,86 @@ class node(threading.Thread):
 
     # Tell the main loop to stop
     def stop(self):
-        self.end.clear()
+        # Stop any loops
+        self.end.set()
 
+        # Free waiters
+        self.reply.set()
+
+        # Close socket for faster quit
+        if self.socket:
+            self.socket.shutdown(socket.SHUT_RDWR)
+
+    # Free waiters
+    def pause(self):
+        # Tell the controller that this run should be discarded
+        self.run_error = True
+
+        # Free the controller from waiting
+        self.reply.set()
+
+    # Thread main function
     def run(self):
+        # Thread main loop
+        while not self.end.is_set():
+            try:
+                # Try to connect this node
+                self.connect()
+
+                # Read data from node
+                self.recv()
+            except KeyboardInterrupt:
+                # Someone pressed Ctrl-C
+                return
+            except socket.timeout:
+                # Timed out during connect. Try again
+                continue
+            except socket.error as e:
+                # Something happened to the socket
+                if e.errno != 0:
+                    # Error number 0 is self made, so don't print it
+                    print("{0}: {1}".format(self.name.title(), e))
+                # Tell controller that something went wrong
+                self.run_error = True
+                self.socket = None
+
+    # Connect to configured node and start main loop
+    def connect(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Set timeout to 5 seconds to avoid too many reconnects.
+        # (See exception handler in self.run()
+        self.socket.settimeout(5)
+
+        # Do the connect
+        self.socket.connect((self.host, self.port))
+
+        # Reduce timeout to avoid hanging in socket.read() while quitting
+        self.socket.settimeout(.1)
+
+    # Reconnect to node
+    def reconnect(self):
+        if self.socket:
+            # Closing the socket causes and exception and reconnect in self.recv()
+            self.socket.shutdown(socket.SHUT_RDWR)
+
+    # Keep receiving objects from the node until connection is closed
+    def recv(self):
+        # Loop while we are not told otherwise
         while not self.end.is_set():
             try:
                 # Wait for data from the node
                 obj = interface.recv(self.socket)
                 if obj:
+                    # Pass received object to the handler
                     self.handle(obj)
                 else:
-                    print("None from {0}".format(self.name))
-                    break
-            except KeyboardInterrupt:
-                break
+                    # Connection was closed.
+                    # Raise an exception to cause reconnect in self.run()
+                    raise socket.error(0, "Connection closed")
             except socket.timeout:
+                # This happens all the time. Just try again
                 continue
-            except socket.error as e:
-                print("Connection to {0} lost: {1}".format(self.name, e))
-                self.socket = None
-                return
-
-        self.socket.close()
-
-    # Connect to configured node and start main loop
-    def connect(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(1)
-        try:
-            self.socket.connect((self.host, self.port))
-        except socket.error as e:
-            print("Connection to {0} failed: {1}".format(self.name, e))
-
-        # Start main loop
-        self.start()
 
     # Handle objects received from the node
     def handle(self, obj):
@@ -99,10 +145,6 @@ class node(threading.Thread):
     def get_dests(self):
         return map(lambda n: {'name': n.name, 'host': n.mesh_host, 'port': n.mesh_port}, self.dests)
 
-    # Wait for information about connected node
-    def wait_node_info(self):
-        self.reply.wait()
-
     # Tell the node to prepare a new run
     def prepare_run(self, run_info):
         self.samples = []
@@ -113,39 +155,22 @@ class node(threading.Thread):
 
         interface.send_node(self.socket, interface.PREPARE_RUN, dests=self.get_dests(), run_info=run_info)
 
-    # Wait for node to report back
-    def wait_prepare(self):
-        while True:
-            if self.reply.wait(1):
-                break
-
     # Tell node to start a test run
     def start_run(self):
         self.reply.clear()
         interface.send_node(self.socket, interface.START_RUN)
 
     # Wait for node to complete the test run
-    def wait_start(self):
-        # Only nodes with destinations execute test runs
-        if not self.dests:
-            return False
-
-        while True:
-            if self.reply.wait(1):
+    def wait(self):
+        while not self.end.is_set():
+            if self.reply.wait(.1):
                 break
-
         return self.run_error
 
     # Tell node to clean up after test run
     def finish_run(self):
         self.reply.clear()
         interface.send_node(self.socket, interface.FINISH_RUN)
-
-    # Wait for node to clean up
-    def wait_finish(self):
-        while True:
-            if self.reply.wait(1):
-                break;
 
     # Return result of current run
     def get_result(self):
@@ -157,7 +182,6 @@ class node(threading.Thread):
 
     # Save information received from node
     def handle_node_info(self, obj):
-        print("Received node info from {}".format(self.name))
         self.mesh_host = obj.mesh_host
         self.mesh_port = obj.mesh_port
         self.reply.set()
@@ -172,9 +196,10 @@ class node(threading.Thread):
 
     # Save received result and set run event to inform waiting callers
     def handle_run_result(self, obj):
-        self.run_result = obj.result
+        if obj.result:
+            self.run_result = obj.result
+            self.client.export_result(self.name, self.run_info, obj.result)
         self.reply.set()
-        self.client.export_result(self.name, self.run_info, obj.result)
 
     # Save received error and set run event to inform waiting callers
     def handle_run_error(self, obj):

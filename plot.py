@@ -46,7 +46,14 @@ class plot:
         if self.data.profile == 'udp_rates':
             for node in sources:
                 self.plot_throughput_udp(node)
-                self.plot_received(node)
+                #self.plot_received(node)
+            for node in relays:
+                #self.plot_coded(node)
+                pass
+
+        elif self.data.profile == 'tcp_algos':
+            for node in sources:
+                self.plot_throughput_tcp(node)
             for node in relays:
                 self.plot_coded(node)
 

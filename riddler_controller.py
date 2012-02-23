@@ -13,17 +13,27 @@ class controller(threading.Thread):
         # Load data object
         self.data = data.data(nodes, args.test_profile)
 
-        self.test_finished = threading.Event()
         self.end = threading.Event()
+        self.pause = threading.Event()
         self.daemon = True
 
+    # Stop the controller
     def stop(self):
         # Tell thread to stop
-        self.end.clear()
-        # Dump data to pickle file
-        data.dump_data(self.data, self.args.data_file)
+        self.end.set()
+
+    # Toggle the pause event to pause tests
+    def toggle_pause(self):
+        if self.pause.is_set():
+            # Pause: on
+            self.pause.clear()
+        else:
+            # Pause: off
+            self.pause.set()
 
     def run(self):
+        self.pause.set()
+
         try:
             self.control()
         except KeyboardInterrupt:
@@ -47,7 +57,12 @@ class controller(threading.Thread):
             print("Profile '{0}' not supported.".format(profile))
             return
 
-        self.test_finished.set()
+        # Yeah, the test actually completed by itself
+        if not self.end.is_set():
+            print("Test completed")
+
+        # Dump data to pickle file
+        data.dump_data(self.data, self.args.data_file)
 
     # Control function to swipe UDP rates
     def test_rates(self):
@@ -60,6 +75,10 @@ class controller(threading.Thread):
                     self.set_run_info(loop=loop, rate=rate, hold=hold, purge=purge, coding=coding)
                     self.execute_run()
 
+                    # Quit if we are told to
+                    if self.end.is_set():
+                        return
+
     # Control function to swipe TCP congestion avoidance algorithms
     def test_tcp_algos(self):
         hold = self.args.hold_time
@@ -71,6 +90,10 @@ class controller(threading.Thread):
                     self.set_run_info(loop=loop, hold=hold, purge=purge, coding=coding, tcp_algo=algo)
                     self.execute_run()
 
+                    # Quit if we are told to
+                    if self.end.is_set():
+                        return
+
     # Control function to swipe different hold times
     def test_hold_times(self):
         purge = self.args.purge_time
@@ -80,28 +103,75 @@ class controller(threading.Thread):
                 self.set_run_info(loop=loop, hold=hold, purge=purge, coding=True)
                 self.execute_run()
 
+                # Quit if we are told to
+                if self.end.is_set():
+                    return
+
     # Control the state of each node and execute a single test run
     def execute_run(self):
-        while True:
+        while not self.end.is_set():
+            # Let the network settle before next test
             time.sleep(self.args.test_sleep)
+
+            # Check if we should pause and rerun
+            if self.wait_pause():
+                continue
+
             self.print_run_info(self.run_info)
             self.prepare_run()
 
             # Wait for run to finish and check the result
-            if not self.exec_run():
-                # Rerun run if an error occurred
-                print("Test failed, retrying.")
-                self.finish_run()
-                continue
+            success = self.exec_node()
 
             # Let the nodes clean up and save data
             self.finish_run()
-            self.save_results()
-            self.save_samples()
 
-            # Update time left
-            self.eta = self.eta - self.args.test_time
-            break
+            # Check if we should pause and rerun
+            if self.wait_pause():
+                continue
+
+            # Decide on the next action
+            if self.end.is_set():
+                # Quit
+                return
+
+            elif success:
+                # Keep running
+                self.save_results()
+                self.save_samples()
+
+                # Update time left
+                self.eta = self.eta - self.args.test_time
+                break
+
+            else:
+                # Test failed, run it again
+                print("Retrying test.")
+
+    # Check if pause is requested and pause if so
+    def wait_pause(self):
+        # Check the user setting
+        if self.pause.is_set():
+            # Nope, we don't pause
+            return False
+
+        # Pause until told otherwise
+        print("Pausing")
+        while not self.end.is_set():
+            if self.pause.wait(.1):
+                print("Continuing")
+                break
+        return True
+
+    # Called by user or timer to recover
+    def recover(self):
+        # Make sure the timer don't calls us again
+        self.recover_timer.cancel()
+        print("Recovering")
+
+        # Reconnect nodes
+        for node in self.nodes:
+            node.reconnect()
 
     # Setup various ranges based on configured profile
     def init_ranges(self):
@@ -153,10 +223,14 @@ class controller(threading.Thread):
             node.prepare_run(self.run_info)
 
         for node in self.nodes:
-            node.wait_prepare()
+            node.wait()
+
+        # Start timer to recover from broken code!
+        self.recover_timer = threading.Timer(self.args.test_time*2, self.recover)
+        self.recover_timer.start()
 
     # Perform a run on each node
-    def exec_run(self):
+    def exec_node(self):
         ret = True
 
         # Start it
@@ -166,7 +240,7 @@ class controller(threading.Thread):
         # Wait for it to finish
         for node in self.nodes:
             # Check if an error occurred in the run
-            if node.wait_start():
+            if node.wait():
                 ret = False
 
         return ret
@@ -177,7 +251,9 @@ class controller(threading.Thread):
             node.finish_run()
 
         for node in self.nodes:
-            node.wait_finish()
+            node.wait()
+
+        self.recover_timer.cancel()
 
     # Store measured data
     def save_results(self):

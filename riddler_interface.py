@@ -3,6 +3,8 @@ import struct
 import socket
 import sys
 import subprocess
+import termios
+import tty
 
 NODE_INFO, NODE_READY, NODE_DONE, PREPARE_RUN, START_RUN, FINISH_RUN, RUN_RESULT, RUN_ERROR, SAMPLE, SAMPLE_ERROR, PREPARE_ERROR = range(11)
 CLIENT_NODES, CLIENT_RESULT, CLIENT_SAMPLE, CLIENT_RUN_INFO = range(4)
@@ -92,3 +94,11 @@ def compat_exec(cmd):
         print(stderr)
         return False
     return stdout
+
+def get_keypress():
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    tty.setcbreak(sys.stdin.fileno())
+    ch = sys.stdin.read(1)
+    termios.tcsetattr(fd, termios.TCSANOW, old_settings)
+    return ch

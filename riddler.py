@@ -43,18 +43,55 @@ args = parser.parse_args()
 class riddler:
     def __init__(self, args):
         self.args = args
+        self.controller = None
+
+        # Start server thread to wait for clients
         self.client = client.client(self.args)
+
+        # Load node objects from network config
         self.load_nodes()
-        self.connect_nodes()
+
+        # Connect to nodes
+        self.start_nodes()
+
+    def start(self):
+        # Start test controller
+        print("Starting test controller")
         self.controller = controller.controller(self.args, self.nodes)
         self.controller.start()
 
-    def stop(self):
-        self.controller.stop()
+    # Tell the controller to stop and wait for it
+    def stop_controller(self):
+        print("Stopping test")
+        if self.controller:
+            self.controller.stop()
+            self.controller.join()
+
+    # Disconnect clients and wait for it
+    def stop_client(self):
+        if self.client:
+            self.client.stop()
+            self.client.join()
+
+    # Disconnect nodes
+    def stop_nodes(self):
+        # End nodes threads
         for node in self.nodes:
             node.stop()
-        self.client.stop()
 
+        # Wait for them to finish
+        for node in self.nodes:
+            node.join()
+
+    # Stop everything and quit program
+    def quit(self):
+        print("Quitting. Please wait...")
+        self.stop_nodes()
+        self.stop_controller()
+        self.stop_client()
+        sys.exit(0)
+
+    # Load the nodes configuration and distribute node references
     def load_nodes(self):
         try:
             c = __import__(self.args.nodes_file)
@@ -70,20 +107,60 @@ class riddler:
         for node in self.nodes:
             self.client.server.nodes.append(node)
 
-    def connect_nodes(self):
+    # Start node thread and wait for information from each node
+    def start_nodes(self):
         for node in self.nodes:
-            node.connect()
+            node.start()
 
-            # Wait for node to send back info
-            node.wait_node_info()
+        for node in self.nodes:
+            node.wait()
+
+    # Clear the pause event in controller to pause current run
+    def toggle_pause(self):
+        print("Toggling pause")
+        self.controller.toggle_pause()
+        for node in self.nodes:
+            node.pause()
+
+    # Recover by reconnecting nodes
+    def recover(self):
+        self.controller.recover()
+
+
+def print_help():
+    print("")
+    print("  t      Start test")
+    print("  p      Toggle pause")
+    print("  s      Stop test")
+    print("  r      Recover")
+    print("  q      Quit")
+    print("  h      Help")
+    print("")
 
 
 if __name__ == "__main__":
+    r = riddler(args)
+    print_help()
     try:
-        r = riddler(args)
         while True:
-            if r.controller.test_finished.wait(1):
-                break
+
+            # Get a key from user
+            c = interface.get_keypress()
+
+            # Select action based on key pressed
+            if c == 't':
+                r.start()
+            elif c == 'p':
+                r.toggle_pause()
+            elif c == 's':
+                r.stop_controller()
+            elif c == 'r':
+                r.recover()
+            elif c == 'q':
+                r.quit()
+            else:
+                print_help()
+
     except KeyboardInterrupt:
-        print("Quit")
-    r.stop()
+        print("Quitting")
+        r.quit()

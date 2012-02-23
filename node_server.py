@@ -25,6 +25,12 @@ class server:
         except socket.error as e:
             print(e)
             pass
+        except KeyboardInterrupt:
+            self.server.shutdown()
+
+    def stop(self):
+        if self.server:
+            self.server.shutdown()
 
 class tcp_handler(SocketServer.BaseRequestHandler):
     # Prepare objects upon a new connection
@@ -71,6 +77,11 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             self.sampler.start_sampling()
             for client in self.tester_clients:
                 client.start()
+
+            # If no clients exists, we don't want the controller to
+            # wait for us, so we send an empty result immediately.
+            obj = interface.node(interface.RUN_RESULT, result=None)
+            self.report(obj)
 
         elif obj.cmd is interface.FINISH_RUN:
             print("Finish run")

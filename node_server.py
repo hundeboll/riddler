@@ -71,29 +71,10 @@ class tcp_handler(SocketServer.BaseRequestHandler):
     def handle_cmd(self, obj):
         if obj.cmd is interface.PREPARE_RUN:
             self.prepare_run(obj)
-
         elif obj.cmd is interface.START_RUN:
-            print("Start run")
-            self.sampler.start_sampling()
-            for client in self.tester_clients:
-                client.start()
-
-            # If no clients exists, we don't want the controller to
-            # wait for us, so we send an empty result immediately.
-            if not self.tester_clients:
-                obj = interface.node(interface.RUN_RESULT, result=None)
-                self.report(obj)
-
+            self.start_run(obj)
         elif obj.cmd is interface.FINISH_RUN:
-            print("Finish run")
-            if self.sampler:
-                self.sampler.stop_sampling()
-            if self.tester_server:
-                self.tester_server.kill()
-
-            # Report back to controller that we are done
-            self.report(interface.node(interface.NODE_DONE))
-
+            self.finish_run(obj)
         else:
             print("Received unknown command: {0}".format(obj.cmd))
 
@@ -125,6 +106,33 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
         # Report back to controller that we are ready
         self.report(interface.node(interface.NODE_READY))
+
+    def start_run(self, obj):
+        print("Start run")
+        self.sampler.start_sampling()
+        for client in self.tester_clients:
+            client.start()
+
+        # If no clients exists, we don't want the controller to
+        # wait for us, so we send an empty result immediately.
+        if not self.tester_clients:
+            obj = interface.node(interface.RUN_RESULT, result=None)
+            self.report(obj)
+
+    def finish_run(self, obj):
+        print("Finish run")
+        if self.sampler:
+            self.sampler.stop_sampling()
+
+        for client in self.tester_clients:
+            client.kill_client()
+
+        if self.tester_server:
+            self.tester_server.kill()
+
+        # Report back to controller that we are done
+        self.report(interface.node(interface.NODE_DONE))
+
 
     # Thread safe sender function
     def report(self, obj):

@@ -124,6 +124,7 @@ class riddler:
 
     # Recover by reconnecting nodes
     def recover(self):
+        print("Recovering")
         self.controller.recover()
 
 

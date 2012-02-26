@@ -13,6 +13,8 @@ class controller(threading.Thread):
         # Load data object
         self.data = data.data(nodes, args.test_profile)
 
+        self.error = False
+        self.recover_timer = None
         self.end = threading.Event()
         self.pause = threading.Event()
         self.daemon = True
@@ -110,43 +112,45 @@ class controller(threading.Thread):
     # Control the state of each node and execute a single test run
     def execute_run(self):
         while not self.end.is_set():
+            # Make time stamp for use in ETA
+            start = time.time()
+
             # Let the network settle before next test
             time.sleep(self.args.test_sleep)
 
             # Check if we should pause and rerun
-            if self.wait_pause():
-                continue
+            self.wait_pause()
 
             self.print_run_info(self.run_info)
             self.prepare_run()
 
             # Wait for run to finish and check the result
-            success = self.exec_node()
+            self.exec_node()
 
             # Let the nodes clean up and save data
             self.finish_run()
 
             # Check if we should pause and rerun
-            if self.wait_pause():
-                continue
+            self.wait_pause()
 
             # Decide on the next action
             if self.end.is_set():
                 # Quit
                 return
 
-            elif success:
-                # Keep running
+            elif not self.error:
+                # Successful test
                 self.save_results()
                 self.save_samples()
 
-                # Update time left
-                self.eta = self.eta - self.args.test_time
+                # Update test count
+                self.test_count -= 1
+                self.test_time = int(time.time() - start)
                 break
 
             else:
                 # Test failed, run it again
-                print("Retrying test.")
+                print("Redoing test")
 
     # Check if pause is requested and pause if so
     def wait_pause(self):
@@ -155,19 +159,34 @@ class controller(threading.Thread):
             # Nope, we don't pause
             return False
 
+        # Invalidate current run
+        self.error = True
+
         # Pause until told otherwise
         print("Pausing")
         while not self.end.is_set():
             if self.pause.wait(.1):
                 print("Continuing")
                 break
-        return True
+
+    def restart_timer(self):
+        # Start timer to recover from broken code!
+        if self.recover_timer:
+            self.recover_timer.cancel()
+        self.recover_timer = threading.Timer(self.args.test_time*2, self.timeout)
+        self.recover_timer.start()
+
+    def timeout(self):
+        print("Time out occurred. Recovering")
+        self.recover()
 
     # Called by user or timer to recover
     def recover(self):
-        # Make sure the timer don't calls us again
-        self.recover_timer.cancel()
-        print("Recovering")
+        # Invalidate the current run
+        self.error = True
+
+        # Restart timer to keep recovering
+        self.restart_timer()
 
         # Reconnect nodes
         for node in self.nodes:
@@ -177,29 +196,30 @@ class controller(threading.Thread):
     def init_ranges(self):
         args = self.args
         self.loops = range(args.test_loops)
+        self.test_time = args.test_time + args.test_sleep
 
         if args.test_profile in ('udp_rates', 'power_meas'):
             self.codings = [True, False]
             self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
-            self.eta = len(self.rates) * args.test_loops * (args.test_time + args.test_sleep) * len(self.codings)
+            self.test_count = len(self.rates) * args.test_loops * len(self.codings)
             self.protocol = 'udp'
-            self.run_info_format = "\n#{loop:2d}/{loops:2d} | {rate:4d} kb/s | Coding: {coding:1b} | ETA: {eta:3d}m"
-            self.result_format = "{:10s} {throughput:6.1f} kb/s | {lost:4d}/{total:4d} ({ratio:4.1f}%)"
+            self.run_info_format = "\n# Loop: {loop:2d}/{loops:<2d} | Rate: {rate:4d} kb/s | Coding: {coding:1b} | ETA: {eta:s}"
+            self.result_format = "{:10s} {throughput:6d} kb/s {lost:4d}/{total:<4d} {ratio:4.1f}%"
 
         if args.test_profile == 'hold_times':
             self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
             self.hold_times = range(args.hold_start, args.hold_stop+1, args.hold_step)
-            self.eta = len(self.rates) * len(self.hold_times) * args.test_loops * (args.test_time + args.test_sleep)
+            self.test_count = len(self.rates) * len(self.hold_times) * args.test_loops
             self.protocol = 'udp'
-            self.run_info_format = "\n#{loop:2d}/{loops:2d} | {rate:4d} kb/s | ETA: {eta:3d}m"
+            self.run_info_format = "\n#{loop:2d}/{loops:2d} | {rate:4d} kb/s | ETA: {eta:s}"
             self.result_format = "{:10s} {throughput:6.1f} kb/s | {lost:4d}/{total:4d} ({ratio:4.1f}%)"
 
         if args.test_profile == 'tcp_algos':
             self.protocol = 'tcp'
             self.codings = [True, False]
-            self.eta = len(self.args.tcp_algos) * args.test_loops * (args.test_time + args.test_sleep) * len(self.codings)
+            self.test_count = len(self.args.tcp_algos) * args.test_loops * len(self.codings)
             self.result_format = "{:10s} {throughput:6.1f} kb/s | {transfered:6.1f} kB"
-            self.run_info_format = "\n#{loop:2d} | {tcp_algo:10s} | Coding: {coding:1b} | ETA: {eta:3d}m"
+            self.run_info_format = "\n#{loop:2d} | {tcp_algo:10s} | Coding: {coding:1b} | ETA: {eta:s}"
 
     # Configure the next run_info to be sent to each node
     def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None):
@@ -219,15 +239,17 @@ class controller(threading.Thread):
 
     # Tell each node to prepare a new run and wait for them to become ready
     def prepare_run(self):
+        # We start from a clean sheet
+        self.error = False
+
+        # Start timer to recover in case of failure
+        self.restart_timer()
+
         for node in self.nodes:
             node.prepare_run(self.run_info)
 
         for node in self.nodes:
             node.wait()
-
-        # Start timer to recover from broken code!
-        self.recover_timer = threading.Timer(self.args.test_time*2, self.recover)
-        self.recover_timer.start()
 
     # Perform a run on each node
     def exec_node(self):
@@ -241,9 +263,7 @@ class controller(threading.Thread):
         for node in self.nodes:
             # Check if an error occurred in the run
             if node.wait():
-                ret = False
-
-        return ret
+                self.error = True
 
     # Tell the nodes to clean up and wait for them to report back
     def finish_run(self):
@@ -277,4 +297,12 @@ class controller(threading.Thread):
 
     # Print info on the current test run
     def print_run_info(self, run_info):
-        print(self.run_info_format.format(eta=self.eta/60, loops=self.args.test_loops-1, **run_info))
+        eta = self.test_count * self.test_time
+        if eta > 60:
+            # Print ETA with hours
+            eta = "{:d}h {:02d}m".format(eta/60/60, (eta/60)%60)
+        else:
+            # Print ETA with minutes
+            eta = "{:d}m {:02d}s".format(eta/60, eta%60)
+
+        print(self.run_info_format.format(eta=eta, loops=self.args.test_loops-1, **run_info))

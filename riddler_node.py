@@ -66,9 +66,14 @@ class node(threading.Thread):
                 if e.errno != 0:
                     # Error number 0 is self made, so don't print it
                     print("{0}: {1}".format(self.name.title(), e))
+                if e.errno == 111:
+                    # Connection refused. Wait a bit
+                    time.sleep(5)
+
                 # Tell controller that something went wrong
                 self.run_error = True
                 self.socket = None
+                self.reply.set()
 
     # Connect to configured node and start main loop
     def connect(self):
@@ -86,8 +91,11 @@ class node(threading.Thread):
 
     # Reconnect to node
     def reconnect(self):
+        # Free waiting processes
+        self.reply.set()
+
         if self.socket:
-            # Closing the socket causes and exception and reconnect in self.recv()
+            # Closing the socket causes exception and reconnect in self.recv()
             self.socket.shutdown(socket.SHUT_RDWR)
 
     # Keep receiving objects from the node until connection is closed

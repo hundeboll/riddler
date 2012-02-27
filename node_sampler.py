@@ -122,9 +122,19 @@ class sampler(threading.Thread):
         # (implement support for multiple stations)
         for line in output.split("\n"):
             match = re.findall("\s+(.+):\s+(\d+)", line)
-            if match:
-                key = "iw " + match[0][0]
-                sample[key] = int(match[0][1])
+            if not match:
+                continue
+
+            key = "iw " + match[0][0]
+
+            # Initialize fields to zero
+            if not sample.has_key(key):
+                sample[key] = 0
+
+            # Sum fields from all stations
+            # Should be saved individually, but then we must
+            # now the names for each mac address.
+            sample[key] += int(match[0][1])
 
         # Add the sample to the set
         self.append_sample(sample)

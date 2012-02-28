@@ -12,7 +12,7 @@ nc_path = "/sys/kernel/debug/batman_adv/bat0/bat_stats"
 class sampler(threading.Thread):
     def __init__(self, controller, args):
         super(sampler, self).__init__(None)
-        self.run_info = None
+        self.run_info = {'sample_interval': 1}
         self.daemon = True
         self.controller = controller
         self.args = args

@@ -50,6 +50,10 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         if self.tester_server:
             self.tester_server.kill()
 
+        if self.sampler:
+            self.sampler.stop()
+            self.sampler.join()
+
     # Read data from controller
     def handle(self):
         while True:

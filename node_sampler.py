@@ -160,18 +160,16 @@ class sampler(threading.Thread):
                 'ip_rx_errors_frame':   int(n[11]),
                 'ip_rx_errors_fifo':    int(n[12]),
                 'ip_rx_errors_missed':  int(n[13]),
-                'ip_rx_bytes':          int(n[14]),
-                'ip_rx_packets':        int(n[15]),
-                'ip_rx_errors':         int(n[16]),
-                'ip_rx_dropped':        int(n[17]),
-                'ip_rx_carrier':        int(n[18]),
-                'ip_rx_collsns':        int(n[19]),
-                'ip_rx_errors_aborted': int(n[20]),
-                'ip_rx_errors_fifo':    int(n[21]),
-                'ip_rx_errors_window':  int(n[22]),
-                'ip_rx_errors_heartbeat': int(n[23]),
-                'ip_tx_bytes':          int(n[24]),
-                'ip_tx_packets':        int(n[25])
+                'ip_tx_bytes':          int(n[14]),
+                'ip_tx_packets':        int(n[15]),
+                'ip_tx_errors':         int(n[16]),
+                'ip_tx_dropped':        int(n[17]),
+                'ip_tx_carrier':        int(n[18]),
+                'ip_tx_collsns':        int(n[19]),
+                'ip_tx_errors_aborted': int(n[20]),
+                'ip_tx_errors_fifo':    int(n[21]),
+                'ip_tx_errors_window':  int(n[22]),
+                'ip_tx_errors_heartbeat': int(n[23]),
                 }
 
         # Add the sample to the set

@@ -89,6 +89,9 @@ class sampler(threading.Thread):
                 key = "nc " + match[0][0]
                 sample[key] = int(match[0][1])
 
+        # Add some extra numbers
+        sample['nc FwdCoded'] = sample['nc Coded'] + sample['nc Forwarded']
+
         # Add the sample to the set
         self.append_sample(sample)
 

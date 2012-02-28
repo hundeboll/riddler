@@ -56,8 +56,6 @@ class sampler(threading.Thread):
     def report_samples(self):
         self.samples['timestamp'] = time.time()
         obj = interface.node(interface.SAMPLE, sample=self.samples)
-        if not self.controller.report(obj):
-            self.stop_sampling()
 
         # Reset our samples before a new run
         self.samples = {}
@@ -65,8 +63,6 @@ class sampler(threading.Thread):
     # Send an error to the controller
     def report_error(self, error):
         obj = interface.node(interface.SAMPLE_ERROR, error = error)
-        if not self.controller.report(obj):
-            self.stop_sampling()
 
     # Save a new set of samples
     def append_sample(self, sample):

@@ -117,9 +117,6 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     def finish_run(self, obj):
         print("Finish run")
-        if self.sampler:
-            self.sampler.stop_sampling()
-
         for client in self.tester_clients:
             client.kill_client()
 

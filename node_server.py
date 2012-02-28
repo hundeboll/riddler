@@ -44,9 +44,6 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     # Stop running threads before connection closes
     def finish(self):
-        if self.sampler:
-            self.sampler.stop()
-
         for client in self.tester_clients:
             client.kill_client()
 
@@ -109,7 +106,6 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     def start_run(self, obj):
         print("Start run")
-        self.sampler.start_sampling()
         for client in self.tester_clients:
             client.start()
 

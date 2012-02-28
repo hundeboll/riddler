@@ -17,6 +17,7 @@ class node(threading.Thread):
         self.dests = []
         self.sources = []
         self.samples = []
+        self.running = False
         self.run_result = None
         self.run_error = False
         nodes.append(self)
@@ -66,7 +67,7 @@ class node(threading.Thread):
                 if e.errno != 0:
                     # Error number 0 is self made, so don't print it
                     print("{0}: {1}".format(self.name.title(), e))
-                if e.errno == 111:
+                if e.errno in (113, 111):
                     # Connection refused. Wait a bit
                     time.sleep(5)
 
@@ -173,6 +174,7 @@ class node(threading.Thread):
     def start_run(self):
         self.reply.clear()
         interface.send_node(self.socket, interface.START_RUN)
+        self.running = True
 
     # Wait for node to complete the test run
     def wait(self):
@@ -210,6 +212,7 @@ class node(threading.Thread):
 
     # Save received result and set run event to inform waiting callers
     def handle_run_result(self, obj):
+        self.running = False
         if obj.result:
             self.run_result = obj.result
             self.client.export_result(self.name, self.run_info, obj.result)
@@ -223,7 +226,9 @@ class node(threading.Thread):
 
     # Save received measurement sample for later extraction
     def handle_sample(self, obj):
-        self.samples.append(obj.sample)
+        # Only store sample if a test is running
+        if self.running:
+            self.samples.append(obj.sample)
         self.client.export_sample(self.name, obj.sample)
 
     # Be verbose about sampling errors that not necessarily ruins the run result

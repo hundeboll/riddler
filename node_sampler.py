@@ -23,18 +23,14 @@ class sampler(threading.Thread):
 
         # The power sampler needs it own thread
         self.power = power.power(args)
+        self.power.start_measure()
 
         self.end = threading.Event()
-        self.sampling = threading.Event()
         self.start()
 
     # Start the sampling in a separate thread
     def run(self):
         while not self.end.is_set():
-            # Wait for the controller to tell us to start
-            if not self.sampling.wait(1):
-                continue
-
             # Do the sampling
             start = time.time()
             self.sample_nc()
@@ -55,16 +51,6 @@ class sampler(threading.Thread):
     def set_run_info(self, run_info):
         self.run_info = run_info
         return True
-
-    # Start the sampling loop
-    def start_sampling(self):
-        self.power.start_measure()
-        self.sampling.set()
-
-    # Stop the sampling loop
-    def stop_sampling(self):
-        self.power.stop_measure()
-        self.sampling.clear()
 
     # Send our samples to the controller
     def report_samples(self):

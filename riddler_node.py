@@ -35,7 +35,7 @@ class node(threading.Thread):
 
         # Close socket for faster quit
         if self.socket:
-            self.socket.shutdown(socket.SHUT_RDWR)
+            self.socket.close()
 
     # Free waiters
     def pause(self):
@@ -96,7 +96,13 @@ class node(threading.Thread):
 
         if self.socket:
             # Closing the socket causes exception and reconnect in self.recv()
-            self.socket.shutdown(socket.SHUT_RDWR)
+            try:
+                self.socket.shutdown(socket.SHUT_RDWR)
+            except socket.error as e:
+                if e.errno != 107:
+                    # We tried to close a non-connected socket
+                    # Don't be too noisy
+                    raise e
 
     # Keep receiving objects from the node until connection is closed
     def recv(self):

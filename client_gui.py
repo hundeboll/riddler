@@ -11,6 +11,7 @@ matplotlib.use('Qt4Agg')
 
 import client_live_monitor as live_monitor
 import client_test_monitor as test_monitor
+import client_control as control
 
 
 class main_window(QMainWindow):
@@ -20,8 +21,10 @@ class main_window(QMainWindow):
 
         self.test_monitor = test_monitor.monitor(parent=self)
         self.live_monitor = live_monitor.monitor(parent=self)
+        self.control = control.control(parent=self)
 
         tabs = QTabWidget()
+        tabs.addTab(self.control.gui, self.tr("Control"))
         tabs.addTab(self.live_monitor.gui, self.tr("Live Monitor"))
         tabs.addTab(self.test_monitor.gui, self.tr("Test Monitor"))
 
@@ -33,7 +36,9 @@ class main_window(QMainWindow):
         self.setCentralWidget(widget)
 
         self.setMinimumSize(160,160)
-        self.resize(640,480)
+        self.resize(1024,768)
+        #self.setMinimumSize(1024,768)
+        #self.resize(1024,768)
         self.show()
 
 

@@ -63,8 +63,12 @@ class controller(threading.Thread):
         if not self.end.is_set():
             print("Test completed")
 
+    def save_data(self, path=None):
+        if not path:
+            path = self.args.data_file
+
         # Dump data to pickle file
-        data.dump_data(self.data, self.args.data_file)
+        data.dump_data(self.data, path)
 
     # Control function to swipe UDP rates
     def test_rates(self):

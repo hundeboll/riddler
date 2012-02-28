@@ -62,7 +62,6 @@ class riddler:
 
     # Tell the controller to stop and wait for it
     def stop_controller(self):
-        print("Stopping test")
         if self.controller:
             self.controller.stop()
             self.controller.join()
@@ -82,6 +81,22 @@ class riddler:
         # Wait for them to finish
         for node in self.nodes:
             node.join()
+
+    # Stop a running test
+    def stop_test(self):
+        if not self.controller:
+            return
+
+        # Tell controller to stop
+        print("Stopping test")
+        self.controller.stop()
+
+        # Reconnect nodes to free controller
+        for node in self.nodes:
+            node.reconnect()
+
+        # Wait for controller to finish
+        self.controller.join()
 
     # Stop everything and quit program
     def quit(self):
@@ -127,6 +142,17 @@ class riddler:
         print("Recovering")
         self.controller.recover()
 
+    def save_data(self):
+        # Read filename form console
+        path = raw_input("Filename: (Hit enter for '{0}')\n".format(self.args.data_file))
+
+        # If no name was entered, we use the configured one
+        if not path:
+            path = self.args.data_file
+
+        self.controller.save_data(path)
+        print("Data saved to '{0}'".format(path))
+
 
 def print_help():
     print("")
@@ -134,6 +160,7 @@ def print_help():
     print("  p      Toggle pause")
     print("  s      Stop test")
     print("  r      Recover")
+    print("  d      Save data")
     print("  q      Quit")
     print("  h      Help")
     print("")
@@ -154,9 +181,11 @@ if __name__ == "__main__":
             elif c == 'p':
                 r.toggle_pause()
             elif c == 's':
-                r.stop_controller()
+                r.stop_test()
             elif c == 'r':
                 r.recover()
+            elif c == 'd':
+                r.save_data()
             elif c == 'q':
                 r.quit()
             else:

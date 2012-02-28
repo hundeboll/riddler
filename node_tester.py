@@ -63,17 +63,20 @@ class client(threading.Thread):
         if not self.running:
             return
 
-        # Ask politely first
-        print("Terminating client (pid {0})".format(self.p.pid))
-        self.p.terminate()
-
-        # Ask again, if necessary
-        if not self.p.poll():
+        try:
+            # Ask politely first
+            print("Terminating client (pid {0})".format(self.p.pid))
             self.p.terminate()
 
-        # No more patience, kill the damn thing
-        if not self.p.poll():
-            self.p.kill()
+            # Ask again, if necessary
+            if not self.p.poll():
+                self.p.terminate()
+
+            # No more patience, kill the damn thing
+            if not self.p.poll():
+                self.p.kill()
+        except OSError as e:
+            print("Killing client failed: {0}".format(e))
 
         # We are done
         self.running = False
@@ -160,11 +163,11 @@ class server(threading.Thread):
 
     # Kill a running iperf server
     def kill(self):
-        try:
-            # Check if process is running at all
-            if not self.running:
-                return
+        # Check if process is running at all
+        if not self.running:
+            return
 
+        try:
             # Politely ask server to quit
             print("Terminating server (pid {0})".format(self.p.pid))
             self.p.terminate()
@@ -176,9 +179,8 @@ class server(threading.Thread):
             # No more patience, kill the damn thing
             if not self.p.poll():
                 self.p.kill()
-
-            # We are done here
-            self.running = False
-
         except OSError as e:
             print("Killing server failed: {0}".format(e))
+
+        # We are done here
+        self.running = False

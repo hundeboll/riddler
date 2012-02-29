@@ -1,80 +1,56 @@
 #!/usr/bin/env python2
 
+import argparse
 import cPickle as pickle
 import plot_data as data
 import plot_graph as graph
 
-c = {
-    "aluminium1":   "#eeeeec",
-    "aluminium2":   "#d3d7cf",
-    "aluminium3":   "#babdb6",
-    "aluminium4":   "#888a85",
-    "aluminium5":   "#555753",
-    "aluminium6":   "#2e3436",
-    "butter1":      "#fce94f",
-    "butter2":      "#edd400",
-    "butter3":      "#c4a000",
-    "chameleon1":   "#8ae234",
-    "chameleon2":   "#73d216",
-    "chameleon3":   "#4e9a06",
-    "chocolate1":   "#e9b96e",
-    "chocolate2":   "#c17d11",
-    "chocolate3":   "#8f5902",
-    "orange1":      "#fcaf3e",
-    "orange2":      "#f57900",
-    "orange3":      "#ce5c00",
-    "plum1":        "#ad7fa8",
-    "plum2":        "#75507b",
-    "plum3":        "#5c3566",
-    "scarletred1":  "#ef2929",
-    "scarletred2":  "#cc0000",
-    "scarletred3":  "#a40000",
-    "skyblue1":     "#729fcf",
-    "skyblue2":     "#3465a4",
-    "skyblue3":     "#204a87",
-}
+parser = argparse.ArgumentParser(description="Riddler Plotting Tools")
+parser.add_argument("--config", default="plot_defaults")
+(args,dummy) = parser.parse_known_args()
+
+try:
+    c = __import__(args.config)
+    defaults = dict((k, v) for k,v in c.__dict__.iteritems() if not k.startswith('__'))
+except ImportError:
+    print("Unable to load config file: {0}".format(args.config))
+    sys.exit(1)
+
+parser.add_argument("--data")
+parser.add_argument("--out")
+parser.add_argument("--show")
+parser.set_defaults(**defaults)
+args = parser.parse_args()
 
 class plot:
-    def __init__(self, filename):
-        d = pickle.load(open(filename))
-        self.data = data.data(d)
+    def __init__(self, args):
+        self.args = args
+
+        self.data = data.data(args.data)
         self.graph = graph.graph()
 
     def plot(self):
-        sources,relays = self.data.typed_nodes()
-
         if self.data.profile == 'udp_rates':
-            for node in sources:
-                self.plot_throughput_udp(node)
-                #self.plot_received(node)
-            for node in relays:
-                #self.plot_coded(node)
+            for node in self.data.sources:
+                self.plot_udp_source(node)
+            for node in self.data.relays:
+                self.plot_udp_relay(node)
                 pass
-
-        elif self.data.profile == 'tcp_algos':
-            for node in sources:
-                self.plot_throughput_tcp(node)
-            for node in relays:
-                self.plot_coded(node)
 
         self.graph.show()
 
-    def plot_throughput_udp(self, node):
-        for coding in self.data.codings:
-            rates,data = self.data.throughput_udp(node, coding)
-            self.graph.plot_throughput(node, rates, data, coding)
+    def plot_udp_source(self, node):
+        for coding in (True, False):
+            data = self.data.udp_source_data(node, coding)
+            self.graph.plot_throughput(node, data, coding)
+            self.graph.plot_cpu(node, data, coding)
 
-    def plot_coded(self, node):
-        try:
-            rates,coded,forwarded,total = self.data.coded(node)
-        except Exception as e:
-            pass
+    def plot_udp_relay(self, node):
+        data = self.data.udp_relay_data(node, coding=True)
+        self.graph.plot_coded(node, data)
 
-    def plot_received(self, node):
-        for coding in self.data.codings:
-            rates,received = self.data.received(node, coding)
-            print received
+
 
 if __name__ == "__main__":
-    p = plot("test.pickle")
+    p = plot(args)
     p.plot()

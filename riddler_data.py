@@ -1,169 +1,88 @@
 import time
 import numpy
+import copy
 import cPickle as pickle
+
+"""
+Data structure:
+
+    data = {
+        'node0': {
+            '0': [ run_data, run_data, ... ],
+            '1': [ run_data, run_data, ... ],
+            ...
+        },
+        'node1': {
+            '0': [ run_data, run_data, ... ],
+            '1': [ run_data, run_data, ... ],
+            ...
+        },
+        ...
+    }
+
+Node dictionaries contain a list for each run_no. These lists contain
+run_data objects for each loop in the test. When retrieving data,
+each run_data contains a run_info dictionary, which can be used to
+determine relevant parameters.
+"""
 
 class run_data:
     def __init__(self, run_info):
         self.run_info = run_info
-        self.time_begin = time.time()
-        self.time_end = None
+        self.result = []
         self.samples = []
-        self.result = None
-
-    def samples_has_field(self, field):
-        if not self.samples:
-            return False
-        return self.samples[0].has_key(field)
-
-    def result_has_field(self, field):
-        if not self.result:
-            return False
-        return self.result.has_key(field)
-
-    def append_samples(self, samples):
-        self.samples.extend(samples)
-
-    def set_result(self, result):
-        self.result = result
-        self.time_end = time.time()
-
-    def get_samples(self, field):
-        return map(lambda s: s[field], self.samples)
-
-    def get_result(self, field):
-        return self.result[field]
-
-
-class node_data:
-    def __init__(self, node):
-        self.node = node
-        self.data_sets = {}
-
-    def new_run(self, run_info):
-        self.key = run_info['key']
-        self.data_sets[self.key] = run_data(run_info)
-
-    def save_result(self, result):
-        self.data_sets[self.key].set_result(result)
-
-    def append_samples(self, samples):
-        self.data_sets[self.key].append_samples(samples)
-
-    def get_samples(self, key, field):
-        return self.data_sets[key].get_samples(field)
-
-    def get_result(self, key, field):
-        return self.data_sets[key].get_result(field)
-
-    def result_has_field(self, field):
-        data = next(self.data_sets.itervalues())
-        return data.result_has_field(field)
-
-    def samples_has_field(self, field):
-        data = next(self.data_sets.itervalues())
-        return data.samples_has_field(field)
-
 
 class data:
-    def __init__(self, nodes, test_profile):
-        self.nodes = map(lambda n: n.name, nodes)
-        self.profile = test_profile
-        self.run_list = []
+    def __init__(self, args):
+        self.args = args
+        self.nodes = []
+        self.sources = []
+        self.relays = []
+        self.rd = {}
 
-        self.data = {}
-        self.paths = {}
+    def add_nodes(self, nodes):
         for node in nodes:
-            self.data[node.name] = node_data(node.name)
-            self.paths[node.name] = map(lambda n: n.name, node.dests)
+            name = node.name
+            self.rd[name] = []
+            if node.dests:
+                self.sources.append(name)
+            else:
+                self.relays.append(name)
 
-    def run_key(self, run_info):
-        run_info['key'] = reduce(lambda s,i: s + i[0] + ": " + str(i[1]) + " ", run_info.iteritems(), "")
-        self.run_list.append(run_info)
-        return run_info
+    def add_run_info(self, run_info):
+        run_info = copy.deepcopy(run_info)
+        run_no = run_info['run_no']
+        loop = run_info['loop']
 
-    def new_run(self, run_info):
-        run_info = self.run_key(run_info)
-        for node in self.nodes:
-            self.data[node].new_run(run_info)
+        for node in self.rd:
+            if loop == 0:
+                self.rd[node].append([])
 
-    def append_samples(self, node, samples):
-        self.data[node].append_samples(samples)
+            rd = run_data(run_info)
+            self.rd[node][run_no].append(rd)
+        self.run_no = run_no
 
-    def save_result(self, node, result):
-        self.data[node].save_result(result)
+    def add_samples(self, node, samples):
+        # Add samples to latest run_data
+        d = self.rd[node][self.run_no][-1]
+        d.samples = samples
 
-    def get_param_range(self, param):
-        r = map(lambda r: r[param], self.run_list)
-        return sorted(set(r))
+    def add_result(self, node, result):
+        # Add result to latest run_data
+        d = self.rd[node][self.run_no][-1]
+        d.result = result
 
-    def _get_samples(self, node, key, field):
-        return self.data[node].get_samples(key, field)
+    def get_run_data(self, node, conditions):
+        d = self.rd[node]
+        test = lambda rd, k, v: rd[0].run_info[k] == v
 
-    def get_samples(self, node, keys, field):
-        return [self._get_samples(node, key, field) for key in keys]
+        for key in conditions:
+            val = conditions[key]
+            d = filter(lambda rd: test(rd, key, val), d)
+        return d
 
-    def _get_samples_avg(self, node, key, field):
-        return numpy.average(self._get_samples(node, key, field))
-
-    def get_samples_avg(self, node, keys, field):
-        return [self._get_samples_avg(node, key, field) for key in keys]
-
-    def _get_samples_num(self, node, key, field):
-        samples = self._get_samples(node, key, field)
-        return samples[-1] - samples[0]
-
-    def get_samples_num(self, node, keys, field):
-        return [self._get_samples_num(node, key, field) for key in keys]
-
-    def get_result(self, node, key, field):
-        return self.data[node].get_result(key, field)
-
-    def get_results(self, node, keys, field):
-        return map(lambda key: self.data[node].get_result(key, field), keys)
-
-    def get_keys(self, conditions, sortby='rate'):
-        run_list = self.run_list
-        for condition in conditions:
-            run_list = filter(lambda r: r[condition] == conditions[condition], run_list)
-        run_list = sorted(run_list, key=lambda r: r[sortby])
-        return map(lambda r: r['key'], run_list)
-
-    def results(self, node, conditions, field):
-        r = []
-        for loop in self.get_param_range('loop'):
-            conditions['loop'] = loop
-            keys = self.get_keys(conditions, 'rate')
-            r.append(self.get_results(node, keys, field))
-
-        return numpy.average(r, axis=0)
-
-    def samples(self, node, conditions, field):
-        loops = self.get_param_range('loop')
-        s = []
-        for loop in loops:
-            conditions['loop'] = loop
-            keys = self.get_keys(conditions, 'rate')
-            s.append(self.get_samples_avg(node, keys, field))
-
-        return numpy.average(s, axis=0)
-
-    def samples_num(self, node, conditions, field):
-        loops = self.get_param_range('loop')
-        s = []
-        for loop in loops:
-            conditions['loop'] = loop
-            keys = self.get_keys(conditions, 'rate')
-            s.append(self.get_samples_num(node, keys, field))
-
-        return numpy.average(s, axis=0)
-
-    def result_has_field(self, node, field):
-        return self.data[node].result_has_field(field)
-
-    def samples_has_field(self, node, field):
-        return self.data[node].result_has_field(field)
 
 def dump_data(data, filename):
     f = open(filename, 'w')
-    pickle.dump(data, f)
+    pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
     f.close()

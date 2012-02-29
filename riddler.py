@@ -6,6 +6,7 @@ import time
 import riddler_interface as interface
 import riddler_controller as controller
 import riddler_client as client
+import riddler_data as data
 
 parser = argparse.ArgumentParser(description="Riddler Controller Application")
 parser.add_argument("--config", default="riddler_defaults")
@@ -55,9 +56,15 @@ class riddler:
         self.start_nodes()
 
     def start(self):
+        # Create a data object for results and samples
+        self.data = data.data(self.args)
+        self.data.add_nodes(self.nodes)
+
         # Start test controller
         print("Starting test controller")
-        self.controller = controller.controller(self.args, self.nodes)
+        self.controller = controller.controller(self.args)
+        self.controller.nodes = self.nodes
+        self.controller.data = self.data
         self.controller.start()
 
     # Tell the controller to stop and wait for it
@@ -150,7 +157,8 @@ class riddler:
         if not path:
             path = self.args.data_file
 
-        self.controller.save_data(path)
+        # Dump data to pickle file
+        data.dump_data(self.data, path)
         print("Data saved to '{0}'".format(path))
 
 

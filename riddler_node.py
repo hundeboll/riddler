@@ -185,6 +185,7 @@ class node(threading.Thread):
 
     # Tell node to clean up after test run
     def finish_run(self):
+        self.running = False
         self.reply.clear()
         interface.send_node(self.socket, interface.FINISH_RUN)
 
@@ -212,8 +213,8 @@ class node(threading.Thread):
 
     # Save received result and set run event to inform waiting callers
     def handle_run_result(self, obj):
-        self.running = False
         if obj.result:
+            self.running = False
             self.run_result = obj.result
             self.client.export_result(self.name, self.run_info, obj.result)
         self.reply.set()

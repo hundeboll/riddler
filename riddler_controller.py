@@ -1,17 +1,13 @@
 import time
 import threading
 import riddler_interface as interface
-import riddler_data as data
 
 class controller(threading.Thread):
-    def __init__(self, args, nodes):
+    def __init__(self, args):
         super(controller, self).__init__(None)
         self.name = "controller"
         self.args = args
-        self.nodes = nodes
-
-        # Load data object
-        self.data = data.data(nodes, args.test_profile)
+        self.run_info = {}
 
         self.error = False
         self.recover_timer = None
@@ -62,13 +58,6 @@ class controller(threading.Thread):
         # Yeah, the test actually completed by itself
         if not self.end.is_set():
             print("Test completed")
-
-    def save_data(self, path=None):
-        if not path:
-            path = self.args.data_file
-
-        # Dump data to pickle file
-        data.dump_data(self.data, path)
 
     # Control function to swipe UDP rates
     def test_rates(self):
@@ -227,7 +216,7 @@ class controller(threading.Thread):
 
     # Configure the next run_info to be sent to each node
     def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None):
-        self.run_info = {}
+        self.update_run_no(loop)
         self.run_info['test_time'] = self.args.test_time
         self.run_info['sample_interval'] = self.args.sample_interval
         self.run_info['protocol'] = self.protocol
@@ -239,7 +228,16 @@ class controller(threading.Thread):
         self.run_info['coding'] = coding
 
         # Update the data storage with the new run info
-        self.data.new_run(self.run_info)
+        self.data.add_run_info(self.run_info)
+
+    # Reset counter if new loop is entered, increment otherwise
+    def update_run_no(self, loop):
+        if not self.run_info or loop != self.run_info['loop']:
+            # We are in a new loop
+            self.run_info['run_no'] = 0
+        else:
+            # Same loop as before
+            self.run_info['run_no'] += 1
 
     # Tell each node to prepare a new run and wait for them to become ready
     def prepare_run(self):
@@ -286,14 +284,14 @@ class controller(threading.Thread):
             # Some nodes don't measure results
             if not result:
                 continue
-            self.data.save_result(node.name, result)
+            self.data.add_result(node.name, result)
             self.print_result(node, result)
 
     # Save sample measurements received during the test
     def save_samples(self):
         for node in self.nodes:
             samples = node.get_samples()
-            self.data.append_samples(node.name, samples)
+            self.data.add_samples(node.name, samples)
 
     # Report the result to the user
     def print_result(self, node, result):
@@ -302,7 +300,7 @@ class controller(threading.Thread):
     # Print info on the current test run
     def print_run_info(self, run_info):
         eta = self.test_count * self.test_time
-        if eta > 60:
+        if eta > 60*60:
             # Print ETA with hours
             eta = "{:d}h {:02d}m".format(eta/60/60, (eta/60)%60)
         else:

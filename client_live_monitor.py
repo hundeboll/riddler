@@ -123,6 +123,7 @@ class monitor_gui(QWidget):
         self.add_fig('ip rx', "IP RX Rate", "Rate [kbit/s]")
         self.add_fig('cpu', "CPU Usage", "Usage [%]", ylim=100, scale=False)
         self.add_fig('coded', "Coded Packets", "Ratio [%]", ylim=1.05, scale=False)
+        self.add_fig('power', "Power Consumption", "Usage [W]")
         self.add_legend()
 
         self.add_node.connect(self._add_node)
@@ -137,6 +138,7 @@ class monitor_gui(QWidget):
         layout.addWidget(self.plots['ip rx'].canvas, 3, 1)
         layout.addWidget(self.plots['cpu'].canvas, 4, 0)
         layout.addWidget(self.plots['coded'].canvas, 4, 1)
+        layout.addWidget(self.plots['power'].canvas, 5, 0)
         layout.setRowMinimumHeight(0, 30)
         layout.setRowMinimumHeight(1, 40)
         layout.setRowStretch(0, 0)
@@ -144,6 +146,7 @@ class monitor_gui(QWidget):
         layout.setRowStretch(2, 0)
         layout.setRowStretch(3, 0)
         layout.setRowStretch(4, 0)
+        layout.setRowStretch(5, 0)
         self.setLayout(layout)
 
         self.timer = self.startTimer(1000)
@@ -232,6 +235,11 @@ class monitor:
         self.cpu_y[node].pop(0)
         self.cpu_y[node].append(cpu)
         self.gui.update_data.emit('cpu', node, self.cpu_y[node])
+
+    def add_power(self, node, power):
+        self.power_y[node].pop(0)
+        self.power_y[node].append(0)
+        self.gui.update_data.emit('power', node, self.power_y[node])
 
     def add_bytes(self, name, node, this_bytes):
         this_bytes = this_bytes*8 / 1024

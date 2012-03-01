@@ -43,7 +43,7 @@ class sampler(threading.Thread):
             if delay > 0:
                 time.sleep(delay)
             else:
-                self.report_error("Missed deadline with {} seconds".format(delay*-1)
+                self.report_error("Missed deadline with {} seconds".format(delay*-1))
 
     # Stop the sampler thread
     def stop(self):

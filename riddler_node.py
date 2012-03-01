@@ -17,7 +17,7 @@ class node(threading.Thread):
         self.dests = []
         self.sources = []
         self.samples = []
-        self.running = False
+        self.store_samples = False
         self.run_result = None
         self.run_error = False
         nodes.append(self)
@@ -128,11 +128,11 @@ class node(threading.Thread):
         if obj.cmd is interface.NODE_INFO:
             self.handle_node_info(obj)
 
-        elif obj.cmd is interface.NODE_READY:
-            self.handle_node_ready(obj)
+        elif obj.cmd is interface.PREPARE_DONE:
+            self.handle_prepare_done(obj)
 
-        elif obj.cmd is interface.NODE_DONE:
-            self.handle_node_done(obj)
+        elif obj.cmd is interface.PREPARE_ERROR:
+            self.handle_prepare_error(obj)
 
         elif obj.cmd is interface.RUN_RESULT:
             self.handle_run_result(obj)
@@ -140,14 +140,14 @@ class node(threading.Thread):
         elif obj.cmd is interface.RUN_ERROR:
             self.handle_run_error(obj)
 
+        elif obj.cmd is interface.FINISH_DONE:
+            self.handle_finish_done(obj)
+
         elif obj.cmd is interface.SAMPLE:
             self.handle_sample(obj)
 
         elif obj.cmd is interface.SAMPLE_ERROR:
             self.handle_sample_error(obj)
-
-        elif obj.cmd is interface.PREPARE_ERROR:
-            self.handle_setup_error(obj)
 
         else:
             print("Received unknown command from {0}: {1}".format(self.name, obj.cmd))
@@ -160,6 +160,27 @@ class node(threading.Thread):
     def get_dests(self):
         return map(lambda n: {'name': n.name, 'host': n.mesh_host, 'port': n.mesh_port}, self.dests)
 
+    # Return result of current run
+    def get_result(self):
+        return self.run_result
+
+    # Return received samples from current run
+    def get_samples(self):
+        return self.samples
+
+    # Wait for node to answer last command
+    def wait(self):
+        while not self.end.is_set():
+            if self.reply.wait(.1):
+                break
+        return self.run_error
+
+    # Save information received from node
+    def handle_node_info(self, obj):
+        self.mesh_host = obj.mesh_host
+        self.mesh_port = obj.mesh_port
+        self.reply.set()
+
     # Tell the node to prepare a new run
     def prepare_run(self, run_info):
         self.samples = []
@@ -170,72 +191,57 @@ class node(threading.Thread):
 
         interface.send_node(self.socket, interface.PREPARE_RUN, dests=self.get_dests(), run_info=run_info)
 
+    # Set event to inform waiting callers
+    def handle_prepare_done(self, obj):
+        self.reply.set()
+
+    # Be verbose about errors occurring during while configuring the node
+    def handle_prepare_error(self, obj):
+        self.run_error = True
+        print("Setup failed at {0}: {1}".format(self.name, obj.error))
+
     # Tell node to start a test run
     def start_run(self):
         self.reply.clear()
         interface.send_node(self.socket, interface.START_RUN)
-        self.running = True
+        self.store_samples = True
 
-    # Wait for node to complete the test run
-    def wait(self):
-        while not self.end.is_set():
-            if self.reply.wait(.1):
-                break
-        return self.run_error
-
-    # Tell node to clean up after test run
-    def finish_run(self):
-        self.running = False
-        self.reply.clear()
-        interface.send_node(self.socket, interface.FINISH_RUN)
-
-    # Return result of current run
-    def get_result(self):
-        return self.run_result
-
-    # Return received samples from current run
-    def get_samples(self):
-        return self.samples
-
-    # Save information received from node
-    def handle_node_info(self, obj):
-        self.mesh_host = obj.mesh_host
-        self.mesh_port = obj.mesh_port
-        self.reply.set()
-
-    # Set ready event to inform waiting callers
-    def handle_node_ready(self, obj):
-        self.reply.set()
-
-    # Set done event to inform waiting callers
-    def handle_node_done(self, obj):
-        self.reply.set()
-
-    # Save received result and set run event to inform waiting callers
+    # Save received result and set event to inform waiting callers
     def handle_run_result(self, obj):
         if obj.result:
-            self.running = False
+            self.store_samples = False
             self.run_result = obj.result
+
+            # Send result to connected clients
             self.client.export_result(self.name, self.run_info, obj.result)
         self.reply.set()
 
-    # Save received error and set run event to inform waiting callers
+    # Save received error and set event to inform waiting callers
     def handle_run_error(self, obj):
         self.run_error = True
         print("Run failed on {0}: {1}".format(self.name, obj.error))
         self.reply.set()
 
+    # Tell node to clean up after test run
+    def finish_run(self):
+        self.store_samples = False
+        self.reply.clear()
+        interface.send_node(self.socket, interface.FINISH_RUN)
+
+    # Set event to inform waiting callers
+    def handle_finish_done(self, obj):
+        self.reply.set()
+
     # Save received measurement sample for later extraction
     def handle_sample(self, obj):
         # Only store sample if a test is running
-        if self.running:
+        if self.store_samples:
             self.samples.append(obj.sample)
+
+        # Send sample to connected clients
         self.client.export_sample(self.name, obj.sample)
 
     # Be verbose about sampling errors that not necessarily ruins the run result
     def handle_sample_error(self, obj):
+        self.run_error = True
         print("Sampling failed at {0}: {1}".format(self.name, obj.error))
-
-    # Be verbose about errors occurring during while configuring the node
-    def handle_setup_error(self, obj):
-        print("Setup failed at {0}: {1}".format(self.name, obj.error))

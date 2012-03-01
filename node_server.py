@@ -106,7 +106,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             self.tester_clients.append(client)
 
         # Report back to controller that we are ready
-        self.report(interface.node(interface.NODE_READY))
+        self.report(interface.node(interface.PREPARE_DONE))
 
     def start_run(self, obj):
         print("Start run")
@@ -128,7 +128,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             self.tester_server.kill()
 
         # Report back to controller that we are done
-        self.report(interface.node(interface.NODE_DONE))
+        self.report(interface.node(interface.FINISH_DONE))
 
 
     # Thread safe sender function

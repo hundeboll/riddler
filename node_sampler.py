@@ -42,6 +42,8 @@ class sampler(threading.Thread):
             delay = self.run_info['sample_interval'] - (time.time() - start)
             if delay > 0:
                 time.sleep(delay)
+            else:
+                self.report_error("Missed deadline with {} seconds".format(delay*-1)
 
     # Stop the sampler thread
     def stop(self):
@@ -63,6 +65,7 @@ class sampler(threading.Thread):
 
     # Send an error to the controller
     def report_error(self, error):
+        print(error)
         obj = interface.node(interface.SAMPLE_ERROR, error = error)
         self.controller.report(obj)
 

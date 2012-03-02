@@ -3,104 +3,138 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-import matplotlib.animation as animation
+from matplotlib.backends import backend_pdf
+from matplotlib import _png
 
-class checkbox:
-    def __init__(self, handle, name):
-        self.name = name
-        self.handle = handle
-        self.cb = QCheckBox(name)
-        self.cb.toggle()
-        self.cb.stateChanged.connect(self.state_changed)
-
-    def state_changed(self, num):
-        print(self.name)
-        if self.cb.isChecked():
-            self.handle.canvas.show()
-            self.handle.update_lines()
-            self.handle.canvas.draw()
-        else:
-            self.handle.canvas.hide()
-
-class plot_selector(QWidget):
+class toolbar(QToolBar):
     def __init__(self, parent=None):
-        super(plot_selector, self).__init__(parent)
-        self.checkboxes = []
-        self.locs = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4),
-                     (1, 0), (1, 1), (1, 2), (1, 3), (1, 4),
-                     (2, 0), (2, 1), (2, 2), (2, 3), (2, 4),
-                     (3, 0), (3, 1), (3, 2), (3, 3), (3, 4),
-                     (4, 0), (4, 1), (4, 2), (4, 3), (4, 4)]
+        super(toolbar, self).__init__(parent)
+        self.hide()
+        self.plots = {}
+        self.add_menus()
 
-        self.layout = QGridLayout()
+    def add_menus(self):
+        # Save-menu
+        self.save_menu = self.add_menu('Save', 'document-save')
+        self.save_menu.addAction("All Visible", self.save_all)
+        self.save_menu.addSeparator()
+
+        # Pause-menu
+        self.pause_menu = self.add_menu('Pause', 'media-playback-pause')
+
+        # View-menu
+        self.view_menu = self.add_menu('View', 'edit-find')
+        p = self.view_menu.addAction("All Visible", self.pause_all)
+        p.setCheckable(True)
+        self.view_menu.addSeparator()
+
+
+    def add_menu(self, text, icon):
+        menu = QMenu(self)
+        button = QToolButton(self)
+        button.setIcon(QIcon.fromTheme(icon))
+        button.setText(text)
+        button.setMenu(menu)
+        button.setPopupMode(QToolButton.InstantPopup)
+        button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.addWidget(button)
+        return menu
+
+    def add_plot(self, plot):
+        self.plots[plot.name] = plot
+        self.save_menu.addAction(plot.title, plot.save_plot)
+        v = self.view_menu.addAction(plot.title, plot.toggle_hide)
+        p = self.pause_menu.addAction(plot.title, plot.toggle_pause)
+
+        v.setCheckable(True)
+        v.setChecked(True)
+        p.setCheckable(True)
+
+    def save_all(self):
+        self.pause_all(True)
+        folder = QFileDialog.getExistingDirectory(self, "Save plots as files")
+        if not folder:
+            self.pause_all(False)
+            return
+
+        for plot in self.plots.values():
+            if not plot.isHidden():
+                filename = "{}/{}.pdf".format(folder, plot.name)
+                plot.save_file(filename, 'pdf')
+        self.pause_all(False)
+
+    def pause_all(self, b=None):
+        for plot in self.plots.values():
+            plot.toggle_pause(b)
+
+
+class live_plot(QGroupBox):
+    def __init__(self, name, title, ylabel, ylim=None, scale=1.1, parent=None):
+        super(live_plot, self).__init__(title, parent)
+        self.name = name
+        self.title = title
+        self.pause = False
+        self.lines = {}
+        self.data = {}
+        self.scale = scale
+        self.bg = None
+
+        self.layout = QHBoxLayout()
+        self.add_fig(title, ylabel, ylim, scale)
         self.setLayout(self.layout)
 
-    def add_plot(self, handle, name):
-        cb = checkbox(handle, name)
-        self.checkboxes.append(cb)
-        loc = self.locs.pop(0)
-        self.layout.addWidget(cb.cb, loc[0], loc[1])
+        self.timer = QTimer()
 
-class live_plot(QObject):
-    def __init__(self, title, ylabel, ylim=None, scale=1.1):
-        super(live_plot, self).__init__(parent=None)
-        plot = {}
-        self.x_window = 60
-        self.x = range(self.x_window)
-        self.fig = Figure()
-        self.ax = self.fig.add_axes([0.20, 0.1, 0.75, 0.75])
-        self.ax.set_title(title)
+    def on_draw(self, event):
+        self.bg = self.canvas.copy_from_bbox(self.ax.bbox)
+
+    def add_fig(self, title, ylabel, ylim=None, scale=1.1):
+        c = self.parent().palette().button().color()
+        self.fig = Figure(facecolor=(c.redF(), c.greenF(), c.blueF()), edgecolor=(0,0,0))
+        self.ax = self.fig.add_axes([0.15, 0.1, 0.75, 0.75])
         self.ax.set_ylabel(ylabel)
         if ylim: self.ax.set_ylim(0,ylim)
         self.ax.grid(True)
         self.ax.xaxis.set_ticks([])
         self.canvas = FigureCanvas(self.fig)
-        self.lines = {}
-        self.data = {}
         self.canvas.mpl_connect('draw_event', self.on_draw)
-        self.scale = scale
-        self.bg = None
-        self.canvas.draw()
+        self.layout.addWidget(self.canvas, 10)
 
-        self.startTimer(self.x_window/4 * 1000) # Every quarter window size
-
-    def timerEvent(self, event):
-        self.scale_y(new_max=None, force=True)
-
-    def on_draw(self, event):
-        self.bg = self.canvas.copy_from_bbox(self.fig.bbox)
+    def add_node(self, node):
+        self.lines[node], = self.ax.plot([0], [0], label=node.title(), animated=True)
 
     def update_lines(self):
         if not self.bg:
             return
+        if self.pause:
+            return
 
         self.canvas.restore_region(self.bg)
-        self.ax.set_xlim(0, self.x_window)
         for node in self.data:
-            y = self.data[node]
-            self.lines[node].set_data(self.x, y)
+            x,y = self.data[node]
+            self.ax.set_xlim(x[0], x[-1])
+            self.lines[node].set_data(x, y)
             self.ax.draw_artist(self.lines[node])
 
         self.canvas.blit(self.ax.bbox)
 
-    def update_data(self, node, y):
-        self.data[node] = y
-        self.scale_y(new_max=max(y))
+    def update_data(self, node, x, y):
+        self.data[node] = (x, y)
+        self.rescale(max(y))
 
-    def add_node(self, node):
-        self.lines[node], = self.ax.plot([], [], label=node.title(), animated=True)
-
-    def scale_y(self, new_max, force=False):
+    def rescale(self, new_max):
         if not self.scale:
             return
         if not self.ax._cachedRenderer:
             return
+        if self.pause:
+            return
 
+        # Read minimum (d) and maximum (max_view) from plot
+        d,max_view = self.ax.get_ybound()
+        current_max = self.current_max()
 
-        # Read minimum (d) and maximum (old_max) from plot
-        d,current_max = self.ax.get_ybound()
-
-        if force or new_max > current_max:
+        if new_max > max_view or (max_view > 10 and current_max*2 < max_view):
             # Scale axes if new maximum has arrived
             self.ax.relim()
             self.ax.autoscale_view(scalex=False)
@@ -108,49 +142,131 @@ class live_plot(QObject):
             self.update_lines()
             self.canvas.draw()
 
+    def current_max(self):
+        current_max = 0
+        for line in self.lines.values():
+            m = max(line.get_ydata())
+            current_max = m if m > current_max else current_max
+        return current_max
+
+    def set_animated(self, b):
+        # Make sure we get animated elements
+        for (node,line) in self.lines.items():
+            line.set_animated(b)
+
+    def save_plot(self):
+        self.toggle_pause(True)
+        filename,ext = QFileDialog.getSaveFileName(self,
+                "Save plot as file",
+                "",
+                "Portable Document File (*.pdf);;Portable Network Graphics (*.png)")
+        if filename and 'png' in ext:
+            print("Saving PNG file to {}".format(filename))
+            fmt = 'png'
+        elif filename and 'pdf' in ext:
+            print("Saving PDF file to {}".format(filename))
+            fmt = 'pdf'
+        else:
+            self.resume()
+            return
+
+        self.save_file(filename, fmt)
+        self.toggle_pause(False)
+
+    def save_file(self, filename, fmt):
+        if not filename:
+            return
+
+        self.set_animated(False)
+        self.ax.set_title(self.title)
+        self.fig.savefig(filename, format=fmt, transparent=True, bbox_inches='tight')
+        self.ax.set_title("")
+        self.set_animated(True)
+
+    def toggle_hide(self):
+        if self.isVisible():
+            self.hide()
+        else:
+            self.show()
+            self.timer.singleShot(100, self.canvas.draw)
+
+    def toggle_pause(self, b=None):
+        if b == None:
+            print("b == None")
+            self.pause = False if self.pause else True
+        else:
+            print("Pause {}: {}".format(self.name, b))
+            self.pause = b
 
 class monitor_gui(QWidget):
     add_node = Signal(str)
-    update_data = Signal(str, str, list)
+    update_data = Signal(str, str, list, list)
 
     def __init__(self, parent=None):
         super(monitor_gui, self).__init__(parent)
-        self.plots = {}
-        self.selector = plot_selector(self)
-        self.add_fig('tx', "TX Rate", "Rate [kbit/s]")
-        self.add_fig('rx', "RX Rate", "Rate [kbit/s]")
-        self.add_fig('ip tx', "IP TX Rate", "Rate [kbit/s]")
-        self.add_fig('ip rx', "IP RX Rate", "Rate [kbit/s]")
-        self.add_fig('cpu', "CPU Usage", "Usage [%]", ylim=100, scale=False)
-        self.add_fig('coded', "Coded Packets", "Ratio [%]", ylim=1.05, scale=False)
-        self.add_fig('power', "Power Consumption", "Usage [W]")
+        self.toolbar = toolbar(self)
         self.add_legend()
+        self.do_layout(2)
+        self.plots = {}
+        self.add_fig('iw tx bytes', "TX Rate",           "Rate [kbit/s]")
+        self.add_fig('iw rx bytes', "RX Rate",           "Rate [kbit/s]")
+        self.add_fig('ip_tx_bytes', "IP TX Rate",        "Rate [kbit/s]")
+        self.add_fig('ip_rx_bytes', "IP RX Rate",        "Rate [kbit/s]")
+        self.add_fig('cpu',         "CPU Usage",         "Usage [%]", ylim=105, scale=False)
+        self.add_fig('coded',       "Coded Packets",     "Ratio [%]", ylim=1.05, scale=False)
+        self.add_fig('power',       "Power Consumption", "Usage [W]")
+
 
         self.add_node.connect(self._add_node)
         self.update_data.connect(self._update_data)
 
-        layout = QGridLayout()
-        layout.addWidget(self.selector, 0, 0, 1, 2)
-        layout.addWidget(self.legend['canvas'], 1, 0, 1, 2, Qt.AlignTop)
-        layout.addWidget(self.plots['tx'].canvas, 2, 0)
-        layout.addWidget(self.plots['rx'].canvas, 2, 1)
-        layout.addWidget(self.plots['ip tx'].canvas, 3, 0)
-        layout.addWidget(self.plots['ip rx'].canvas, 3, 1)
-        layout.addWidget(self.plots['cpu'].canvas, 4, 0)
-        layout.addWidget(self.plots['coded'].canvas, 4, 1)
-        layout.addWidget(self.plots['power'].canvas, 5, 0)
-        layout.setRowMinimumHeight(0, 30)
-        layout.setRowMinimumHeight(1, 40)
-        layout.setRowStretch(0, 0)
-        layout.setRowStretch(1, 1)
-        layout.setRowStretch(2, 0)
-        layout.setRowStretch(3, 0)
-        layout.setRowStretch(4, 0)
-        layout.setRowStretch(5, 0)
+        self.startTimer(1000)
+
+    def showEvent(self, event):
+        # Switch our toolbar
+        self.toolbar.show()
+
+        # Force plots to draw axes when tab becomes visible
+        for (name,plot) in self.plots.items():
+            plot.timer.singleShot(10, plot.canvas.draw)
+
+    def hideEvent(self, event):
+        self.toolbar.hide()
+
+    def do_layout(self, column_num):
+        self.column_num = column_num
+        self.next_column = 0
+        self.columns = []
+        for i in range(column_num):
+            self.columns.append(QSplitter(Qt.Vertical))
+
+        splitter = QSplitter(Qt.Horizontal)
+        for column in self.columns:
+            splitter.addWidget(column)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.toolbar)
+        layout.addWidget(self.legend['canvas'])
+        layout.addWidget(splitter, 1)
         self.setLayout(layout)
 
-        self.timer = self.startTimer(1000)
+    def add_plot_to_column(self, handle):
+        self.columns[self.next_column%self.column_num].addWidget(handle)
+        self.next_column += 1
 
+    def add_fig(self, name, title, ylabel, ylim=None, scale=1.1):
+        plot = live_plot(name, title, ylabel, ylim, scale, parent=self)
+        self.toolbar.add_plot(plot)
+        self.plots[name] = plot
+        self.add_plot_to_column(plot)
+
+    def add_legend(self):
+        c = self.palette().button().color()
+        legend = {}
+        legend['fig'] = Figure(facecolor=(c.redF(), c.greenF(), c.blueF()), edgecolor=(0,0,0), figsize=(3,2))
+        legend['canvas'] = FigureCanvas(legend['fig'])
+        legend['canvas'].setFixedHeight(40)
+        self.legend = legend
 
     def timerEvent(self, time):
         for key in self.plots:
@@ -164,22 +280,9 @@ class monitor_gui(QWidget):
         self.legend['fig'].legend(handles, labels, ncol=5, loc='upper center')
         self.legend['canvas'].draw()
 
-    @Slot(str, str, list)
-    def _update_data(self, plot, node, y):
-        self.plots[plot].update_data(node, y)
-
-    def add_fig(self, name, title, ylabel, ylim=None, scale=1.1):
-        plot = live_plot(title, ylabel, ylim, scale)
-        self.selector.add_plot(plot, name)
-        self.plots[name] = plot
-
-    def add_legend(self):
-        legend = {}
-        legend['fig'] = Figure(figsize=(3,2))
-        legend['canvas'] = FigureCanvas(legend['fig'])
-        self.legend = legend
-
-
+    @Slot(str, str, list, list)
+    def _update_data(self, plot, node, x, y):
+        self.plots[plot].update_data(node, x, y)
 
 class monitor:
     def __init__(self, parent=None):
@@ -188,62 +291,60 @@ class monitor:
         self.timestamps = {}
         self.start_time = time.time()
 
-        self.cpu_y = {}
+        self.vals = {}
         self.bytes = {}
         self.bytes_last = {}
-        self.tx_y = {}
-        self.rx_y = {}
-        self.tx_last = {}
-        self.rx_last = {}
         self.ratio = {}
         self.coded_last = {}
         self.fwd_last = {}
-        self.fwd_last = {}
 
     def add_node(self, node):
-        self.timestamps[node] = [0]*60
-        self.cpu_y[node] = [0]*60
+        self.timestamps[node] = None
+        self.vals[node] = {}
         self.bytes[node] = {}
         self.bytes_last[node] = {}
-        self.tx_last[node] = 0
-        self.tx_y[node] = [0]*60
-        self.rx_last[node] = 0
-        self.rx_y[node] = [0]*60
         self.ratio[node] = [0]*60
         self.coded_last[node] = 0
         self.fwd_last[node] = 0
         self.gui.add_node.emit(node)
 
+
     def add_sample(self, node, sample):
-        self.timestamps[node].pop(0)
-        self.timestamps[node].append(sample['timestamp'] - self.start_time)
+        self.add_timestamp(node, sample['timestamp'])
 
-        if sample.has_key('cpu'):
-            self.add_cpu(node, sample['cpu'])
-        if sample.has_key('iw tx bytes'):
-            self.add_tx(node, sample['iw tx bytes'])
-        if sample.has_key('iw rx bytes'):
-            self.add_rx(node, sample['iw rx bytes'])
-        if sample.has_key('nc Coded') and sample.has_key('nc Forwarded'):
-            self.add_coded(node, sample['nc Coded'], sample['nc Forwarded'])
-        if sample.has_key('ip_rx_bytes'):
-            self.add_bytes('ip rx', node, sample['ip_rx_bytes'])
-        if sample.has_key('ip_tx_bytes'):
-            self.add_bytes('ip tx', node, sample['ip_tx_bytes'])
+        self.add_val('cpu', node, sample)
+        self.add_val('power', node, sample)
+        self.add_coded(node, sample)
+        self.add_bytes('iw rx bytes', node, sample)
+        self.add_bytes('iw tx bytes', node, sample)
+        self.add_bytes('ip_rx_bytes', node, sample)
+        self.add_bytes('ip_tx_bytes', node, sample)
 
-    def add_cpu(self, node, cpu):
-        self.cpu_y[node].pop(0)
-        self.cpu_y[node].append(cpu)
-        self.gui.update_data.emit('cpu', node, self.cpu_y[node])
+    def add_timestamp(self, node, timestamp):
+        if self.timestamps[node]:
+            # Just add new timestamp to ringbuffer
+            self.timestamps[node].pop(0)
+            self.timestamps[node].append(timestamp - self.start_time)
+            return
 
-    def add_power(self, node, power):
-        self.power_y[node].pop(0)
-        self.power_y[node].append(0)
-        self.gui.update_data.emit('power', node, self.power_y[node])
+        # Initialize timestamps from first sample
+        rel_time = int(timestamp - self.start_time)
+        times = range(rel_time - 60, rel_time)
+        self.timestamps[node] = times
 
-    def add_bytes(self, name, node, this_bytes):
+    def add_val(self, name, node, sample):
+        if name not in self.vals[node]:
+            self.vals[node][name] = [0]*60
+
+        val = sample.get(name, 0)
+        self.vals[node][name].pop(0)
+        self.vals[node][name].append(val)
+        self.gui.update_data.emit(name, node, self.timestamps[node], self.vals[node][name])
+
+    def add_bytes(self, name, node, sample):
+        this_bytes = sample.get(name, 0)
         this_bytes = this_bytes*8 / 1024
-        if not self.bytes_last[node].has_key(name):
+        if name not in self.bytes_last[node]:
             self.bytes_last[node][name] = this_bytes
             self.bytes[node][name] = [0]*60
             return
@@ -254,39 +355,11 @@ class monitor:
         self.bytes_last[node][name] = this_bytes
         self.bytes[node][name].pop(0)
         self.bytes[node][name].append(bytes)
-        self.gui.update_data.emit(name, node, self.bytes[node][name])
+        self.gui.update_data.emit(name, node, self.timestamps[node], self.bytes[node][name])
 
-    def add_tx(self, node, this_tx):
-        this_tx = this_tx*8 / 1024
-        if not self.tx_last[node]:
-            self.tx_last[node] = this_tx
-            return
-
-        this_time = self.timestamps[node][-1]
-        last_time = self.timestamps[node][-2]
-        tx = (this_tx - self.tx_last[node]) / (this_time - last_time)
-        self.tx_last[node] = this_tx
-        self.tx_y[node].pop(0)
-        self.tx_y[node].append(tx)
-        self.gui.update_data.emit('tx', node, self.tx_y[node])
-
-    def add_rx(self, node, this_rx):
-        this_rx = this_rx*8 / 1024
-        if not self.rx_last[node]:
-            self.rx_last[node] = this_rx
-            return
-
-        this_time = self.timestamps[node][-1]
-        last_time = self.timestamps[node][-2]
-        rx = (this_rx - self.rx_last[node]) / (this_time - last_time)
-        self.rx_last[node] = this_rx
-        self.rx_y[node].pop(0)
-        self.rx_y[node].append(rx)
-        self.gui.update_data.emit('rx', node, self.rx_y[node])
-
-    def add_coded(self, node, coded, fwd):
-        if not coded:
-            return
+    def add_coded(self, node, sample):
+        coded = sample.get('nc Coded', 0)
+        fwd = sample.get('nc Forwarded', 0)
 
         # Initialize last sample
         if not self.coded_last[node]:
@@ -298,7 +371,7 @@ class monitor:
         this_coded = coded - self.coded_last[node]
         this_fwd = fwd - self.fwd_last[node]
         this_total = this_coded + this_fwd
-        this_ratio = this_coded/float(this_total) if this_total else 0
+        this_ratio = 0 if not this_total else this_coded/float(this_total)
 
         # Save values for use in next calculation
         self.coded_last[node] = coded
@@ -307,4 +380,4 @@ class monitor:
         # Update plot data
         self.ratio[node].pop(0)
         self.ratio[node].append(this_ratio)
-        self.gui.update_data.emit('coded', node, self.ratio[node])
+        self.gui.update_data.emit('coded', node, self.timestamps[node], self.ratio[node])

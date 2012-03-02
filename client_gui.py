@@ -23,22 +23,23 @@ class main_window(QMainWindow):
         self.live_monitor = live_monitor.monitor(parent=self)
         self.control = control.control(parent=self)
 
+        menu = self.menuBar().addMenu("File")
+        status = self.statusBar()
+
+        self.addToolBar(self.control.toolbar)
+        self.addToolBar(self.live_monitor.gui.toolbar)
+        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+
         tabs = QTabWidget()
-        tabs.addTab(self.control.gui, self.tr("Control"))
+        tabs.addTab(self.control, self.tr("Control"))
         tabs.addTab(self.live_monitor.gui, self.tr("Live Monitor"))
         tabs.addTab(self.test_monitor.gui, self.tr("Test Monitor"))
-
-        vbox = QVBoxLayout()
-        vbox.addWidget(tabs)
-
-        widget = QWidget()
-        widget.setLayout(vbox)
-        self.setCentralWidget(widget)
+        #tabs.setCurrentWidget(self.live_monitor.gui)
+        tabs.setTabPosition(QTabWidget.West)
+        self.setCentralWidget(tabs)
 
         self.setMinimumSize(160,160)
         self.resize(1024,768)
-        #self.setMinimumSize(1024,768)
-        #self.resize(1024,768)
         self.show()
 
 

@@ -255,8 +255,6 @@ class controller(threading.Thread):
 
     # Perform a run on each node
     def exec_node(self):
-        ret = True
-
         # Start it
         for node in self.nodes:
             node.start_run()
@@ -265,6 +263,10 @@ class controller(threading.Thread):
         for node in self.nodes:
             # Check if an error occurred in the run
             if node.wait():
+                self.error = True
+
+            # Check if the node has sent samples
+            if not node.get_samples():
                 self.error = True
 
     # Tell the nodes to clean up and wait for them to report back

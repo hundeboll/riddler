@@ -21,12 +21,12 @@ class toolbar(QToolBar):
 
         # Pause-menu
         self.pause_menu = self.add_menu('Pause', 'media-playback-pause')
+        p = self.pause_menu.addAction("All Visible", self.pause_all)
+        p.setCheckable(True)
+        self.pause_menu.addSeparator()
 
         # View-menu
         self.view_menu = self.add_menu('View', 'edit-find')
-        p = self.view_menu.addAction("All Visible", self.pause_all)
-        p.setCheckable(True)
-        self.view_menu.addSeparator()
 
 
     def add_menu(self, text, icon):

@@ -1,52 +1,184 @@
+from os import path
+import cPickle as pickle
 import time
 from PySide.QtCore import *
 from PySide.QtGui import *
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+import client_socket as socket
+
+class add_connection(QDialog):
+    def __init__(self, callback, parent=None):
+        super(add_connection, self).__init__(parent)
+        self.callback = callback
+        self.do_layout()
+
+    def do_layout(self):
+        # Name for connection
+        self.name_field = QLineEdit()
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(QLabel("Name:"))
+        self.layout.addWidget(self.name_field)
+
+        # Hostname
+        self.host_field = QLineEdit()
+        host_box = QVBoxLayout()
+        host_box.addWidget(QLabel("Host:"))
+        host_box.addWidget(self.host_field)
+
+        # Port number
+        self.port_field = QLineEdit()
+        self.port_field.setMaximumWidth(50)
+        port_box = QVBoxLayout()
+        port_box.addWidget(QLabel("Port:"))
+        port_box.addWidget(self.port_field)
+
+        # Add host and port
+        host_port_box = QHBoxLayout()
+        host_port_box.addLayout(host_box)
+        host_port_box.addLayout(port_box)
+        self.layout.addLayout(host_port_box)
+
+        # Save connection
+        self.save_checkbox = QCheckBox()
+        self.save_checkbox.stateChanged.connect(self.save_changed)
+        save_box = QHBoxLayout()
+        save_box.addWidget(QLabel("Save connection:"))
+        save_box.addWidget(self.save_checkbox)
+        self.layout.addLayout(save_box)
+
+        # Auto connection
+        self.auto_checkbox = QCheckBox()
+        self.auto_checkbox.setEnabled(False)
+        auto_box = QHBoxLayout()
+        auto_box.addWidget(QLabel("Auto connect on start:"))
+        auto_box.addWidget(self.auto_checkbox)
+        self.layout.addLayout(auto_box)
+
+        # OK and Cancel buttons
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.layout.addSpacing(10)
+        self.layout.addWidget(self.button_box)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.close)
+
+        self.setLayout(self.layout)
+
+    def save_changed(self, b):
+        self.auto_checkbox.setEnabled(b)
+        if not b:
+            self.auto_checkbox.setChecked(False)
+
+    def accept(self):
+        conn = {}
+        conn['name'] = self.name_field.text()
+        conn['host'] = self.host_field.text()
+        conn['port'] = self.port_field.text()
+        conn['auto'] = self.auto_checkbox.isChecked()
+
+        save = self.save_checkbox.isChecked()
+        self.close()
+        self.callback(conn, save)
+
+
 
 class toolbar(QToolBar):
     def __init__(self, parent=None):
         super(toolbar, self).__init__(parent)
+        self.path = 'connections.pickle'
+        self.sockets = []
         self.hide()
         self.add_actions()
+        self.load_connections()
         self.testing = False
 
+    def add_menu(self, text, icon):
+        menu = QMenu(self)
+        button = QToolButton(self)
+        button.setIcon(QIcon.fromTheme(icon))
+        button.setText(text)
+        button.setMenu(menu)
+        button.setPopupMode(QToolButton.InstantPopup)
+        button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.addWidget(button)
+        return menu
+
     def add_actions(self):
-        self.connect_action = self.addAction(QIcon.fromTheme("network-wired"), "Connect")
-        self.connect_action.toggled.connect(self.connect)
-        self.connect_action.setCheckable(True)
+        # Connect menu
+        self.connect_menu = self.add_menu("Connect", "network-wired")
+        self.connect_action = self.connect_menu.addAction("New Connection", self.new_connection)
 
-        self.toggle_action = self.addAction(QIcon.fromTheme("media-playback-start"), "Start")
-        self.toggle_action.triggered.connect(self.toggle_test)
-        self.toggle_action.setEnabled(False)
+        # Start button
+        self.start_action = self.addAction(QIcon.fromTheme("media-playback-start"), "Start")
+        self.start_action.triggered.connect(self.start_test)
+        self.start_action.setEnabled(False)
 
+        # Stop button
+        self.stop_action = self.addAction(QIcon.fromTheme("media-playback-stop"), "Stop")
+        self.stop_action.triggered.connect(self.stop_test)
+        self.stop_action.setEnabled(False)
+
+        # Pause button
         self.pause_action = self.addAction(QIcon.fromTheme("media-playback-pause"), "Pause")
         self.pause_action.toggled.connect(self.pause)
         self.pause_action.setCheckable(True)
         self.pause_action.setEnabled(False)
 
+        # Recover button
         self.recover_action = self.addAction(QIcon.fromTheme("edit-redo"), "Recover")
         self.recover_action.triggered.connect(self.recover)
         self.recover_action.setEnabled(False)
 
+        # Save button
         self.save_action = self.addAction(QIcon.fromTheme("document-save"), "Save Data")
         self.save_action.triggered.connect(self.save)
         self.save_action.setEnabled(False)
 
-    @Slot(int)
-    def connect(self, b):
+    def load_connection(self, conn):
+        # Create socket object
+        self.connect_menu.addAction(conn['name'])
+
+    def load_connections(self):
+        if not path.exists(self.path):
+            self.connections = []
+        else:
+            self.connections = pickle.load(open(self.path, 'r'))
+
+        if self.connections:
+            self.connect_menu.addSeparator()
+
+        for conn in self.connections:
+            self.load_connection(conn)
+
+    def new_connection(self):
+        self.connect_dialog = add_connection(self.add_connection, self)
+        self.connect_dialog.show()
+
+    def add_connection(self, conn, save):
+        self.load_connection(conn)
+
+        # Make sure we only have one auto connect
+        if save and conn['auto']:
+            for conn in self.connections:
+                conn['auto'] = False
+
+        # Add connection to storage
+        if save:
+            self.connections.append(conn)
+            pickle.dump(self.connections, open(self.path, 'w'), pickle.HIGHEST_PROTOCOL)
+
+    def connect(self):
+        return
         self.toggle_action.setEnabled(b)
         self.pause_action.setEnabled(b)
         self.recover_action.setEnabled(b)
         self.save_action.setEnabled(b)
 
-    def toggle_test(self):
-        self.testing = False if self.testing else True
-        if self.testing:
-            self.toggle_action.setText("Stop")
-            self.toggle_action.setIcon(QIcon.fromTheme("media-playback-stop"))
-        else:
-            self.toggle_action.setText("Start")
-            self.toggle_action.setIcon(QIcon.fromTheme("media-playback-start"))
+    def start_test(self):
+        self.start_action.setEnabled(False)
+        self.stop_action.setEnabled(True)
+
+    def stop_test(self):
+        pass
 
     @Slot(int)
     def pause(self, b):

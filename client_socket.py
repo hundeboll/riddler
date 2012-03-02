@@ -1,25 +1,23 @@
 import threading
 import socket
 import riddler_interface as interface
-import client_gui as gui
 
 class sock(threading.Thread):
-    def __init__(self, args):
+    def __init__(self, name, host, port):
         super(sock, self).__init__(None)
         self.daemon = True
-        self.name = "sock"
-        self.args = args
+        self.name = name
+        self.host = host
+        self.port = port
 
-        self.gui = gui.main_window()
 
         self.socket = None
         self.end = threading.Event()
-        self.connect()
-        self.start()
 
     def connect(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect(('localhost', 6677))
+        self.start()
 
     def run(self):
         while not self.end.is_set():

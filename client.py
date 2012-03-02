@@ -9,11 +9,11 @@ except ImportError:
     print("You need the PySide module to use riddler_client!")
     sys.exit(1)
 
-import client_socket as sock
+import client_gui as gui
 
 class client:
     def __init__(self):
-        self.sock = sock.sock(None)
+        self.gui = gui.main_window()
 
 
 if __name__ == "__main__":

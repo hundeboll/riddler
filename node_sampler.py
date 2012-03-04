@@ -47,6 +47,8 @@ class sampler(threading.Thread):
     # Stop the sampler thread
     def stop(self):
         self.end.set()
+        self.power.stop()
+        self.power.join()
 
     # Get a new configuration
     def set_run_info(self, run_info):

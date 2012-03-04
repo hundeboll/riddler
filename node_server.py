@@ -46,9 +46,11 @@ class tcp_handler(SocketServer.BaseRequestHandler):
     def finish(self):
         for client in self.tester_clients:
             client.kill_client()
+            client.join()
 
         if self.tester_server:
             self.tester_server.kill()
+            self.tester_server.join()
 
         if self.sampler:
             self.sampler.stop()

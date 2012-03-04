@@ -28,6 +28,9 @@ class power(threading.Thread):
         self.name = 'power_meas'
         self.start()
 
+    def stop(self):
+        self.end.set()
+
     # Main function of thread
     def run(self):
         # Main loop while we are not told to end

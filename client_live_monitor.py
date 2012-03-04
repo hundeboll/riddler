@@ -6,11 +6,43 @@ from matplotlib.figure import Figure
 from matplotlib.backends import backend_pdf
 from matplotlib import _png
 
+import riddler_interface as interface
+
+color_cycle = {
+#    "aluminium1":   "#eeeeec",
+#    "aluminium2":   "#d3d7cf",
+#    "aluminium3":   "#babdb6",
+#    "aluminium4":   "#888a85",
+#    "aluminium5":   "#555753",
+#    "aluminium6":   "#2e3436",
+#    "butter1":      "#fce94f",
+#    "butter2":      "#edd400",
+#    "butter3":      "#c4a000",
+#    "chameleon1":   "#8ae234",
+    "chameleon2":   "#73d216",
+#    "chameleon3":   "#4e9a06",
+#    "chocolate1":   "#e9b96e",
+#    "chocolate2":   "#c17d11",
+#    "chocolate3":   "#8f5902",
+#    "orange1":      "#fcaf3e",
+#    "orange2":      "#f57900",
+#    "orange3":      "#ce5c00",
+#    "plum1":        "#ad7fa8",
+#    "plum2":        "#75507b",
+#    "plum3":        "#5c3566",
+#    "scarletred1":  "#ef2929",
+    "scarletred2":  "#cc0000",
+#    "scarletred3":  "#a40000",
+#    "skyblue1":     "#729fcf",
+    "skyblue2":     "#3465a4",
+#    "skyblue3":     "#204a87",
+}
+
 class toolbar(QToolBar):
     def __init__(self, parent=None):
         super(toolbar, self).__init__(parent)
         self.hide()
-        self.plots = {}
+        self.figs = {}
         self.add_menus()
 
     def add_menus(self):
@@ -40,11 +72,11 @@ class toolbar(QToolBar):
         self.addWidget(button)
         return menu
 
-    def add_plot(self, plot):
-        self.plots[plot.name] = plot
-        self.save_menu.addAction(plot.title, plot.save_plot)
-        v = self.view_menu.addAction(plot.title, plot.toggle_hide)
-        p = self.pause_menu.addAction(plot.title, plot.toggle_pause)
+    def add_fig(self, fig):
+        self.figs[fig.name] = fig
+        self.save_menu.addAction(fig.title, fig.save_fig)
+        v = self.view_menu.addAction(fig.title, fig.toggle_hide)
+        p = self.pause_menu.addAction(fig.title, fig.toggle_pause)
 
         v.setCheckable(True)
         v.setChecked(True)
@@ -57,27 +89,24 @@ class toolbar(QToolBar):
             self.pause_all(False)
             return
 
-        for plot in self.plots.values():
-            if not plot.isHidden():
-                filename = "{}/{}.pdf".format(folder, plot.name)
-                plot.save_file(filename, 'pdf')
+        for fig in self.figs.values():
+            if not fig.isHidden():
+                filename = "{}/{}.pdf".format(folder, fig.name)
+                fig.save_file(filename, 'pdf')
         self.pause_all(False)
 
     def pause_all(self, b=None):
-        for plot in self.plots.values():
-            plot.toggle_pause(b)
+        for fig in self.figs.values():
+            fig.toggle_pause(b)
 
 
-class live_plot(QGroupBox):
+class live_fig(QGroupBox):
     def __init__(self, name, title, ylabel, ylim=None, scale=1.1, parent=None):
-        super(live_plot, self).__init__(title, parent)
+        super(live_fig, self).__init__(title, parent)
         self.name = name
         self.title = title
-        self.pause = False
-        self.lines = {}
-        self.data = {}
         self.scale = scale
-        self.bg = None
+        self.clear_data()
 
         self.layout = QHBoxLayout()
         self.add_fig(title, ylabel, ylim, scale)
@@ -96,6 +125,7 @@ class live_plot(QGroupBox):
         if ylim: self.ax.set_ylim(0,ylim)
         self.ax.grid(True)
         self.ax.xaxis.set_ticks([])
+        self.ax.set_color_cycle(color_cycle.values())
         self.canvas = FigureCanvas(self.fig)
         self.canvas.mpl_connect('draw_event', self.on_draw)
         self.layout.addWidget(self.canvas, 10)
@@ -121,6 +151,19 @@ class live_plot(QGroupBox):
     def update_data(self, node, x, y):
         self.data[node] = (x, y)
         self.rescale(max(y))
+
+    def clear_data(self):
+        if hasattr(self, "lines"):
+            # Remove lines from figure and reset color cycle
+            for line in self.lines.values():
+                line.remove()
+            self.ax.set_color_cycle(color_cycle.values())
+
+        # Clear data
+        self.bg = None
+        self.pause = False
+        self.lines = {}
+        self.data = {}
 
     def rescale(self, new_max):
         if not self.scale:
@@ -154,7 +197,7 @@ class live_plot(QGroupBox):
         for (node,line) in self.lines.items():
             line.set_animated(b)
 
-    def save_plot(self):
+    def save_fig(self):
         self.toggle_pause(True)
         filename,ext = QFileDialog.getSaveFileName(self,
                 "Save plot as file",
@@ -192,10 +235,8 @@ class live_plot(QGroupBox):
 
     def toggle_pause(self, b=None):
         if b == None:
-            print("b == None")
-            self.pause = False if self.pause else True
+            self.pause = not self.pause
         else:
-            print("Pause {}: {}".format(self.name, b))
             self.pause = b
 
 class monitor_gui(QWidget):
@@ -207,7 +248,7 @@ class monitor_gui(QWidget):
         self.toolbar = toolbar(self)
         self.add_legend()
         self.do_layout(2)
-        self.plots = {}
+        self.figs = {}
         self.add_fig('iw tx bytes', "TX Rate",           "Rate [kbit/s]")
         self.add_fig('iw rx bytes', "RX Rate",           "Rate [kbit/s]")
         self.add_fig('ip_tx_bytes', "IP TX Rate",        "Rate [kbit/s]")
@@ -226,12 +267,16 @@ class monitor_gui(QWidget):
         # Switch our toolbar
         self.toolbar.show()
 
-        # Force plots to draw axes when tab becomes visible
-        for (name,plot) in self.plots.items():
-            plot.timer.singleShot(10, plot.canvas.draw)
+        # Force fig to draw axes when tab becomes visible
+        for fig in self.figs.values():
+            fig.timer.singleShot(1, fig.canvas.draw)
 
     def hideEvent(self, event):
         self.toolbar.hide()
+
+    def timerEvent(self, time):
+        for fig in self.figs.values():
+            fig.update_lines()
 
     def do_layout(self, column_num):
         self.column_num = column_num
@@ -250,15 +295,15 @@ class monitor_gui(QWidget):
         layout.addWidget(splitter, 1)
         self.setLayout(layout)
 
-    def add_plot_to_column(self, handle):
-        self.columns[self.next_column%self.column_num].addWidget(handle)
+    def add_fig_to_column(self, fig):
+        self.columns[self.next_column%self.column_num].addWidget(fig)
         self.next_column += 1
 
     def add_fig(self, name, title, ylabel, ylim=None, scale=1.1):
-        plot = live_plot(name, title, ylabel, ylim, scale, parent=self)
-        self.toolbar.add_plot(plot)
-        self.plots[name] = plot
-        self.add_plot_to_column(plot)
+        fig = live_fig(name, title, ylabel, ylim, scale, parent=self)
+        self.toolbar.add_fig(fig)
+        self.figs[name] = fig
+        self.add_fig_to_column(fig)
 
     def add_legend(self):
         c = self.palette().button().color()
@@ -268,26 +313,29 @@ class monitor_gui(QWidget):
         legend['canvas'].setFixedHeight(40)
         self.legend = legend
 
-    def timerEvent(self, time):
-        for key in self.plots:
-            self.plots[key].update_lines()
+    def clear_data(self):
+        for fig in self.figs.values():
+            fig.clear_data()
+        self.legend['fig'].clear()
 
     @Slot(str)
     def _add_node(self, node):
-        for key in self.plots:
-            self.plots[key].add_node(node)
-        handles, labels = self.plots[key].ax.get_legend_handles_labels()
+        for fig in self.figs.values():
+            fig.add_node(node)
+        handles, labels = fig.ax.get_legend_handles_labels()
         self.legend['fig'].legend(handles, labels, ncol=5, loc='upper center')
         self.legend['canvas'].draw()
 
     @Slot(str, str, list, list)
-    def _update_data(self, plot, node, x, y):
-        self.plots[plot].update_data(node, x, y)
+    def _update_data(self, name, node, x, y):
+        self.figs[name].update_data(node, x, y)
 
 class monitor:
     def __init__(self, parent=None):
         self.gui = monitor_gui(parent)
+        self.clear_data()
 
+    def clear_data(self):
         self.timestamps = {}
         self.start_time = time.time()
 
@@ -297,6 +345,21 @@ class monitor:
         self.ratio = {}
         self.coded_last = {}
         self.fwd_last = {}
+
+    def add_subscriptions(self, socket):
+        socket.subscribe(self, interface.CLIENT_NODES, self.add_nodes)
+        socket.subscribe(self, interface.CLIENT_SAMPLE, self.add_sample)
+
+    def controller_connected(self):
+        pass
+
+    def controller_disconnected(self):
+        self.clear_data()
+        self.gui.clear_data()
+
+    def add_nodes(self, obj):
+        for node in obj.nodes:
+            self.add_node(node)
 
     def add_node(self, node):
         self.timestamps[node] = None
@@ -309,9 +372,11 @@ class monitor:
         self.gui.add_node.emit(node)
 
 
-    def add_sample(self, node, sample):
-        self.add_timestamp(node, sample['timestamp'])
+    def add_sample(self, obj):
+        node = obj.node
+        sample = obj.sample
 
+        self.add_timestamp(node, sample['timestamp'])
         self.add_val('cpu', node, sample)
         self.add_val('power', node, sample)
         self.add_coded(node, sample)

@@ -5,6 +5,15 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.gridspec as gridspec
 
+class toolbar(QToolBar):
+    def __init__(self, parent=None):
+        super(toolbar, self).__init__(parent)
+        self.hide()
+
+        # Disconnect button
+        self.action = self.addAction(QIcon.fromTheme("go-up"), "Action!")
+        self.action.setEnabled(False)
+
 class monitor_gui(QWidget):
     new_loop = Signal(int)
     update_tp_data = Signal(str, str, list, list)
@@ -12,6 +21,7 @@ class monitor_gui(QWidget):
 
     def __init__(self, parent=None):
         super(monitor_gui, self).__init__(parent)
+        self.toolbar = toolbar(parent)
 
         self.gs = gridspec.GridSpec(2, 2, height_ratios=[0.95, 0.05], width_ratios=[0.02, 0.98])
 
@@ -21,6 +31,12 @@ class monitor_gui(QWidget):
         self.new_loop.connect(self._new_loop)
         self.update_tp_data.connect(self._update_tp_data)
         self.reset_node.connect(self._reset_node)
+
+    def showEvent(self, event):
+        self.toolbar.show()
+
+    def hideEvent(self, event):
+        self.toolbar.hide()
 
     @Slot(int)
     def _new_loop(self, loop):

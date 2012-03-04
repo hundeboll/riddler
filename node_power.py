@@ -26,7 +26,6 @@ class power(threading.Thread):
 
         # Configure and start thread
         self.name = 'power_meas'
-        self.daemon = True
         self.start()
 
     # Main function of thread

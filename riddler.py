@@ -48,6 +48,7 @@ class riddler:
 
         # Start server thread to wait for clients
         self.client = client.client(self.args)
+        self.client.set_riddler(self)
 
         # Load node objects from network config
         self.load_nodes()
@@ -59,6 +60,9 @@ class riddler:
         # Create a data object for results and samples
         self.data = data.data(self.args)
         self.data.add_nodes(self.nodes)
+
+        # Inform clients
+        self.client.export_event(interface.STARTED)
 
         # Start test controller
         print("Starting test controller")
@@ -98,6 +102,9 @@ class riddler:
         print("Stopping test")
         self.controller.stop()
 
+        # Inform clients
+        self.client.export_event(interface.STOPPED)
+
         # Reconnect nodes to free controller
         for node in self.nodes:
             node.reconnect()
@@ -127,7 +134,7 @@ class riddler:
 
         # Add node objects to client server
         for node in self.nodes:
-            self.client.server.nodes.append(node)
+            self.client.export_node(node)
 
     # Start node thread and wait for information from each node
     def start_nodes(self):
@@ -137,10 +144,22 @@ class riddler:
         for node in self.nodes:
             node.wait()
 
+    def set_pause(self, pause):
+        self.controller.set_pause(pause)
+        for node in self.nodes:
+            node.pause()
+        if pause:
+            self.client.export_event(interface.PAUSED)
+        else:
+            self.client.export_event(interface.UNPAUSED)
+
     # Clear the pause event in controller to pause current run
     def toggle_pause(self):
         print("Toggling pause")
-        self.controller.toggle_pause()
+        if self.controller.toggle_pause():
+            self.client.export_event(interface.PAUSED)
+        else:
+            self.client.export_event(interface.UNPAUSED)
         for node in self.nodes:
             node.pause()
 

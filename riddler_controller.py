@@ -13,21 +13,28 @@ class controller(threading.Thread):
         self.recover_timer = None
         self.end = threading.Event()
         self.pause = threading.Event()
-        self.daemon = True
 
     # Stop the controller
     def stop(self):
         # Tell thread to stop
         self.end.set()
 
+    def set_pause(self, pause):
+        if pause:
+            self.pause.clear()
+        else:
+            self.pause.set()
+
     # Toggle the pause event to pause tests
     def toggle_pause(self):
         if self.pause.is_set():
             # Pause: on
             self.pause.clear()
+            return True
         else:
             # Pause: off
             self.pause.set()
+            return False
 
     def run(self):
         self.pause.set()

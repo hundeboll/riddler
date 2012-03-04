@@ -12,6 +12,7 @@ matplotlib.use('Qt4Agg')
 import client_live_monitor as live_monitor
 import client_test_monitor as test_monitor
 import client_control as control
+import riddler_interface as interface
 
 
 class main_window(QMainWindow):
@@ -28,19 +29,43 @@ class main_window(QMainWindow):
 
         self.addToolBar(self.control.toolbar)
         self.addToolBar(self.live_monitor.gui.toolbar)
+        self.addToolBar(self.test_monitor.gui.toolbar)
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
-        tabs = QTabWidget()
-        tabs.addTab(self.control, self.tr("Control"))
-        tabs.addTab(self.live_monitor.gui, self.tr("Live Monitor"))
-        tabs.addTab(self.test_monitor.gui, self.tr("Test Monitor"))
-        #tabs.setCurrentWidget(self.live_monitor.gui)
-        tabs.setTabPosition(QTabWidget.West)
-        self.setCentralWidget(tabs)
+        self.tabs = QTabWidget()
+        self.tabs.addTab(self.control, "Control")
+        self.tabs.addTab(self.live_monitor.gui, "Live Monitor")
+        self.tabs.addTab(self.test_monitor.gui, "Test Monitor")
+        #self.tabs.setCurrentWidget(self.live_monitor.gui)
+        self.tabs.setTabPosition(QTabWidget.West)
+        self.setCentralWidget(self.tabs)
+
+        # Add key bindings to scroll tabs
+        self.ctrl_pgup = QShortcut(QKeySequence("Ctrl+PgUp"), self)
+        self.ctrl_pgup.activated.connect(self.tab_prev)
+        self.ctrl_pgdown = QShortcut(QKeySequence("Ctrl+PgDown"), self)
+        self.ctrl_pgdown.activated.connect(self.tab_next)
+
 
         self.setMinimumSize(160,160)
         self.resize(1024,768)
         self.show()
+
+    def tab_next(self):
+        self.tab_shift(1)
+
+    def tab_prev(self):
+        self.tab_shift(-1)
+
+    def tab_shift(self, i):
+        current = self.tabs.currentIndex()
+        count = self.tabs.count()
+        index = (current + i) % count
+        self.tabs.setCurrentIndex(index)
+
+    def set_socket(self, sock):
+        self.control.set_socket(sock)
+        self.live_monitor.add_subscriptions(sock)
 
 
 if __name__ == "__main__":

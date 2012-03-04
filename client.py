@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
 import sys
+import client_socket as socket
 
 try:
     from PySide.QtCore import *
@@ -13,7 +14,9 @@ import client_gui as gui
 
 class client:
     def __init__(self):
+        self.socket = socket.sock()
         self.gui = gui.main_window()
+        self.gui.set_socket(self.socket)
 
 
 if __name__ == "__main__":

@@ -3,59 +3,100 @@ import socket
 import riddler_interface as interface
 
 class sock(threading.Thread):
-    def __init__(self, name, host, port):
+    def __init__(self):
         super(sock, self).__init__(None)
-        self.daemon = True
-        self.name = name
-        self.host = host
-        self.port = port
-
-
         self.socket = None
-        self.end = threading.Event()
 
-    def connect(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect(('localhost', 6677))
+        # Allow other classes to subscribe to incoming data
+        self.subscriptions = {}
+        self.subscribers = []
+
+        # State handling
+        self.end = threading.Event()
+        self.connected = threading.Event()
+        self.name = "sock"
+        self.lock = threading.Lock()
+        self.daemon = True
         self.start()
+
+    def subscribe(self, caller, data_type, callback):
+        if not data_type in self.subscriptions:
+            self.subscriptions[data_type] = [callback]
+        else:
+            self.subscriptions[data_type].append(callback)
+
+        if caller not in self.subscribers:
+            self.subscribers.append(caller)
+
+    def connect(self, host, port):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.socket.settimeout(.5)
+            self.socket.connect((host, int(port)))
+        except socket.error as e:
+            self.error = e
+            self.socket = None
+            return False
+        else:
+            self.connected.set()
+            self.publish_connect()
+            return True
+
+    def disconnect(self):
+        if self.socket:
+            self.connected.clear()
+            self.socket.close()
+            self.socket = None
+        self.publish_disconnect()
 
     def run(self):
         while not self.end.is_set():
             try:
+                # Wait for GUI to start connection
+                self.connected.wait()
+
+                # Read data from controller
                 obj = interface.recv(self.socket)
                 if obj:
                     self.handle_obj(obj)
                 else:
-                    break
+                    # Connected closed by remote, clean up
+                    self.disconnect()
             except socket.timeout:
                 continue
             except socket.error as e:
-                print("Connection to riddler lost: {0}".format(e))
-                return
+                self.disconnect()
 
     def stop(self):
         self.end.set()
 
     def handle_obj(self, obj):
-        if obj.cmd is interface.CLIENT_NODES:
-            self.handle_nodes(obj)
+        self.publish_data(obj)
 
-        elif obj.cmd is interface.CLIENT_RESULT:
-            self.handle_result(obj)
+    def send(self, cmd, **vals):
+        if not self.socket:
+            return
 
-        elif obj.cmd is interface.CLIENT_SAMPLE:
-            self.handle_sample(obj)
+        self.lock.acquire()
+        interface.send_client(self.socket, cmd, **vals)
+        self.lock.release()
 
-        else:
-            print("Received unknown command: {0}".format(obj.cmd))
+    def publish_data(self, obj):
+        if not obj.cmd in self.subscriptions:
+            # No one is interested in the data
+            return
 
-    def handle_nodes(self, obj):
-        for node in obj.nodes:
-            self.gui.live_monitor.add_node(node)
-            self.gui.test_monitor.add_node(node)
+        # Deliver the object to interested receivers
+        for subscriber in self.subscriptions[obj.cmd]:
+            subscriber(obj)
 
-    def handle_sample(self, obj):
-        self.gui.live_monitor.add_sample(obj.node, obj.sample)
+    def publish_disconnect(self):
+        for subscriber in self.subscribers:
+            subscriber.controller_disconnected()
 
-    def handle_result(self, obj):
-        self.gui.test_monitor.add_result(obj.node, obj.run_info, obj.result)
+    def publish_connect(self):
+        for subscriber in self.subscribers:
+            subscriber.controller_connected()
+
+    def get_error(self):
+        return self.error

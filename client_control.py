@@ -4,7 +4,8 @@ import time
 from PySide.QtCore import *
 from PySide.QtGui import *
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-import client_socket as socket
+
+import riddler_interface as interface
 
 class add_connection(QDialog):
     def __init__(self, callback, parent=None):
@@ -80,16 +81,13 @@ class add_connection(QDialog):
         self.callback(conn, save)
 
 
-
 class toolbar(QToolBar):
     def __init__(self, parent=None):
         super(toolbar, self).__init__(parent)
         self.path = 'connections.pickle'
-        self.sockets = []
-        self.hide()
+        self.socket = None
         self.add_actions()
         self.load_connections()
-        self.testing = False
 
     def add_menu(self, text, icon):
         menu = QMenu(self)
@@ -107,6 +105,11 @@ class toolbar(QToolBar):
         self.connect_menu = self.add_menu("Connect", "network-wired")
         self.connect_action = self.connect_menu.addAction("New Connection", self.new_connection)
 
+        # Disconnect button
+        self.disconnect_action = self.addAction(QIcon.fromTheme("network-offline"), "Disconnect")
+        self.disconnect_action.triggered.connect(self.disconnect)
+        self.disconnect_action.setEnabled(False)
+
         # Start button
         self.start_action = self.addAction(QIcon.fromTheme("media-playback-start"), "Start")
         self.start_action.triggered.connect(self.start_test)
@@ -119,7 +122,7 @@ class toolbar(QToolBar):
 
         # Pause button
         self.pause_action = self.addAction(QIcon.fromTheme("media-playback-pause"), "Pause")
-        self.pause_action.toggled.connect(self.pause)
+        self.pause_action.triggered.connect(self.pause)
         self.pause_action.setCheckable(True)
         self.pause_action.setEnabled(False)
 
@@ -134,8 +137,9 @@ class toolbar(QToolBar):
         self.save_action.setEnabled(False)
 
     def load_connection(self, conn):
-        # Create socket object
-        self.connect_menu.addAction(conn['name'])
+        # Create action with connection data
+        a = self.connect_menu.addAction(conn['name'], self.connect)
+        a.setData(conn)
 
     def load_connections(self):
         if not path.exists(self.path):
@@ -166,29 +170,97 @@ class toolbar(QToolBar):
             self.connections.append(conn)
             pickle.dump(self.connections, open(self.path, 'w'), pickle.HIGHEST_PROTOCOL)
 
-    def connect(self):
-        return
-        self.toggle_action.setEnabled(b)
-        self.pause_action.setEnabled(b)
-        self.recover_action.setEnabled(b)
-        self.save_action.setEnabled(b)
+    def set_socket(self, socket):
+        self.socket = socket
+        for conn in self.connections:
+            if conn['auto']:
+                self.connect(conn)
+
+    def enable_connect(self, b):
+        # Disable further connects until disconnected
+        a = self.connect_menu.menuAction().associatedWidgets()
+        for w in a:
+            w.setEnabled(b)
+
+    def connect(self, conn=None):
+        if not conn:
+            # Read connection data
+            conn = self.sender().data()
+
+        # Connect to controller
+        if self.socket and not self.socket.connect(conn['host'], conn['port']):
+            print(self.socket.get_error())
+            return
+
+    def disconnect(self):
+        if not self.socket:
+            return
+        self.socket.disconnect()
+
+    def add_event(self, event):
+        if event == interface.CONNECTDED:
+            self.enable_connect(False)
+            self.disconnect_action.setEnabled(True)
+            self.start_action.setEnabled(True)
+        elif event == interface.DISCONNECTED:
+            self.enable_connect(True)
+            self.disconnect_action.setEnabled(False)
+            self.start_action.setEnabled(False)
+            self.stop_action.setEnabled(False)
+            self.pause_action.setEnabled(False)
+            self.pause_action.setChecked(False)
+            self.recover_action.setEnabled(False)
+        elif event == interface.STOPPED:
+            self.start_action.setEnabled(True)
+            self.stop_action.setEnabled(False)
+            self.pause_action.setEnabled(False)
+            self.pause_action.setChecked(False)
+            self.recover_action.setEnabled(False)
+        elif event == interface.STARTED:
+            self.start_action.setEnabled(False)
+            self.stop_action.setEnabled(True)
+            self.pause_action.setEnabled(True)
+            self.recover_action.setEnabled(True)
+        elif event == interface.PAUSED:
+            self.add_event(interface.STARTED)
+            self.pause_action.setChecked(True)
+        elif event == interface.UNPAUSED:
+            self.add_event(interface.STARTED)
+        else:
+            print("Received unknown event")
 
     def start_test(self):
-        self.start_action.setEnabled(False)
-        self.stop_action.setEnabled(True)
+        print("Start")
+        if not self.socket:
+            return
+        self.socket.send(interface.CLIENT_EVENT, event=interface.STARTED)
 
     def stop_test(self):
-        pass
+        print("Stop")
+        if not self.socket:
+            return
+        self.socket.send(interface.CLIENT_EVENT, event=interface.STOPPED)
 
-    @Slot(int)
-    def pause(self, b):
-        pass
+    def pause(self):
+        print("Pause")
+        if not self.socket:
+            return
+        if not self.pause_action.isChecked():
+            self.socket.send(interface.CLIENT_EVENT, event=interface.PAUSED)
+        else:
+            self.socket.send(interface.CLIENT_EVENT, event=interface.UNPAUSED)
 
     def recover(self):
-        pass
+        print("Recover")
+        if not self.socket:
+            return
+        self.socket.send(interface.CLIENT_EVENT, event=interface.RECOVERING)
 
     def save(self):
-        pass
+        print("Save")
+        if not self.socket:
+            return
+        self.socket.send(interface.CLIENT_EVENT, event=interface.STARTED)
 
 
 class log(QPlainTextEdit):
@@ -230,6 +302,15 @@ class info(QWidget):
         self.layout.addStretch()
         self.setLayout(self.layout)
 
+    def add_node(self, obj):
+        print(obj.nodes)
+
+    def add_run_info(self, obj):
+        print(obj.run_info['rate'])
+
+    def add_args(self, obj):
+        print(obj.args.test_profile)
+
 
 class control(QWidget):
     def __init__(self, parent=None):
@@ -239,12 +320,6 @@ class control(QWidget):
         self.info = info(self)
         self.do_layout()
 
-    def showEvent(self, event):
-        self.toolbar.show()
-
-    def hideEvent(self, event):
-        self.toolbar.hide()
-
     def do_layout(self):
         self.splitter = QSplitter(Qt.Vertical)
         self.splitter.addWidget(self.info)
@@ -253,3 +328,18 @@ class control(QWidget):
         self.layout.addWidget(self.splitter)
         self.setLayout(self.layout)
 
+    def set_socket(self, socket):
+        socket.subscribe(self, interface.CLIENT_NODES, self.info.add_node)
+        socket.subscribe(self, interface.CLIENT_RUN_INFO, self.info.add_run_info)
+        socket.subscribe(self, interface.CLIENT_ARGS, self.info.add_args)
+        socket.subscribe(self, interface.CLIENT_EVENT, self.add_event)
+        self.toolbar.set_socket(socket)
+
+    def controller_connected(self):
+        self.toolbar.add_event(interface.CONNECTDED)
+
+    def controller_disconnected(self):
+        self.toolbar.add_event(interface.DISCONNECTED)
+
+    def add_event(self, obj):
+        self.toolbar.add_event(obj.event)

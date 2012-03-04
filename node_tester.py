@@ -13,7 +13,6 @@ class client(threading.Thread):
         self.running = False
         self.timer = threading.Timer(run_info['test_time']*2, self.kill_client)
         self.end = threading.Event()
-        self.daemon = True
 
     # Run the specified test in a separate thread
     def run(self):
@@ -141,7 +140,6 @@ class server(threading.Thread):
         self.protocol = protocol
         self.running = False
         self.end = threading.Event()
-        self.daemon = True
         self.start()
 
     # Run a iperf server in a separate thread

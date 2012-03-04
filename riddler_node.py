@@ -24,7 +24,6 @@ class node(threading.Thread):
 
         self.end = threading.Event()
         self.reply = threading.Event()
-        self.daemon = True
 
     # Tell the main loop to stop
     def stop(self):

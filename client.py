@@ -18,11 +18,15 @@ class client:
         self.gui = gui.main_window()
         self.gui.set_socket(self.socket)
 
+    def stop(self):
+        self.socket.stop()
+
 
 if __name__ == "__main__":
     try:
         q = QApplication(sys.argv)
         c = client()
         q.exec_()
+        c.stop()
     except KeyboardInterrupt:
         pass

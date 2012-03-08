@@ -57,6 +57,7 @@ class node(threading.Thread):
                 self.recv()
             except KeyboardInterrupt:
                 # Someone pressed Ctrl-C
+                self.stop()
                 return
             except socket.timeout:
                 # Timed out during connect. Try again

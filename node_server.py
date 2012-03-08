@@ -15,26 +15,30 @@ class server:
         self.server = SocketServer.TCPServer((self.args.host, self.args.port), tcp_handler, bind_and_activate=False)
         self.server.allow_reuse_address = True
         self.server.timeout = 1
+        self.server.running = True
         self.server.args = self.args
         self.server.server_bind()
         self.server.server_activate()
 
     def serve(self):
-        try:
-            self.server.serve_forever()
-        except socket.error as e:
-            print(e)
-            pass
-        except KeyboardInterrupt:
-            self.server.shutdown()
+        while self.server.running:
+            try:
+                self.server.handle_request()
+            except socket.error as e:
+                print(e)
+                continue
+            except KeyboardInterrupt:
+                print("Quit")
+                return
 
     def stop(self):
         if self.server:
-            self.server.shutdown()
+            self.server.running = False
 
 class tcp_handler(SocketServer.BaseRequestHandler):
     # Prepare objects upon a new connection
     def setup(self):
+        self.end = threading.Event()
         self.tester_clients = []
         self.tester_server = None
         self.lock = threading.Lock()
@@ -45,20 +49,26 @@ class tcp_handler(SocketServer.BaseRequestHandler):
     # Stop running threads before connection closes
     def finish(self):
         for client in self.tester_clients:
+            print("Killing client")
             client.kill_client()
-            client.join()
+            if client.is_alive():
+                client.join()
 
         if self.tester_server:
+            print("Killing server")
             self.tester_server.kill()
-            self.tester_server.join()
+            if self.tester_server.is_alive():
+                self.tester_server.join()
 
         if self.sampler:
+            print("Killing sampler")
             self.sampler.stop()
-            self.sampler.join()
+            if self.sampler.is_alive():
+                self.sampler.join()
 
     # Read data from controller
     def handle(self):
-        while True:
+        while not self.end.is_set():
             try:
                 obj = interface.recv(self.request)
                 if not obj:
@@ -68,6 +78,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
                 print("Connection to controller lost: {0}".format(e))
                 break
             except KeyboardInterrupt:
+                self.server.running = False
                 break
 
     # Handle commands/data from controller
@@ -138,6 +149,8 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         self.lock.acquire()
         ret = interface.send(self.request, obj)
         self.lock.release()
+        if not ret:
+            self.end.set()
         return ret
 
     # Send our own information to the controller

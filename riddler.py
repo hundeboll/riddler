@@ -45,6 +45,7 @@ class riddler:
     def __init__(self, args):
         self.args = args
         self.controller = None
+        self.data = None
 
         # Start server thread to wait for clients
         self.client = client.client(self.args)
@@ -115,8 +116,11 @@ class riddler:
     # Stop everything and quit program
     def quit(self):
         print("Quitting. Please wait...")
+        print("Stopping nodes")
         self.stop_nodes()
+        print("Stopping controller")
         self.stop_controller()
+        print("Stopping client")
         self.stop_client()
         sys.exit(0)
 
@@ -141,10 +145,17 @@ class riddler:
         for node in self.nodes:
             node.start()
 
-        for node in self.nodes:
-            node.wait()
+        try:
+            for node in self.nodes:
+                node.wait()
+        except KeyboardInterrupt:
+            print("Quit")
+            self.quit()
 
     def set_pause(self, pause):
+        if not self.controller:
+            return
+
         self.controller.set_pause(pause)
         for node in self.nodes:
             node.pause()
@@ -155,6 +166,9 @@ class riddler:
 
     # Clear the pause event in controller to pause current run
     def toggle_pause(self):
+        if not self.controller:
+            return
+
         print("Toggling pause")
         if self.controller.toggle_pause():
             self.client.export_event(interface.PAUSED)
@@ -165,10 +179,14 @@ class riddler:
 
     # Recover by reconnecting nodes
     def recover(self):
+        if not self.controller:
+            return
         print("Recovering")
         self.controller.recover()
 
     def save_data(self):
+        if not self.data:
+            return
         # Read filename form console
         path = raw_input("Filename: (Hit enter for '{0}')\n".format(self.args.data_file))
 
@@ -195,9 +213,10 @@ def print_help():
 
 if __name__ == "__main__":
     r = riddler(args)
-    print_help()
+
     try:
-        while True:
+        print_help()
+        while r:
 
             # Get a key from user
             c = interface.get_keypress()

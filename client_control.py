@@ -245,7 +245,7 @@ class toolbar(QToolBar):
         print("Pause")
         if not self.socket:
             return
-        if not self.pause_action.isChecked():
+        if self.pause_action.isChecked():
             self.socket.send(interface.CLIENT_EVENT, event=interface.PAUSED)
         else:
             self.socket.send(interface.CLIENT_EVENT, event=interface.UNPAUSED)

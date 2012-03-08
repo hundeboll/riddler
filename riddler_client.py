@@ -11,7 +11,7 @@ class client(threading.Thread):
         # Start listening threaded TCP server and wait for clients
         self.server = ThreadedTCPServer((args.client_host, args.client_port), tcp_handler, bind_and_activate=False)
         self.server.allow_reuse_address = True
-        self.server.timeout = .1
+        self.server.timeout = .5
         self.server.server_bind()
         self.server.server_activate()
         self.server.args = args
@@ -23,7 +23,11 @@ class client(threading.Thread):
 
     # Stop the TCP server
     def stop(self):
+        for client in self.server.clients:
+            client.stop()
+
         if self.server:
+            print("Stopping server")
             self.server.shutdown()
 
     # Start the server in a separate thread
@@ -60,6 +64,7 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 class tcp_handler(SocketServer.BaseRequestHandler):
     # Prepare the class for a new connection
     def setup(self):
+        self.end = threading.Event()
         self.lock = threading.Lock()
         self.server.clients.append(self)
         self.export_args(self.server.args)
@@ -71,9 +76,13 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         self.server.clients.remove(self)
         self.request.close()
 
+    def stop(self):
+        self.end.set()
+        self.request.close()
+
     def handle(self):
         # self.request is the TCP socket connected to the client
-        while True:
+        while not self.end.is_set():
             try:
                 # We currently don't expect anything from the client
                 obj = interface.recv(self.request)
@@ -93,7 +102,6 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             print("Received unknown command")
 
     def handle_event(self, event):
-        print("Received event: {}".format(event))
         if event == interface.STARTED:
             self.server.riddler.start()
         elif event == interface.STOPPED:
@@ -105,7 +113,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         elif event == interface.RECOVERING:
             self.server.riddler.recover()
         else:
-            print("Received unknown event")
+            print("Received unknown event: {}".format(event))
 
 
     def send(self, cmd, **vals):
@@ -131,4 +139,3 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     def export_event(self, event):
         self.send(interface.CLIENT_EVENT, event=event)
-        print("Sent event: {}".format(event))

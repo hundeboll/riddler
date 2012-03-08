@@ -255,6 +255,7 @@ class monitor_gui(QWidget):
         self.add_fig('ip_rx_bytes', "IP RX Rate",        "Rate [kbit/s]")
         self.add_fig('cpu',         "CPU Usage",         "Usage [%]", ylim=105, scale=False)
         self.add_fig('coded',       "Coded Packets",     "Ratio [%]", ylim=1.05, scale=False)
+        self.add_fig('nc Failed',   "Packets Failed to Decode", "Packets")
         self.add_fig('power',       "Power Consumption", "Usage [W]")
 
 
@@ -340,6 +341,8 @@ class monitor:
         self.start_time = time.time()
 
         self.vals = {}
+        self.diff = {}
+        self.diff_last = {}
         self.bytes = {}
         self.bytes_last = {}
         self.ratio = {}
@@ -364,6 +367,8 @@ class monitor:
     def add_node(self, node):
         self.timestamps[node] = None
         self.vals[node] = {}
+        self.diff[node] = {}
+        self.diff_last[node] = {}
         self.bytes[node] = {}
         self.bytes_last[node] = {}
         self.ratio[node] = [0]*60
@@ -379,6 +384,7 @@ class monitor:
         self.add_timestamp(node, sample['timestamp'])
         self.add_val('cpu', node, sample)
         self.add_val('power', node, sample)
+        self.add_diff('nc Failed', node, sample)
         self.add_coded(node, sample)
         self.add_bytes('iw rx bytes', node, sample)
         self.add_bytes('iw tx bytes', node, sample)
@@ -421,6 +427,26 @@ class monitor:
         self.bytes[node][name].pop(0)
         self.bytes[node][name].append(bytes)
         self.gui.update_data.emit(name, node, self.timestamps[node], self.bytes[node][name])
+
+    def add_diff(self, name, node, sample):
+        diff = sample.get(name, 0)
+
+        # Initialize last sample
+        if name not in self.diff_last[node]:
+            self.diff_last[node][name] = diff
+            self.diff[node][name] = [0]*60
+            return
+
+        # Calculate number and ratio since last sample
+        this_diff = diff - self.diff_last[node][name]
+
+        # Save values for use in next calculation
+        self.diff_last[node][name] = diff
+
+        # Update plot data
+        self.diff[node][name].pop(0)
+        self.diff[node][name].append(this_diff)
+        self.gui.update_data.emit(name, node, self.timestamps[node], self.diff[node][name])
 
     def add_coded(self, node, sample):
         coded = sample.get('nc Coded', 0)

@@ -16,7 +16,6 @@ class sock(threading.Thread):
         self.connected = threading.Event()
         self.name = "sock"
         self.lock = threading.Lock()
-        self.daemon = True
         self.start()
 
     def subscribe(self, caller, data_type, callback):
@@ -31,8 +30,8 @@ class sock(threading.Thread):
     def connect(self, host, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            self.socket.settimeout(.5)
             self.socket.connect((host, int(port)))
+            self.socket.settimeout(.5)
         except socket.error as e:
             self.error = e
             self.socket = None
@@ -53,7 +52,8 @@ class sock(threading.Thread):
         while not self.end.is_set():
             try:
                 # Wait for GUI to start connection
-                self.connected.wait()
+                if not self.connected.wait(.5):
+                    continue
 
                 # Read data from controller
                 obj = interface.recv(self.socket)
@@ -68,6 +68,7 @@ class sock(threading.Thread):
                 self.disconnect()
 
     def stop(self):
+        self.disconnect()
         self.end.set()
 
     def handle_obj(self, obj):

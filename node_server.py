@@ -106,7 +106,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         # (Re)start iperf server
         if self.tester_server:
             self.tester_server.kill()
-        self.tester_server = tester.server(self.server.args, obj.run_info['protocol'])
+        self.tester_server = tester.server(self.server.args, obj.run_info)
 
         # Wait for previous iperf clients to finish
         for client in self.tester_clients:

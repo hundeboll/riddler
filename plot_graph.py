@@ -35,6 +35,8 @@ c = {
 class graph:
     def __init__(self):
         self.throughput_plots = {}
+        self.tcp_throughput_plot = None
+        self.tcp_throughput_data = {}
         self.cpu_plots = {}
 
     def show(self):
@@ -100,3 +102,36 @@ class graph:
         label = "With Coding" if coding else "Without Coding"
         self.plot_fig(fig, data['rates'], data['cpu'], label)
         self.finish_fig(fig)
+
+    def plot_tcp_throughput(self, node, data, coding):
+        if not self.tcp_throughput_plot:
+            fig = self.setup_fig(
+                    title="TCP Throughput",
+                    xlabel="",
+                    ylabel="Measured Throughput")
+            label_pos = numpy.array(range(len(data['algos'])))+.2
+            fig.set_xticks(label_pos)
+            fig.set_xticklabels(data['algos'])
+            self.tcp_throughput_plot = fig
+            self.tcp_throughput_data[coding] = numpy.array([0]*len(data['algos']))
+            top = self.tcp_throughput_data[coding]
+            self.tcp_throughput_data[not coding] = top
+        else:
+            fig = self.tcp_throughput_plot
+            top = self.tcp_throughput_data[coding]
+
+        width = .2
+        positions = range(len(data['algos']))
+        if coding:
+            color = c['skyblue2']
+            positions = numpy.array(positions)+width
+            label = "{} with Coding".format(node.title())
+        else:
+            label = "{} without Coding".format(node.title())
+            color = c['chameleon2']
+
+        fig.bar(positions, data['throughput'], width, top, color=color, ecolor='black', label=label)
+        fig.legend(prop=dict(size=12), numpoints=1, loc='lower right')
+
+        # Save top values for each bar
+        self.tcp_throughput_data[coding] = numpy.sum([top, data['throughput']], axis=0)

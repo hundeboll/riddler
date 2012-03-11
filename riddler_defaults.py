@@ -10,25 +10,25 @@ client_port = 6677
 #
 # Test settings
 #
-test_profile = 'udp_rates'  # Profiles to run (udp_rates, tcp_algos, hold_times, or power_meas).
-test_time = 15          # Time for each loop to run
-test_sleep = 2          # Time to sleep between runs
-test_loops = 5         # Number of repetitions for each run
+test_profile = 'udp_rates'  # Profiles to run (udp_rates, tcp_algos, tcp_windows, hold_times, or power_meas).
+test_time = 30          # Time for each loop to run
+test_sleep = 10          # Time to sleep between runs
+test_loops = 10         # Number of repetitions for each run
 sample_interval = 1     # Seconds between each node sample
 
 #
 # Settings for udp_rates, tcp_algos, power_meas
 #
 hold_time = 10
-purge_time = 500
+purge_time = 2000
 packet_length = 100     # Not implemented yet
 
 #
 # Settings for udp_rates, hold_times, power_meas
 #
 rate_start = 50       # Initial rate of each swipe in kbit/s
-rate_stop = 1100        # Last rate of each swipe in kbit/s
-rate_step = 10         # Rate increment for each run in kbit/s
+rate_stop = 1500        # Last rate of each swipe in kbit/s
+rate_step = 50         # Rate increment for each run in kbit/s
 
 #
 # Settings for hold_times
@@ -40,6 +40,7 @@ hold_step = 2
 #
 # Settings for tcp_algos
 #
+tcp_window = 87380
 tcp_algos = [           # Algorithms to test
                 #'bic',
                 'cubic',
@@ -55,3 +56,10 @@ tcp_algos = [           # Algorithms to test
                 'westwood',
                 #'yeah',
             ]
+
+#
+# Settings for tcp_windows
+window_start = 100000
+window_stop = 250000
+window_step = 50000
+tcp_algo = 'westwood'

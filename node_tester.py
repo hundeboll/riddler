@@ -19,10 +19,11 @@ class client(threading.Thread):
         h = self.dest_node['host']
         t = str(self.run_info['test_time'])
         p = str(self.dest_node['port'])
+        w = str(self.run_info['tcp_window'])
 
         # Craft the iperf command depending on the given protocol
         if self.run_info['protocol'] == 'tcp':
-            cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p]
+            cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p, "-w", w]
         elif self.run_info['protocol'] == 'udp':
             r = str(self.run_info['rate']*1024)
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-yC"]
@@ -134,10 +135,11 @@ class client(threading.Thread):
 
 
 class server(threading.Thread):
-    def __init__(self, args, protocol):
+    def __init__(self, args, run_info):
         super(server, self).__init__(None)
         self.args = args
-        self.protocol = protocol
+        self.protocol = run_info['protocol']
+        self.tcp_window = run_info['tcp_window']
         self.running = False
         self.end = threading.Event()
         self.start()
@@ -145,11 +147,12 @@ class server(threading.Thread):
     # Run a iperf server in a separate thread
     def run(self):
         h = self.args.mesh_host
-        p =  str(self.args.mesh_port)
+        p = str(self.args.mesh_port)
+        w = str(self.tcp_window)
 
         # Craft the iperf command based on the protocol
         if self.protocol == "tcp":
-            self.cmd = ["iperf", "-s", "-B", h, "-p", p]
+            self.cmd = ["iperf", "-s", "-B", h, "-p", p, "-w", w]
         elif self.protocol == "udp":
             self.cmd = ["iperf", "-s", "-u", "-B", h, "-p", p]
 

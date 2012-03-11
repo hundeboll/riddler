@@ -92,3 +92,12 @@ class data:
         data['fwd_coded'] = self.difference_samples(rd, 'nc FwdCoded', 'rate')
 
         return data
+
+    def tcp_udp_source_data(self, node, coding):
+        rd = self.data.get_run_data(node, {'coding': coding})
+
+        data = {}
+        data['algos']       = self.keys(rd, 'tcp_algo')
+        data['throughput']  = self.average_result(rd, 'throughput', 'tcp_algo')
+
+        return data

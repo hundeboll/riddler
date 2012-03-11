@@ -35,7 +35,12 @@ class plot:
                 self.plot_udp_source(node)
             for node in self.data.relays:
                 self.plot_udp_relay(node)
-                pass
+
+        elif self.data.profile == 'tcp_algos':
+            for node in self.data.sources:
+                self.plot_tcp_source(node)
+            for node in self.data.relays:
+                self.plot_tcp_relay(node)
 
         self.graph.show()
 
@@ -48,6 +53,14 @@ class plot:
     def plot_udp_relay(self, node):
         data = self.data.udp_relay_data(node, coding=True)
         self.graph.plot_coded(node, data)
+
+    def plot_tcp_source(self, node):
+        for coding in (True, False):
+            data = self.data.tcp_udp_source_data(node, coding)
+            self.graph.plot_tcp_throughput(node, data, coding)
+
+    def plot_tcp_relay(self, node):
+        pass
 
 
 

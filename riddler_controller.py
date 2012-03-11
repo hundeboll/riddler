@@ -55,6 +55,9 @@ class controller(threading.Thread):
         elif profile == "tcp_algos":
             self.test_tcp_algos()
 
+        elif profile == "tcp_windows":
+            self.test_tcp_windows()
+
         elif profile == "hold_times":
             self.test_hold_times()
 
@@ -85,11 +88,28 @@ class controller(threading.Thread):
     def test_tcp_algos(self):
         hold = self.args.hold_time
         purge = self.args.purge_time
+        window = self.args.tcp_window
 
         for loop in self.loops:
             for algo in self.args.tcp_algos:
                 for coding in self.codings:
-                    self.set_run_info(loop=loop, hold=hold, purge=purge, coding=coding, tcp_algo=algo)
+                    self.set_run_info(loop=loop, hold=hold, purge=purge, coding=coding, tcp_algo=algo, tcp_window=window)
+                    self.execute_run()
+
+                    # Quit if we are told to
+                    if self.end.is_set():
+                        return
+
+    # Control function to swipe TCP windows sizes
+    def test_tcp_windows(self):
+        hold = self.args.hold_time
+        purge = self.args.purge_time
+        tcp_algo = self.args.tcp_algo
+
+        for loop in self.loops:
+            for window in self.tcp_windows:
+                for coding in self.codings:
+                    self.set_run_info(loop=loop, hold=hold, purge=purge, coding=coding, tcp_window=window, tcp_algo=tcp_algo)
                     self.execute_run()
 
                     # Quit if we are told to
@@ -219,10 +239,18 @@ class controller(threading.Thread):
             self.codings = [True, False]
             self.test_count = len(self.args.tcp_algos) * args.test_loops * len(self.codings)
             self.result_format = "{:10s} {throughput:6.1f} kb/s | {transfered:6.1f} kB"
-            self.run_info_format = "\n#{loop:2d} | {tcp_algo:10s} | Coding: {coding:1b} | ETA: {eta:s}"
+            self.run_info_format = "\n#{loop:2d} | {tcp_algo:8s} | Coding: {coding:1b} | ETA: {eta:s}"
+
+        if args.test_profile == 'tcp_windows':
+            self.protocol = 'tcp'
+            self.codings = [True, False]
+            self.tcp_windows = range(args.window_start, args.window_stop+1, args.window_step)
+            self.test_count = len(self.codings) * len(self.tcp_windows) * args.test_loops
+            self.result_format = "{:10s} {throughput:6.1f} kb/s | {transfered:6.1f} kB"
+            self.run_info_format = "\n#{loop:2d} | Window {tcp_window:5} | Coding: {coding:1b} | ETA: {eta:s}"
 
     # Configure the next run_info to be sent to each node
-    def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None):
+    def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None, tcp_window=None):
         self.update_run_no(loop)
         self.run_info['test_time'] = self.args.test_time
         self.run_info['sample_interval'] = self.args.sample_interval
@@ -233,6 +261,7 @@ class controller(threading.Thread):
         self.run_info['hold'] = hold
         self.run_info['purge'] = purge
         self.run_info['coding'] = coding
+        self.run_info['tcp_window'] = tcp_window
 
         # Update the data storage with the new run info
         self.data.add_run_info(self.run_info)

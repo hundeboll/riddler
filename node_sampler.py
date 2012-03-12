@@ -22,7 +22,6 @@ class sampler(threading.Thread):
 
         # The power sampler needs it own thread
         self.power = power.power(args)
-        self.power.start_measure()
 
         self.end = threading.Event()
         self.start()

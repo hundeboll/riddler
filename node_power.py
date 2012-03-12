@@ -11,7 +11,6 @@ class power(threading.Thread):
         self.args = args
 
         # State control
-        self.measure = threading.Event()
         self.end = threading.Event()
         self.data_lock = threading.Lock()
 
@@ -35,11 +34,8 @@ class power(threading.Thread):
     def run(self):
         # Main loop while we are not told to end
         while not self.end.is_set():
-            # Wait for signal to start measuring
-            if not self.measure.wait(1):
-                continue
-
             if not self.ser:
+                time.sleep(1)
                 continue
 
             # Read from arduino
@@ -58,16 +54,6 @@ class power(threading.Thread):
             self.measure_volt.append(meas[1])
             self.data_lock.release()
 
-    # Signal main loop to start measuring
-    def start_measure(self):
-        if self.ser:
-            self.ser.flushInput()
-            self.measure.set()
-
-    # Signal main loop to stop measuring
-    def stop_measure(self):
-        self.measure.clear()
-
     # Prepare configured serial device for measuring
     def open_serial(self):
         self.ser = None
@@ -79,6 +65,7 @@ class power(threading.Thread):
                 return False
 
         # Open device and wait for it to settle
+        print("Open serial device: {}".format(self.args.power_dev))
         self.ser = serial.Serial(self.args.power_dev, 9600, timeout=1)
         time.sleep(5) # FIXME: Arduino need ~5sec to start serial
         self.ser.flushInput()
@@ -124,8 +111,9 @@ class power(threading.Thread):
 if __name__ == "__main__":
     import node_defaults as args
 
+    print("Start power")
     p = power(args)
-    p.start_measure()
+    print("Wait 20 secs")
     time.sleep(20)
     p.process_data()
     print("Read Power")
@@ -134,5 +122,4 @@ if __name__ == "__main__":
     print(p.read_volt())
     print("Read Amp")
     print(p.read_amp())
-
-    p.stop_measure()
+    p.stop.set()

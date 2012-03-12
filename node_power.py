@@ -53,7 +53,7 @@ class power(threading.Thread):
             try:
                 self.measure_amp.append(float(meas[0])/1000)
                 #self.measure_volt.append(meas[1])
-                self.measure_volt = 5
+                self.measure_volt.append(5)
             except ValueError as e:
                 print(e)
             self.data_lock.release()

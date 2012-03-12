@@ -92,6 +92,8 @@ class power(threading.Thread):
             f_amp = [float(i) for i in self.measure_amp]
             f_volt = [float(i) for i in self.measure_volt]
         except ValueError as e:
+            f_amp = None
+            f_volt = None
             print(e)
         self.measure_amp = []
         self.measure_volt = []

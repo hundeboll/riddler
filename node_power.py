@@ -50,8 +50,12 @@ class power(threading.Thread):
 
             # Save measurement for later processing
             self.data_lock.acquire()
-            self.measure_amp.append(meas[0])
-            self.measure_volt.append(meas[1])
+            try:
+                self.measure_amp.append(float(meas[0])/1000)
+                #self.measure_volt.append(meas[1])
+                self.measure_volt = 5
+            except ValueError as e:
+                print(e)
             self.data_lock.release()
 
     # Prepare configured serial device for measuring
@@ -75,13 +79,8 @@ class power(threading.Thread):
     def process_data(self):
         # Don't measure while processing data
         self.data_lock.acquire()
-        try:
-            f_amp = [float(i) for i in self.measure_amp]
-            f_volt = [float(i) for i in self.measure_volt]
-        except ValueError as e:
-            f_amp = None
-            f_volt = None
-            print(e)
+        f_amp = self.measure_amp
+        f_volt = self.measure_volt
         self.measure_amp = []
         self.measure_volt = []
         self.data_lock.release()

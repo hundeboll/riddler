@@ -43,8 +43,12 @@ class power(threading.Thread):
                 continue
 
             # Read from arduino
-            data = self.ser.readline()
-            if not data:
+            try:
+                data = self.ser.readline()
+                if not data:
+                    continue
+            except OSError as e:
+                print(e)
                 continue
             meas = data.split()
 

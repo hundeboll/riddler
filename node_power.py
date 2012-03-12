@@ -88,8 +88,11 @@ class power(threading.Thread):
     def process_data(self):
         # Don't measure while processing data
         self.data_lock.acquire()
-        f_amp = [float(i) for i in self.measure_amp]
-        f_volt = [float(i) for i in self.measure_volt]
+        try:
+            f_amp = [float(i) for i in self.measure_amp]
+            f_volt = [float(i) for i in self.measure_volt]
+        except ValueError as e:
+            print(e)
         self.measure_amp = []
         self.measure_volt = []
         self.data_lock.release()

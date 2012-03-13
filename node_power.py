@@ -68,12 +68,15 @@ class power(threading.Thread):
                 print(self.error)
                 return False
 
-        # Open device and wait for it to settle
-        print("Open serial device: {}".format(self.args.power_dev))
+        # Open device and flush old data
+        print("Opening serial device: {}".format(self.args.power_dev))
         self.ser = serial.Serial(self.args.power_dev, 9600, timeout=1)
-        time.sleep(7) # FIXME: Arduino need ~5sec to start serial
-        self.ser.timeout = 1
         self.ser.flushInput()
+
+        # Wait for device to settle
+        while not self.ser.readline().strip():
+            continue
+
         return True
 
     # Process the data measured since last read

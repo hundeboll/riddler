@@ -40,7 +40,7 @@ class power(threading.Thread):
 
             # Read from arduino
             try:
-                data = self.ser.readline()
+                data = self.ser.readline().strip()
                 if not data:
                     continue
             except OSError as e:
@@ -70,7 +70,7 @@ class power(threading.Thread):
 
         # Open device and wait for it to settle
         print("Open serial device: {}".format(self.args.power_dev))
-        self.ser = serial.Serial(self.args.power_dev, 9600, timeout=7)
+        self.ser = serial.Serial(self.args.power_dev, 9600, timeout=1)
         time.sleep(7) # FIXME: Arduino need ~5sec to start serial
         self.ser.timeout = 1
         self.ser.flushInput()

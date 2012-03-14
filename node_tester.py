@@ -83,12 +83,12 @@ class client(threading.Thread):
 
     # Screen scrape the output from a iperf TCP client
     def parse_tcp_output(self, output):
-        # Remove trailing newlines and get the comma separated values
-        output = output.strip()
-        vals = output.split(",")
-
         # Now convert and format the results
         try:
+            # Remove trailing newlines and get the comma separated values
+            output = output.strip()
+            vals = output.split(",")
+
             return {
                     'dest':         self.dest_node['name'],
                     'transfered':   int(vals[7])/8/1024,    # kB
@@ -103,12 +103,12 @@ class client(threading.Thread):
     def parse_udp_output(self, output):
         t = self.run_info['test_time']
 
-        # Select 2nd line and get the comma separated values
-        output = output.split()[1]
-        vals = output.split(",")
-
         # Convert and format the results
         try:
+            # Select 2nd line and get the comma separated values
+            output = output.split()[1]
+            vals = output.split(",")
+
             return {
                     'dest':         self.dest_node['name'],
                     'transfered':   int(vals[7])/8/1024,    # kB

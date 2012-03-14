@@ -21,8 +21,8 @@ class server:
         self.server.server_activate()
 
     def serve(self):
+        print("# Waiting for controller connection")
         while self.server.running:
-            print("# Waiting for controller connection")
             try:
                 self.server.handle_request()
             except socket.error as e:

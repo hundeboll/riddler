@@ -46,6 +46,7 @@ class controller(threading.Thread):
         return False
 
     def run(self):
+        # Disable pause
         self.pause.set()
 
         try:
@@ -54,6 +55,7 @@ class controller(threading.Thread):
             return
 
     def control(self):
+        self.start_time = time.time()
         self.init_ranges()
         profile = self.args.test_profile
 
@@ -76,7 +78,12 @@ class controller(threading.Thread):
 
         # Yeah, the test actually completed by itself
         if not self.end.is_set():
-            print("Test completed")
+            total_time = time.time() - self.start_time
+            if total_time > 60*60:
+                time_str = "{:i}h {:2i}m".format(total_time/60/60, (total_time/60)%60)
+            else:
+                time_str = "{:i}m {:2i}s".format(total_time/60, total_time%60)
+            print("Test completed in {}".format(time_str))
 
     # Control function to swipe UDP rates
     def test_rates(self):

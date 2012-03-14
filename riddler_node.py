@@ -197,7 +197,7 @@ class node(threading.Thread):
 
     # Be verbose about errors occurring during while configuring the node
     def handle_prepare_error(self, obj):
-        self.run_error = True
+        #self.run_error = True
         print("Setup failed at {0}: {1}".format(self.name, obj.error))
 
     # Tell node to start a test run
@@ -243,5 +243,5 @@ class node(threading.Thread):
 
     # Be verbose about sampling errors that not necessarily ruins the run result
     def handle_sample_error(self, obj):
-        self.run_error = True
+        #self.run_error = True
         print("Sampling failed at {0}: {1}".format(self.name, obj.error))

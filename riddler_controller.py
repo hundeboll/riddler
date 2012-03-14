@@ -80,9 +80,9 @@ class controller(threading.Thread):
         if not self.end.is_set():
             total_time = time.time() - self.start_time
             if total_time > 60*60:
-                time_str = "{:i}h {:2i}m".format(total_time/60/60, (total_time/60)%60)
+                time_str = "{:i}h {:2i}m".format(int(total_time/60/60), int((total_time/60)%60))
             else:
-                time_str = "{:i}m {:2i}s".format(total_time/60, total_time%60)
+                time_str = "{:i}m {:2i}s".format(int(total_time/60), int(total_time%60))
             print("Test completed in {}".format(time_str))
 
     # Control function to swipe UDP rates

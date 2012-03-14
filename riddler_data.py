@@ -1,5 +1,4 @@
 import time
-import numpy
 import copy
 import cPickle as pickle
 

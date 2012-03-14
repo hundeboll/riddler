@@ -76,7 +76,7 @@ class power(threading.Thread):
         # Wait for device to settle
         while not self.ser.readline().strip():
             continue
-
+        print("Serial device ready")
         return True
 
     # Process the data measured since last read

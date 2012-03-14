@@ -32,7 +32,7 @@ class client(threading.Thread):
         self.timer.start()
 
         # Start the client in a separate process and wait for it to finish
-        print("Starting {0} client".format(self.run_info['protocol']))
+        print("  Starting {0} client".format(self.run_info['protocol']))
         self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.running = True
         self.p.wait()
@@ -65,7 +65,7 @@ class client(threading.Thread):
 
         try:
             # Ask politely first
-            print("Terminating client (pid {0})".format(self.p.pid))
+            print("  Terminating client (pid {0})".format(self.p.pid))
             self.p.terminate()
 
             # Ask again, if necessary
@@ -76,7 +76,7 @@ class client(threading.Thread):
             if not self.p.poll():
                 self.p.kill()
         except OSError as e:
-            print("Killing client failed: {0}".format(e))
+            print("  Killing client failed: {0}".format(e))
 
         # We are done
         self.running = False
@@ -95,7 +95,7 @@ class client(threading.Thread):
                     'throughput':   int(vals[8])/1024,      # kbit/s
                     }
         except IndexError as e:
-            print("Failed to parse result: {0}".format(e))
+            print("  Failed to parse result: {0}".format(e))
             self.report_error(output)
             return None
 
@@ -119,17 +119,19 @@ class client(threading.Thread):
                     'ratio':        float(vals[12]),        # percent
                     }
         except IndexError as e:
-            print("Failed to parse result: {0}".format(e))
+            print("  Failed to parse result: {0}".format(e))
             self.report_error(output)
             return None
 
     # Send back a result to the controller
     def report_result(self, result):
+        print("  Reporting result")
         obj = interface.node(interface.RUN_RESULT, result=result)
         self.controller.report(obj)
 
     # Send back an error to the controller
     def report_error(self, error):
+        print("  Reporting error")
         obj = interface.node(interface.RUN_ERROR, error=error)
         self.controller.report(obj)
 
@@ -157,7 +159,7 @@ class server(threading.Thread):
             self.cmd = ["iperf", "-s", "-u", "-B", h, "-p", p]
 
         # Start the iperf server in a separate process and wait for it be killed
-        print("Starting {0} server".format(self.protocol))
+        print("  Starting {0} server".format(self.protocol))
         self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.running = True
         self.p.wait()
@@ -170,7 +172,7 @@ class server(threading.Thread):
 
         try:
             # Politely ask server to quit
-            print("Terminating server (pid {0})".format(self.p.pid))
+            print("  Terminating server (pid {0})".format(self.p.pid))
             self.p.terminate()
 
             # Ask again if necessary
@@ -181,7 +183,7 @@ class server(threading.Thread):
             if not self.p.poll():
                 self.p.kill()
         except OSError as e:
-            print("Killing server failed: {0}".format(e))
+            print("  Killing server failed: {0}".format(e))
 
         # We are done here
         self.running = False

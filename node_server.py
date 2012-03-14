@@ -39,7 +39,7 @@ class server:
 class tcp_handler(SocketServer.BaseRequestHandler):
     # Prepare objects upon a new connection
     def setup(self):
-        print("Connected to controller: {}".format(self.client_address))
+        print("  Connected to controller: {}".format(self.client_address))
         self.end = threading.Event()
         self.tester_clients = []
         self.tester_server = None
@@ -50,25 +50,26 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     # Stop running threads before connection closes
     def finish(self):
+        print("# Disconnect from controller")
         for client in self.tester_clients:
-            print("Killing client")
+            print("  Killing client")
             client.kill_client()
             if client.is_alive():
                 client.join()
 
         if self.tester_server:
-            print("Killing server")
+            print("  Killing server")
             self.tester_server.kill()
             if self.tester_server.is_alive():
                 self.tester_server.join()
 
         if self.sampler:
-            print("Killing sampler")
+            print("  Killing sampler")
             self.sampler.stop()
             if self.sampler.is_alive():
                 self.sampler.join()
 
-        print("Closing connection")
+        print("  Closing connection")
 
     # Read data from controller
     def handle(self):

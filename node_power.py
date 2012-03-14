@@ -30,6 +30,10 @@ class power(threading.Thread):
     def stop(self):
         self.end.set()
 
+        if self.ser:
+            print("  Closing serial device")
+            self.ser.close()
+
     # Main function of thread
     def run(self):
         # Main loop while we are not told to end
@@ -64,19 +68,19 @@ class power(threading.Thread):
 
         # Check if device exists
         if (os.name == "posix") and not os.path.exists(self.args.power_dev):
-                self.error = "Power device '{0}' does not exist".format(self.args.power_dev)
+                self.error = "  Power device '{0}' does not exist".format(self.args.power_dev)
                 print(self.error)
                 return False
 
         # Open device and flush old data
-        print("Opening serial device: {}".format(self.args.power_dev))
+        print("  Opening serial device: {}".format(self.args.power_dev))
         self.ser = serial.Serial(self.args.power_dev, 9600, timeout=1)
         self.ser.flushInput()
 
         # Wait for device to settle
         while not self.ser.readline().strip():
             continue
-        print("Serial device ready")
+        print("  Serial device ready")
         return True
 
     # Process the data measured since last read

@@ -50,7 +50,6 @@ def send(sock, obj):
     except KeyboardInterrupt:
         return False
     except socket.error as e:
-        print("Connection lost: {0}".format(e))
         return False
 
 def recv(sock):

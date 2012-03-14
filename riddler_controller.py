@@ -10,6 +10,7 @@ class controller(threading.Thread):
         self.run_info = {}
 
         self.error = False
+        self.redo = False
         self.recover_timer = None
         self.end = threading.Event()
         self.pause = threading.Event()
@@ -35,6 +36,14 @@ class controller(threading.Thread):
             # Pause: off
             self.pause.set()
             return False
+
+    # Sleep function that breaks, if controller is stopped
+    def sleep(self, secs):
+        for i in range(secs):
+            time.sleep(1)
+            if self.end.is_set():
+                return True
+        return False
 
     def run(self):
         self.pause.set()
@@ -141,7 +150,7 @@ class controller(threading.Thread):
             self.prepare_run()
 
             # Let the network settle before next test
-            time.sleep(self.args.test_sleep)
+            self.sleep(self.args.test_sleep)
 
             # Wait for run to finish and check the result
             self.print_run_info(self.run_info)
@@ -159,6 +168,12 @@ class controller(threading.Thread):
                 return
 
             elif not self.error:
+                # We always discard the first result after an error
+                if self.redo:
+                    print("Discarding result because of previous error")
+                    self.redo = False
+                    continue
+
                 # Successful test
                 self.save_results()
                 self.save_samples()
@@ -170,8 +185,8 @@ class controller(threading.Thread):
 
             else:
                 # Test failed, run it again
-                print("Redoing test in 60 secs")
-                time.sleep(50)
+                print("Redoing test")
+                self.redo = True
 
     # Check if pause is requested and pause if so
     def wait_pause(self):
@@ -339,6 +354,9 @@ class controller(threading.Thread):
 
     # Print info on the current test run
     def print_run_info(self, run_info):
+        if self.end.is_set():
+            return
+
         eta = self.test_count * self.test_time
         if eta > 60*60:
             # Print ETA with hours

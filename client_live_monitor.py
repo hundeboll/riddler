@@ -256,7 +256,7 @@ class monitor_gui(QWidget):
         self.add_fig('cpu',         "CPU Usage",         "Usage [%]", ylim=105, scale=False)
         self.add_fig('coded',       "Coded Packets",     "Ratio [%]", ylim=1.05, scale=False)
         self.add_fig('nc Failed',   "Packets Failed to Decode", "Packets")
-        self.add_fig('power',       "Power Consumption", "Usage [W]")
+        self.add_fig('power_watt',       "Power Consumption", "Usage [W]")
 
 
         self.add_node.connect(self._add_node)
@@ -383,7 +383,7 @@ class monitor:
 
         self.add_timestamp(node, sample['timestamp'])
         self.add_val('cpu', node, sample)
-        self.add_val('power', node, sample)
+        self.add_val('power_watt', node, sample)
         self.add_diff('nc Failed', node, sample)
         self.add_coded(node, sample)
         self.add_bytes('iw rx bytes', node, sample)

@@ -76,6 +76,7 @@ class data:
         data['throughput'] = self.average_result(rd, 'throughput', 'rate')
         data['jitter']     = self.average_result(rd, 'jitter', 'rate')
         data['cpu']        = self.average_samples(rd, 'cpu', 'rate')
+        data['power']      = self.average_samples(rd, 'power_watt', 'rate')
 
         return data
 
@@ -93,11 +94,20 @@ class data:
 
         return data
 
-    def tcp_udp_source_data(self, node, coding):
+    def tcp_source_data(self, node, coding):
         rd = self.data.get_run_data(node, {'coding': coding})
 
         data = {}
         data['algos']       = self.keys(rd, 'tcp_algo')
         data['throughput']  = self.average_result(rd, 'throughput', 'tcp_algo')
+
+        return data
+
+    def tcp_window_source_data(self, node, coding):
+        rd = self.data.get_run_data(node, {'coding': coding})
+
+        data = {}
+        data['tcp_windows'] = self.keys(rd, 'tcp_window')
+        data['throughput']  = self.average_result(rd, 'throughput', 'tcp_window')
 
         return data

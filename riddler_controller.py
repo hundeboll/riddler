@@ -135,16 +135,16 @@ class controller(threading.Thread):
             # Make time stamp for use in ETA
             start = time.time()
 
-            # Let the network settle before next test
-            time.sleep(self.args.test_sleep)
-
             # Check if we should pause and rerun
             self.wait_pause()
 
-            self.print_run_info(self.run_info)
             self.prepare_run()
 
+            # Let the network settle before next test
+            time.sleep(self.args.test_sleep)
+
             # Wait for run to finish and check the result
+            self.print_run_info(self.run_info)
             self.exec_node()
 
             # Let the nodes clean up and save data
@@ -170,7 +170,8 @@ class controller(threading.Thread):
 
             else:
                 # Test failed, run it again
-                print("Redoing test")
+                print("Redoing test in 60 secs")
+                time.sleep(50)
 
     # Check if pause is requested and pause if so
     def wait_pause(self):
@@ -193,7 +194,7 @@ class controller(threading.Thread):
         # Start timer to recover from broken code!
         if self.recover_timer:
             self.recover_timer.cancel()
-        self.recover_timer = threading.Timer(self.args.test_time*2, self.timeout)
+        self.recover_timer = threading.Timer(self.test_time*2, self.timeout)
         self.recover_timer.start()
 
     def timeout(self):
@@ -262,6 +263,7 @@ class controller(threading.Thread):
         self.run_info['purge'] = purge
         self.run_info['coding'] = coding
         self.run_info['tcp_window'] = tcp_window
+        self.run_info['promisc'] = coding
 
         # Update the data storage with the new run info
         self.data.add_run_info(self.run_info)

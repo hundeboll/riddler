@@ -21,6 +21,7 @@ class server:
         self.server.server_activate()
 
     def serve(self):
+        print("# Waiting for controller connection")
         while self.server.running:
             try:
                 self.server.handle_request()

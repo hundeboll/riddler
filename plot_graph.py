@@ -35,9 +35,12 @@ c = {
 class graph:
     def __init__(self):
         self.throughput_plots = {}
+        self.aggregated_throughput_plot = None
+        self.tcp_window_throughput_plot = None
         self.tcp_throughput_plot = None
         self.tcp_throughput_data = {}
         self.cpu_plots = {}
+        self.power_plots = {}
 
     def show(self):
         pylab.show()
@@ -74,6 +77,20 @@ class graph:
         self.plot_fig(fig, data['rates'], total_ratio, "Total")
         self.finish_fig(fig)
 
+    def plot_udp_aggregated_throughput(self, data, coding):
+        if self.aggregated_throughput_plot:
+            fig = self.aggregated_throughput_plot
+        else:
+            fig = self.setup_fig(
+                    title="Aggregated Throughput",
+                    xlabel="Total Offered Load [kbit/s]",
+                    ylabel="Measured Throughput [kbit/s]")
+            self.aggregated_throughput_plot = fig
+
+        label = "With Coding" if coding else "Without Coding"
+        self.plot_fig(fig, data['rates'], data['throughput'], label)
+        self.finish_fig(fig)
+
     def plot_throughput(self, node, data, coding):
         if node in self.throughput_plots:
             fig = self.throughput_plots[node]
@@ -97,18 +114,34 @@ class graph:
                     xlabel="Total offered load [kbit/s]",
                     ylabel="CPU Usage [%]"
                     )
+            fig.set_ylim(0,100)
             self.cpu_plots[node] = fig
 
         label = "With Coding" if coding else "Without Coding"
         self.plot_fig(fig, data['rates'], data['cpu'], label)
         self.finish_fig(fig)
 
+    def plot_power(self, node, data, coding):
+        if node in self.power_plots:
+            fig = self.power_plots[node]
+        else:
+            fig = self.setup_fig(
+                    title="Power for {}".format(node.title()),
+                    xlabel="Total offered load [kbit/s]",
+                    ylabel="Consumption [W]"
+                    )
+            self.power_plots[node] = fig
+
+        label = "With Coding" if coding else "Without Coding"
+        self.plot_fig(fig, data['rates'], data['power'], label)
+        self.finish_fig(fig)
+
     def plot_tcp_throughput(self, node, data, coding):
         if not self.tcp_throughput_plot:
             fig = self.setup_fig(
                     title="TCP Throughput",
-                    xlabel="",
-                    ylabel="Measured Throughput")
+                    xlabel="Congestion Avoidance Algorithm",
+                    ylabel="Measured Throughput [kbit/s]")
             label_pos = numpy.array(range(len(data['algos'])))+.2
             fig.set_xticks(label_pos)
             fig.set_xticklabels(data['algos'])
@@ -122,6 +155,39 @@ class graph:
 
         width = .2
         positions = range(len(data['algos']))
+        if coding:
+            color = c['skyblue2']
+            positions = numpy.array(positions)+width
+            label = "{} with Coding".format(node.title())
+        else:
+            label = "{} without Coding".format(node.title())
+            color = c['chameleon2']
+
+        fig.bar(positions, data['throughput'], width, top, color=color, ecolor='black', label=label)
+        fig.legend(prop=dict(size=12), numpoints=1, loc='lower right')
+
+        # Save top values for each bar
+        self.tcp_throughput_data[coding] = numpy.sum([top, data['throughput']], axis=0)
+
+    def plot_tcp_window_throughput(self, node, data, coding):
+        if not self.tcp_throughput_plot:
+            fig = self.setup_fig(
+                    title="TCP Throughput",
+                    xlabel="Window size [bytes]",
+                    ylabel="Measured Throughput [kbit/s]")
+            label_pos = numpy.array(range(len(data['tcp_windows'])))+.2
+            fig.set_xticks(label_pos)
+            fig.set_xticklabels(data['tcp_windows'])
+            self.tcp_throughput_plot = fig
+            self.tcp_throughput_data[coding] = numpy.array([0]*len(data['tcp_windows']))
+            top = self.tcp_throughput_data[coding]
+            self.tcp_throughput_data[not coding] = top
+        else:
+            fig = self.tcp_throughput_plot
+            top = self.tcp_throughput_data[coding]
+
+        width = .2
+        positions = range(len(data['tcp_windows']))
         if coding:
             color = c['skyblue2']
             positions = numpy.array(positions)+width

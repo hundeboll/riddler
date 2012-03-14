@@ -38,6 +38,7 @@ class server:
 class tcp_handler(SocketServer.BaseRequestHandler):
     # Prepare objects upon a new connection
     def setup(self):
+        print("Connected to controller: {}".format(self.client_address))
         self.end = threading.Event()
         self.tester_clients = []
         self.tester_server = None

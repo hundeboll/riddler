@@ -12,8 +12,9 @@ current_algo = "tcp_congestion_control"
 available_algos = "tcp_available_congestion_control"
 
 class setup:
-    def __init__(self):
+    def __init__(self, args):
         self.error = None
+        self.args = args
 
     # Call the different setup functions
     def apply_setup(self, run_info):
@@ -21,6 +22,9 @@ class setup:
             return False
 
         if not self.setup_tcp(run_info):
+            return False
+
+        if not self.setup_iface(run_info):
             return False
 
         return True
@@ -60,6 +64,13 @@ class setup:
             return False
 
         return True
+
+    def setup_iface(self, run_info):
+        iface = self.args.wifi_iface
+        state = "on" if run_info['promisc'] else "off"
+        cmd = ['ip', 'link', 'set', 'dev', iface, 'promisc', state]
+        r = subprocess.call(cmd)
+        return False if r else True
 
     # Read data from file
     def read(self, path):

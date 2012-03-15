@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 
 import argparse
-import numpy
 import cPickle as pickle
 import plot_data as data
 import plot_graph as graph
@@ -19,7 +18,8 @@ except ImportError:
 
 parser.add_argument("--data")
 parser.add_argument("--out")
-parser.add_argument("--show")
+parser.add_argument("--hide", action='store_true')
+parser.add_argument("--plots")
 parser.set_defaults(**defaults)
 args = parser.parse_args()
 
@@ -35,11 +35,12 @@ class plot:
             # For each source
             for node in self.data.sources:
                 self.plot_udp_source(node)
-            self.plot_udp_aggregated_throughput()
 
             # For each relay
             for node in self.data.relays:
                 self.plot_udp_relay(node)
+
+            self.plot_udp_system()
 
         elif self.data.profile == 'tcp_algos':
             for node in self.data.sources:
@@ -53,36 +54,53 @@ class plot:
             for node in self.data.relays:
                 self.plot_tcp_window_relay(node)
 
-        self.graph.show()
+        if not self.args.hide:
+            self.graph.show(self.args.plots)
 
-    def plot_udp_aggregated_throughput(self):
-        for coding in (True, False):
-            data = self.aggregated_throughput[coding]
-            self.graph.plot_udp_aggregated_throughput(data, coding)
-
-    def add_udp_aggregated_throughput(self, data, coding):
-        if not coding in self.aggregated_throughput:
-            self.aggregated_throughput[coding] = {}
-            self.aggregated_throughput[coding]['rates'] = numpy.array(data['rates'])
-            self.aggregated_throughput[coding]['throughput'] = numpy.array(data['throughput'])
-            return
-
-        self.aggregated_throughput[coding]['throughput'] += data['throughput']
-        self.aggregated_throughput[coding]['rates'] += data['rates']
+        if self.args.out:
+            self.graph.save_figs(self.args.out)
 
     def plot_udp_source(self, node):
+        if self.args.plots not in ('all', 'system', node):
+            return
+
         for coding in (True, False):
             data = self.data.udp_source_data(node, coding)
-            self.graph.plot_throughput(node, data, coding)
-            self.graph.plot_cpu(node, data, coding)
-            self.graph.plot_power(node, data, coding)
-            self.add_udp_aggregated_throughput(data, coding)
+
+            if self.args.plots in ('all', node):
+                self.graph.plot_throughput(node, data, coding)
+                self.graph.plot_cpu(node, data, coding)
+                self.graph.plot_power(node, data, coding)
 
     def plot_udp_relay(self, node):
-        data = self.data.udp_relay_data(node, coding=True)
-        self.graph.plot_coded(node, data)
+        if self.args.plots not in ('all', 'system', node):
+            return
+
+        for coding in (True, False):
+            data = self.data.udp_relay_data(node, coding)
+
+            if self.args.plots in ('all', node) and coding:
+                self.graph.plot_coded(node, data)
+
+            if self.args.plots in ('all', node):
+                self.graph.plot_power(node, data, coding)
+
+    def plot_udp_system(self):
+        if self.args.plots not in ('all', 'system'):
+            return
+
+        for coding in (True, False):
+            source_agg,source_avg = self.data.get_system_data('udp_sources', coding)
+            relay_agg,relay_avg = self.data.get_system_data('udp_relays', coding)
+
+            self.graph.plot_udp_system_throughput(source_agg, coding)
+            self.graph.plot_udp_system_power(source_agg, relay_agg, coding)
+
 
     def plot_tcp_source(self, node):
+        if self.args.plots not in ('all', 'system', node):
+            return
+
         for coding in (True, False):
             data = self.data.tcp_source_data(node, coding)
             self.graph.plot_tcp_throughput(node, data, coding)
@@ -91,6 +109,9 @@ class plot:
         pass
 
     def plot_tcp_window_source(self, node):
+        if self.args.plots not in ('all', 'system', node):
+            return
+
         for coding in (True, False):
             data = self.data.tcp_window_source_data(node, coding)
             self.graph.plot_tcp_window_throughput(node, data, coding)

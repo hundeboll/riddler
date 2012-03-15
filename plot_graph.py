@@ -1,6 +1,10 @@
+import os
+import time
 import pylab
-import matplotlib.gridspec as gridspec
 import numpy
+import threading
+import riddler_interface as interface
+
 
 c = {
     "aluminium1":   "#eeeeec",
@@ -32,172 +36,196 @@ c = {
     "skyblue3":     "#204a87",
 }
 
+bar_colors = {
+        True:  [c["chameleon1"], c["chameleon3"], c["chameleon2"]],
+        False: [c["skyblue1"], c["skyblue2"], c["skyblue3"]],
+        }
+label = {True: "With Coding", False: "Without Coding"}
+
 class graph:
     def __init__(self):
-        self.throughput_plots = {}
-        self.aggregated_throughput_plot = None
-        self.tcp_window_throughput_plot = None
-        self.tcp_throughput_plot = None
-        self.tcp_throughput_data = {}
-        self.cpu_plots = {}
-        self.power_plots = {}
+        self.figs = {}
+        self.axes = {}
+        self.bar_tops = {}
+        self.bar_colors = {True: {}, False: {}}
 
-    def show(self):
+    def show(self, plots):
+        self.t = threading.Thread(None, self.hide)
+        self.t.start()
         pylab.show()
+        print("Show done")
 
-    def setup_fig(self, title, xlabel, ylabel):
-        fig = pylab.figure()
-        ax = fig.add_subplot(111)
-        ax.grid(True)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.set_title(title)
-        return ax
+    def hide(self):
+        ch = interface.get_keypress()
+        pylab.close('all')
+        time.sleep(1)
+        print("Closed")
 
-    def finish_fig(self, ax):
-        ax.legend(loc='upper left', shadow=True)
+    def save_figs(self, path):
+        if not os.path.exists(path):
+            print("Creating directory: {}".format(path))
+            try:
+                os.mkdir(path)
+            except OSError as e:
+                print("Unable to create direcoty: {}".format(e.strerror))
+                return
 
-    def plot_fig(self, fig, x, y, label):
-        fig.plot(x, y, linewidth=2, label=label)
+    def setup_fig(self, name, title, xlabel, ylabel):
+        if title in self.figs and name in self.figs[title]:
+            self.fig = self.figs[title][name]
+            self.ax = self.axes[title][name]
+            return self.fig
+
+        self.fig = pylab.figure()
+        self.ax = self.fig.add_subplot(111)
+        self.ax.grid(True)
+        self.ax.set_xlabel(xlabel)
+        self.ax.set_ylabel(ylabel)
+        self.ax.set_title(title)
+
+        if title in self.figs:
+            self.figs[title][name] = self.fig
+            self.axes[title][name] = self.ax
+        else:
+            self.figs[title] = {name: self.fig}
+            self.axes[title] = {name: self.ax}
+
+        return self.fig,self.ax
+
+    def finish_fig(self):
+        self.fig.gca().legend(loc='upper left', shadow=True)
+
+    def plot(self, x, y, label):
+        self.fig.gca().plot(x, y, linewidth=2, label=label)
+
+    def get_bar_tops(self, name, title, data, coding):
+        if title not in self.bar_tops:
+            self.bar_tops[title] = {}
+
+        if name not in self.bar_tops[title]:
+            l = len(data)
+            self.bar_tops[title][name] = {True: numpy.zeros(l), False: numpy.zeros(l)}
+
+        return self.bar_tops[title][name][coding]
+
+    def update_bar_tops(self, name, title, data, coding):
+        self.bar_tops[title][name][coding] += data
+
+    def get_bar_args(self, node, coding, data):
+        # Get next bar color
+        if node not in self.bar_colors[coding]:
+            self.bar_colors[coding][node] = bar_colors[coding].pop(0)
+            self.bar_colors[not coding][node] = bar_colors[not coding].pop(0)
+
+        width = .2
+        color = self.bar_colors[coding][node]
+        positions = range(len(data))
+        if coding:
+            positions = numpy.array(positions)+width
+            label = "{} with Coding".format(node.title())
+        else:
+            label = "{} without Coding".format(node.title())
+
+        return positions,data,width,color,label
 
     def plot_coded(self, node, data):
-        fig = self.setup_fig(
+        self.setup_fig(
+                name=node,
                 title="Coded vs. Forwarded Packets for {}".format(node.title()),
                 xlabel="Total Offered Load [kbit/s]",
-                ylabel="Ratio [packets/sum]"
-                )
+                ylabel="Ratio [packets/sum]")
 
-        coded_packets = numpy.divide(data['coded'], 2)
-        coded_ratio = numpy.divide(coded_packets, data['fwd_coded'])
-        fwd_ratio = numpy.divide(data['fwd'], data['fwd_coded'])
-        total_ratio = coded_ratio + fwd_ratio
+        self.plot(data['rates'], data['ratio_coded'], "Coded")
+        self.plot(data['rates'], data['ratio_fwd'],   "Forwarded")
+        self.plot(data['rates'], data['ratio_total'], "Total")
+        self.finish_fig()
 
-        self.plot_fig(fig, data['rates'], coded_ratio, "Coded")
-        self.plot_fig(fig, data['rates'], fwd_ratio, "Forwarded")
-        self.plot_fig(fig, data['rates'], total_ratio, "Total")
-        self.finish_fig(fig)
+    def plot_udp_system_throughput(self, data, coding):
+        self.setup_fig(
+                name='system',
+                title="System Throughput",
+                xlabel="Total Offered Load [kbit/s]",
+                ylabel="Measured Throughput [kbit/s]")
 
-    def plot_udp_aggregated_throughput(self, data, coding):
-        if self.aggregated_throughput_plot:
-            fig = self.aggregated_throughput_plot
-        else:
-            fig = self.setup_fig(
-                    title="Aggregated Throughput",
-                    xlabel="Total Offered Load [kbit/s]",
-                    ylabel="Measured Throughput [kbit/s]")
-            self.aggregated_throughput_plot = fig
-
-        label = "With Coding" if coding else "Without Coding"
-        self.plot_fig(fig, data['rates'], data['throughput'], label)
-        self.finish_fig(fig)
+        self.plot(data['rates'], data['throughput'], label[coding])
+        self.finish_fig()
 
     def plot_throughput(self, node, data, coding):
-        if node in self.throughput_plots:
-            fig = self.throughput_plots[node]
-        else:
-            fig = self.setup_fig(
-                    title="Throughput for {0}".format(node.title()),
-                    xlabel="Total Offered Load [kbit/s]",
-                    ylabel="Measured Throughput")
-            self.throughput_plots[node] = fig
+        self.setup_fig(
+                name=node,
+                title="Throughput for {0}".format(node.title()),
+                xlabel="Total Offered Load [kbit/s]",
+                ylabel="Measured Throughput")
 
-        label = "With Coding" if coding else "Without Coding"
-        self.plot_fig(fig, data['rates'], data['throughput'], label)
-        self.finish_fig(fig)
+        self.plot(data['rates'], data['throughput'], label[coding])
+        self.finish_fig()
 
     def plot_cpu(self, node, data, coding):
-        if node in self.cpu_plots:
-            fig = self.cpu_plots[node]
-        else:
-            fig = self.setup_fig(
-                    title="CPU Usage for {}".format(node.title()),
-                    xlabel="Total offered load [kbit/s]",
-                    ylabel="CPU Usage [%]"
-                    )
-            fig.set_ylim(0,100)
-            self.cpu_plots[node] = fig
+        self.setup_fig(
+                name=node,
+                title="CPU Usage for {}".format(node.title()),
+                xlabel="Total offered load [kbit/s]",
+                ylabel="CPU Usage [%]")
+        self.ax.set_ylim(0,100)
 
-        label = "With Coding" if coding else "Without Coding"
-        self.plot_fig(fig, data['rates'], data['cpu'], label)
-        self.finish_fig(fig)
+        self.plot(data['rates'], data['cpu'], label[coding])
+        self.finish_fig()
 
     def plot_power(self, node, data, coding):
-        if node in self.power_plots:
-            fig = self.power_plots[node]
-        else:
-            fig = self.setup_fig(
-                    title="Power for {}".format(node.title()),
-                    xlabel="Total offered load [kbit/s]",
-                    ylabel="Consumption [W]"
-                    )
-            self.power_plots[node] = fig
+        self.setup_fig(
+                name=node,
+                title="Power for {}".format(node.title()),
+                xlabel="Offered load [kbit/s]",
+                ylabel="Consumed Energy [W]")
 
-        label = "With Coding" if coding else "Without Coding"
-        self.plot_fig(fig, data['rates'], data['power'], label)
-        self.finish_fig(fig)
+        self.plot(data['rates'], data['power'], label[coding])
+        self.finish_fig()
+
+    def plot_udp_system_power(self, source_data, relay_data, coding):
+        self.setup_fig(
+                name='system',
+                title="System Energy Consumption",
+                xlabel="Total Offered Load [kbit/s]",
+                ylabel="Consumed Energy [W]")
+        x = source_data['rates'] + relay_data['rates']
+        y = source_data['power'] + relay_data['power']
+        self.plot(x, y, label[coding])
+        self.finish_fig()
 
     def plot_tcp_throughput(self, node, data, coding):
-        if not self.tcp_throughput_plot:
-            fig = self.setup_fig(
-                    title="TCP Throughput",
-                    xlabel="Congestion Avoidance Algorithm",
-                    ylabel="Measured Throughput [kbit/s]")
-            label_pos = numpy.array(range(len(data['algos'])))+.2
-            fig.set_xticks(label_pos)
-            fig.set_xticklabels(data['algos'])
-            self.tcp_throughput_plot = fig
-            self.tcp_throughput_data[coding] = numpy.array([0]*len(data['algos']))
-            top = self.tcp_throughput_data[coding]
-            self.tcp_throughput_data[not coding] = top
-        else:
-            fig = self.tcp_throughput_plot
-            top = self.tcp_throughput_data[coding]
+        self.setup_fig(
+                name= 'system',
+                title="TCP Throughput",
+                xlabel="Congestion Avoidance Algorithm",
+                ylabel="Measured Throughput [kbit/s]")
+        label_pos = numpy.array(range(len(data['algos'])))+.2
+        self.ax.set_xticks(label_pos)
+        self.ax.set_xticklabels(data['algos'])
 
-        width = .2
-        positions = range(len(data['algos']))
-        if coding:
-            color = c['skyblue2']
-            positions = numpy.array(positions)+width
-            label = "{} with Coding".format(node.title())
-        else:
-            label = "{} without Coding".format(node.title())
-            color = c['chameleon2']
+        # Get values for bar plot
+        bottoms = self.get_bar_tops('system', "TCP Throughput", data['throughput'], coding)
+        left,height,width,color,label = self.get_bar_args(node, coding, data['throughput'])
 
-        fig.bar(positions, data['throughput'], width, top, color=color, ecolor='black', label=label)
-        fig.legend(prop=dict(size=12), numpoints=1, loc='lower right')
-
-        # Save top values for each bar
-        self.tcp_throughput_data[coding] = numpy.sum([top, data['throughput']], axis=0)
+        # Plot values and update the y-offset for next plot
+        self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
+        self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower right')
+        self.update_bar_tops('system', "TCP Throughput", data['throughput'], coding)
 
     def plot_tcp_window_throughput(self, node, data, coding):
-        if not self.tcp_throughput_plot:
-            fig = self.setup_fig(
-                    title="TCP Throughput",
-                    xlabel="Window size [bytes]",
-                    ylabel="Measured Throughput [kbit/s]")
-            label_pos = numpy.array(range(len(data['tcp_windows'])))+.2
-            fig.set_xticks(label_pos)
-            fig.set_xticklabels(data['tcp_windows'])
-            self.tcp_throughput_plot = fig
-            self.tcp_throughput_data[coding] = numpy.array([0]*len(data['tcp_windows']))
-            top = self.tcp_throughput_data[coding]
-            self.tcp_throughput_data[not coding] = top
-        else:
-            fig = self.tcp_throughput_plot
-            top = self.tcp_throughput_data[coding]
+        self.setup_fig(
+                name='system',
+                title="TCP Throughput",
+                xlabel="Window size [bytes]",
+                ylabel="Measured Throughput [kbit/s]")
+        label_pos = numpy.array(range(len(data['tcp_windows'])))+.2
+        self.ax.set_xticks(label_pos)
+        self.ax.set_xticklabels(data['tcp_windows'])
 
-        width = .2
-        positions = range(len(data['tcp_windows']))
-        if coding:
-            color = c['skyblue2']
-            positions = numpy.array(positions)+width
-            label = "{} with Coding".format(node.title())
-        else:
-            label = "{} without Coding".format(node.title())
-            color = c['chameleon2']
+        # Get values for bar plot
+        bottoms = self.get_bar_tops('system', "TCP Throughput", data['throughput'], coding)
+        left,height,width,color,label = self.get_bar_args(node, coding, data['throughput'])
 
-        fig.bar(positions, data['throughput'], width, top, color=color, ecolor='black', label=label)
-        fig.legend(prop=dict(size=12), numpoints=1, loc='lower right')
-
-        # Save top values for each bar
-        self.tcp_throughput_data[coding] = numpy.sum([top, data['throughput']], axis=0)
+        # Plot values and update the y-offset for next plot
+        self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
+        self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower right')
+        self.update_bar_tops('system', "TCP Throughput", data['throughput'], coding)

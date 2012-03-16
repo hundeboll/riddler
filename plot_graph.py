@@ -3,6 +3,7 @@ import time
 import pylab
 import numpy
 import threading
+from matplotlib.backends.backend_pdf import PdfPages
 import riddler_interface as interface
 
 
@@ -69,6 +70,22 @@ class graph:
             except OSError as e:
                 print("Unable to create direcoty: {}".format(e.strerror))
                 return
+
+        # Prepare for a single file with all plots
+        p = "{}/all_plots.pdf".format(path)
+        pdf_pages = PdfPages(p)
+
+        for title in self.figs:
+            for name,fig in self.figs[title].items():
+                # Save plot to its own file
+                filename = "{}/{}.pdf".format(path, title.lower().replace(' ', '_'))
+                fig.savefig(filename, transparent=True, bbox_inches='tight', pad_inches=0)
+
+                # Add plot to the one and only pdf
+                pdf_pages.savefig(fig, transparent=True)
+
+        # Save the teh single file
+        pdf_pages.close()
 
     def setup_fig(self, name, title, xlabel, ylabel):
         if title in self.figs and name in self.figs[title]:

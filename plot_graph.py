@@ -3,6 +3,7 @@ import time
 import pylab
 import numpy
 import threading
+from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_pdf import PdfPages
 import riddler_interface as interface
 
@@ -42,6 +43,7 @@ bar_colors = {
         False: [c["skyblue1"], c["skyblue2"], c["skyblue3"]],
         }
 label = {True: "With Coding", False: "Without Coding"}
+color = {True: c["chameleon2"], False: c["skyblue2"]}
 
 class graph:
     def __init__(self):
@@ -87,14 +89,17 @@ class graph:
         # Save the teh single file
         pdf_pages.close()
 
-    def setup_fig(self, name, title, xlabel, ylabel):
+    def setup_fig(self, name, title, xlabel, ylabel, projection=None):
         if title in self.figs and name in self.figs[title]:
             self.fig = self.figs[title][name]
             self.ax = self.axes[title][name]
             return self.fig
 
         self.fig = pylab.figure()
-        self.ax = self.fig.add_subplot(111)
+        if projection:
+            self.ax = self.fig.add_subplot(111, projection=projection)
+        else:
+            self.ax = self.fig.add_subplot(111)
         self.ax.grid(True)
         self.ax.set_xlabel(xlabel)
         self.ax.set_ylabel(ylabel)
@@ -109,11 +114,11 @@ class graph:
 
         return self.fig,self.ax
 
-    def finish_fig(self):
-        self.fig.gca().legend(loc='upper left', shadow=True)
+    def finish_fig(self, loc='upper left'):
+        self.fig.gca().legend(loc=loc, shadow=True)
 
-    def plot(self, x, y, label):
-        self.fig.gca().plot(x, y, linewidth=2, label=label)
+    def plot(self, x, y, l):
+        self.fig.gca().plot(x, y, linewidth=2, label=l)
 
     def get_bar_tops(self, name, title, data, coding):
         if title not in self.bar_tops:
@@ -177,6 +182,36 @@ class graph:
         self.plot(data['rates'], data['throughput'], label[coding])
         self.finish_fig()
 
+    def plot_udp_ratio_throughput(self, node, data, coding):
+        self.setup_fig(
+                name=node,
+                title="Throughput for {0}".format(node.title()),
+                xlabel="Ratio [%]",
+                ylabel="Offered Load [kbit/s]",
+                projection='3d')
+
+        x = data['throughput']['x']
+        y = data['throughput']['y']
+        z = data['throughput']['z']
+        self.ax.set_zlabel('Throughput [kbit/s]')
+        self.ax.plot_surface(x, y, z, rstride=1, cstride=1, color=color[coding])
+        print label[coding]
+        self.ax.legend((label[coding]))
+
+    def plot_udp_ratio_coded(self, node, data):
+        self.setup_fig(
+                name=node,
+                title="Coded for {0}".format(node.title()),
+                xlabel="Ratio [%]",
+                ylabel="Offered Load [kbit/s]",
+                projection='3d')
+
+        x = data['coded']['x']
+        y = data['coded']['y']
+        z = data['coded']['z']
+        self.ax.set_zlabel('Coded [packets]')
+        self.ax.plot_surface(x, y, z, rstride=1, cstride=1, color=color[True])
+
     def plot_cpu(self, node, data, coding):
         self.setup_fig(
                 name=node,
@@ -208,6 +243,22 @@ class graph:
         y = source_data['power'] + relay_data['power']
         self.plot(x, y, label[coding])
         self.finish_fig()
+
+    def plot_udp_system_power_per_bit(self, source_data, relay_data, coding):
+        self.setup_fig(
+                name='system',
+                title="System Energy per Bit",
+                xlabel="Total offered load",
+                ylabel="Energy per Bit [J/b]")
+
+        x = source_data['rates']
+        w = source_data['power'] + relay_data['power']
+        tp = source_data['throughput']
+        tp *= 8 # From bytes to bits
+        y = w/tp
+
+        self.plot(x, y, label[coding])
+        self.finish_fig(loc="upper right")
 
     def plot_tcp_throughput(self, node, data, coding):
         self.setup_fig(

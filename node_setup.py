@@ -7,9 +7,11 @@ nc_file = "network_coding"
 hold_file = "nc_hold"
 purge_file = "nc_purge"
 
-tcp_path = "/proc/sys/net/ipv4/"
+ipv4_path = "/proc/sys/net/ipv4/"
 current_algo = "tcp_congestion_control"
 available_algos = "tcp_available_congestion_control"
+window_read = "tcp_rmem"
+window_write = "tcp_wmem"
 
 class setup:
     def __init__(self, args):
@@ -54,12 +56,16 @@ class setup:
         if not run_info['protocol'] == 'tcp':
             return True
 
+        # Write TCP window sizes
+        window = run_info['tcp_window']
+        self.write(ipv4_path)
+
         # Write and enable the selected algorithm
         algo = run_info['tcp_algo']
-        self.write(tcp_path + current_algo, algo)
+        self.write(ipv4_path + current_algo, algo)
 
         # Check if we succeeded
-        if algo not in self.read(tcp_path + current_algo):
+        if algo not in self.read(ipv4_path + current_algo):
             self.error = "Failed to set tcp algorithm: {0}".format(algo)
             return False
 

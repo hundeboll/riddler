@@ -20,6 +20,7 @@ class data:
     # Read specified field in sorted order
     def keys(self, rd, field):
         keys = map(lambda r: r[0].run_info[field], rd)
+        keys = list(set(keys))
         return sorted(keys)
 
     # Return values of a dictionary sorted by their keys
@@ -38,6 +39,56 @@ class data:
             avg[key] = numpy.average(val)
         # Return a list sorted by rates
         return self.sort_data(avg)
+
+    def prepare_grids(self, c):
+        # Mad man sorting
+        x,y,z = zip(*c)
+        c_sorted = [c[i] for i in numpy.lexsort((z,y,x))]
+
+        # Shape our sorted axes and values
+        x_,y_,z_ = zip(*c_sorted)
+        x_len = len(numpy.unique(x_))
+        y_len = len(numpy.unique(y_))
+        x_ = numpy.reshape(x_, (y_len, x_len), order='F')
+        y_ = numpy.reshape(y_, (y_len, x_len), order='F')
+        z_ = numpy.reshape(z_, (y_len, x_len), order='F')
+
+        return {'x': x_, 'y': y_, 'z': z_}
+
+    def average_result_3d(self, rd, field, x_par, y_par):
+        c = []
+        for r in rd:
+            x = r[0].run_info[x_par]
+            y = r[0].run_info[y_par]
+            z = map(lambda d: d.result[field], r)
+            z = numpy.average(z)
+            c.append((x, y, z))
+
+        return self.prepare_grids(c)
+
+    def average_samples_3d(self, rd, field, x_par, y_par):
+        c = []
+        for r in rd:
+            x = r[0].run_info[x_par]
+            y = r[0].run_info[y_par]
+            z = self.average_run_samples(r, field)
+            c.append((x,y,z))
+
+        return self.prepare_grids(c)
+
+
+    def difference_samples_3d(self, rd, field, x_par, y_par):
+        sample_diff = lambda r, f: r.samples[-1][f] - r.samples[0][f]
+        c = []
+
+        for r in rd:
+            x = r[0].run_info[x_par]
+            y = r[0].run_info[y_par]
+            z = map(lambda d: sample_diff(d, field), r)
+            z = numpy.average(z)
+            c.append((x,y,z))
+
+        return self.prepare_grids(c)
 
     # Average over a field in a sample set (from one run)
     def average_run_samples(self, r, field):
@@ -132,10 +183,26 @@ class data:
         data['throughput'] = self.average_result(rd, 'throughput', 'rate')
         data['jitter']     = self.average_result(rd, 'jitter', 'rate')
         data['cpu']        = self.average_samples(rd, 'cpu', 'rate')
-        data['power']      = self.sum_samples(rd, 'power_watt', 'rate')
+        data['power']      = self.average_samples(rd, 'power_watt', 'rate')
+        data['iw_rx']      = self.difference_samples(rd, 'iw rx bytes', 'rate')
+        data['ip_rx']      = self.difference_samples(rd, 'ip_rx_bytes', 'rate')
 
         self.update_system_data('udp_sources', data, coding)
 
+        return data
+
+    def udp_ratio_source_data(self, node, coding):
+        rd = self.data.get_run_data(node, {'coding': coding})
+
+        data = {}
+        data['throughput'] = self.average_result_3d(rd, 'throughput', 'ratio', 'rate')
+        return data
+
+    def udp_ratio_relay_data(self, node, coding):
+        rd = self.data.get_run_data(node, {'coding': coding})
+
+        data = {}
+        data['coded'] = self.difference_samples_3d(rd, 'nc Coded', 'ratio', 'rate')
         return data
 
     def udp_relay_data(self, node, coding):
@@ -146,10 +213,11 @@ class data:
         data = {}
         data['rates']     = self.keys(rd, 'rate')
         data['cpu']       = self.average_samples(rd, 'cpu', 'rate')
-        data['power']     = self.sum_samples(rd, 'power_watt', 'rate')
+        data['power']     = self.average_samples(rd, 'power_watt', 'rate')
         data['coded']     = self.difference_samples(rd, 'nc Coded', 'rate')
         data['fwd']       = self.difference_samples(rd, 'nc Forwarded', 'rate')
         data['fwd_coded'] = self.difference_samples(rd, 'nc FwdCoded', 'rate')
+        data['tx']        = self.difference_samples(rd, 'iw tx bytes', 'rate')
 
         data['ratio_coded'] = data['coded']/data['fwd_coded']/2
         data['ratio_fwd']   = data['fwd']/data['fwd_coded']

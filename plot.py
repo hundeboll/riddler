@@ -34,13 +34,20 @@ class plot:
         if self.data.profile == 'udp_rates':
             # For each source
             for node in self.data.sources:
-                self.plot_udp_source(node)
+                self.plot_udp_rate_source(node)
 
             # For each relay
             for node in self.data.relays:
-                self.plot_udp_relay(node)
+                self.plot_udp_rate_relay(node)
 
-            self.plot_udp_system()
+            self.plot_udp_rate_system()
+
+        elif self.data.profile == 'udp_ratios':
+            for node in self.data.sources:
+                self.plot_udp_ratio_source(node)
+
+            for node in self.data.relays:
+                self.plot_udp_ratio_relay(node)
 
         elif self.data.profile == 'tcp_algos':
             for node in self.data.sources:
@@ -60,7 +67,7 @@ class plot:
         if self.args.out:
             self.graph.save_figs(self.args.out)
 
-    def plot_udp_source(self, node):
+    def plot_udp_rate_source(self, node):
         if self.args.plots not in ('all', 'system', node):
             return
 
@@ -72,7 +79,7 @@ class plot:
                 self.graph.plot_cpu(node, data, coding)
                 self.graph.plot_power(node, data, coding)
 
-    def plot_udp_relay(self, node):
+    def plot_udp_rate_relay(self, node):
         if self.args.plots not in ('all', 'system', node):
             return
 
@@ -85,7 +92,7 @@ class plot:
             if self.args.plots in ('all', node):
                 self.graph.plot_power(node, data, coding)
 
-    def plot_udp_system(self):
+    def plot_udp_rate_system(self):
         if self.args.plots not in ('all', 'system'):
             return
 
@@ -95,7 +102,27 @@ class plot:
 
             self.graph.plot_udp_system_throughput(source_agg, coding)
             self.graph.plot_udp_system_power(source_agg, relay_agg, coding)
+            self.graph.plot_udp_system_power_per_bit(source_agg, relay_agg, coding)
 
+    def plot_udp_ratio_source(self, node):
+        if self.args.plots not in ('all', 'system', node):
+            return
+
+        for coding in (True, False):
+            data = self.data.udp_ratio_source_data(node, coding)
+
+            if self.args.plots in ('all', node):
+                self.graph.plot_udp_ratio_throughput(node, data, coding)
+
+    def plot_udp_ratio_relay(self, node):
+        if self.args.plots not in ('all', 'system', node):
+            return
+
+        for coding in (True, False):
+            data = self.data.udp_ratio_relay_data(node, coding)
+
+            if self.args.plots in ('all', node) and coding:
+                self.graph.plot_udp_ratio_coded(node, data)
 
     def plot_tcp_source(self, node):
         if self.args.plots not in ('all', 'system', node):

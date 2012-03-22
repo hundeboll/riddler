@@ -33,10 +33,9 @@ class main_window(QMainWindow):
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(self.control, "Control")
+        self.tabs.addTab(self.control, "Controller")
         self.tabs.addTab(self.live_monitor.gui, "Live Monitor")
         self.tabs.addTab(self.test_monitor.gui, "Test Monitor")
-        #self.tabs.setCurrentWidget(self.live_monitor.gui)
         self.tabs.setTabPosition(QTabWidget.West)
         self.setCentralWidget(self.tabs)
 

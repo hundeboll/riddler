@@ -101,7 +101,7 @@ class toolbar(QToolBar):
 
 
 class live_fig(QGroupBox):
-    def __init__(self, name, title, ylabel, ylim=None, scale=1.1, parent=None):
+    def __init__(self, name, title, ylabel, ylim=None, scale=1.1, show=False, parent=None):
         super(live_fig, self).__init__(title, parent)
         self.name = name
         self.title = title
@@ -111,6 +111,8 @@ class live_fig(QGroupBox):
         self.layout = QHBoxLayout()
         self.add_fig(title, ylabel, ylim, scale)
         self.setLayout(self.layout)
+        if not show:
+            self.hide()
 
         self.timer = QTimer()
 
@@ -249,14 +251,18 @@ class monitor_gui(QWidget):
         self.add_legend()
         self.do_layout(2)
         self.figs = {}
-        self.add_fig('iw tx bytes', "TX Rate",           "Rate [kbit/s]")
-        self.add_fig('iw rx bytes', "RX Rate",           "Rate [kbit/s]")
-        self.add_fig('ip_tx_bytes', "IP TX Rate",        "Rate [kbit/s]")
-        self.add_fig('ip_rx_bytes', "IP RX Rate",        "Rate [kbit/s]")
-        self.add_fig('cpu',         "CPU Usage",         "Usage [%]", ylim=105, scale=False)
-        self.add_fig('coded',       "Coded Packets",     "Ratio [%]", ylim=1.05, scale=False)
-        self.add_fig('nc Failed',   "Packets Failed to Decode", "Packets")
-        self.add_fig('power_watt',       "Power Consumption", "Usage [W]")
+        self.add_fig('iw tx bytes',   "TX Rate",           "Rate [kbit/s]", show=True)
+        self.add_fig('iw rx bytes',   "RX Rate",           "Rate [kbit/s]", show=True)
+        self.add_fig('ip_tx_bytes',   "IP TX Rate",        "Rate [kbit/s]", show=False)
+        self.add_fig('ip_rx_bytes',   "IP RX Rate",        "Rate [kbit/s]", show=False)
+        self.add_fig('cpu',           "CPU Usage",         "Usage [%]", ylim=105, scale=False, show=True)
+        self.add_fig('power_watt',    "Power Consumption", "Usage [W]", show=True)
+        self.add_fig('nc Coded',         "Coded Packets",     "Packets", show=True)
+        self.add_fig('nc Failed',     "Packets Failed to Decode", "Packets", show=False)
+        self.add_fig('iw tx failed',  "TX Failed",         "Packets", show=False)
+        self.add_fig('iw tx retries', "TX Retries",        "Packets", show=True)
+        self.add_fig('nc Decoded',    "Decoded",           "Packets", show=True)
+        self.add_fig('nc Overheard',  "Overheard",         "Packets", show=True)
 
 
         self.add_node.connect(self._add_node)
@@ -300,8 +306,8 @@ class monitor_gui(QWidget):
         self.columns[self.next_column%self.column_num].addWidget(fig)
         self.next_column += 1
 
-    def add_fig(self, name, title, ylabel, ylim=None, scale=1.1):
-        fig = live_fig(name, title, ylabel, ylim, scale, parent=self)
+    def add_fig(self, name, title, ylabel, ylim=None, scale=1.1, show=False):
+        fig = live_fig(name, title, ylabel, ylim, scale, show, parent=self)
         self.toolbar.add_fig(fig)
         self.figs[name] = fig
         self.add_fig_to_column(fig)
@@ -383,9 +389,13 @@ class monitor:
 
         self.add_timestamp(node, sample['timestamp'])
         self.add_val('cpu', node, sample)
-        self.add_val('power_watt', node, sample)
+        self.add_val('power_watt',    node, sample)
+        self.add_diff('iw tx retries', node, sample)
+        self.add_diff('iw tx failed',  node, sample)
         self.add_diff('nc Failed', node, sample)
-        self.add_coded(node, sample)
+        self.add_diff('nc Decoded', node, sample)
+        self.add_diff('nc Overheard', node, sample)
+        self.add_diff('nc Coded', node, sample)
         self.add_bytes('iw rx bytes', node, sample)
         self.add_bytes('iw tx bytes', node, sample)
         self.add_bytes('ip_rx_bytes', node, sample)

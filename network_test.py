@@ -15,3 +15,4 @@ bob = node.node("bob", "n53")
 
 alice.add_dest(bob)
 bob.add_dest(alice)
+bob.set_enable_ratio(True)

@@ -63,6 +63,9 @@ class controller(threading.Thread):
         if profile in ("udp_rates","power_meas"):
             self.test_rates()
 
+        elif profile == "udp_ratios":
+            self.test_ratios()
+
         elif profile == "tcp_algos":
             self.test_tcp_algos()
 
@@ -97,6 +100,21 @@ class controller(threading.Thread):
                     self.execute_run()
 
                     # Quit if we are told to
+                    if self.end.is_set():
+                        return
+
+    # Control function to swipe ratios between
+    def test_ratios(self):
+        hold = self.args.hold_time
+        purge = self.args.purge_time
+
+        for loop in self.loops:
+            for rate in self.rates:
+                for ratio in self.ratios:
+                    for coding in self.codings:
+                        self.set_run_info(loop=loop, rate=rate, ratio=ratio, hold=hold, purge=purge, coding=coding)
+                        self.execute_run()
+
                     if self.end.is_set():
                         return
 
@@ -249,6 +267,15 @@ class controller(threading.Thread):
             self.run_info_format = "\n# Loop: {loop:2d}/{loops:<2d} | Rate: {rate:4d} kb/s | Coding: {coding:1b} | ETA: {eta:s}"
             self.result_format = "{:10s} {throughput:6d} kb/s {lost:4d}/{total:<4d} {ratio:4.1f}%"
 
+        if args.test_profile == "udp_ratios":
+            self.codings = [True, False]
+            self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
+            self.ratios = range(args.ratio_start, args.ratio_stop+1, args.ratio_step)
+            self.test_count = len(self.rates) * len(self.ratios) * args.test_loops * len(self.codings)
+            self.protocol = 'udp'
+            self.run_info_format = "\n# Loop: {loop:2d}/{loops:<2d} | Ratio: {ratio:02d}% | Rate: {rate:4d} kb/s | Coding: {coding:1b} | ETA: {eta:s}"
+            self.result_format = "{:10s} {throughput:6d} kb/s {lost:4d}/{total:<4d} {ratio:4.1f}%"
+
         if args.test_profile == 'hold_times':
             self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
             self.hold_times = range(args.hold_start, args.hold_stop+1, args.hold_step)
@@ -273,7 +300,7 @@ class controller(threading.Thread):
             self.run_info_format = "\n#{loop:2d} | Window {tcp_window:5} | Coding: {coding:1b} | ETA: {eta:s}"
 
     # Configure the next run_info to be sent to each node
-    def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None, tcp_window=None):
+    def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None, tcp_window=None, ratio=None):
         self.update_run_no(loop)
         self.run_info['test_time'] = self.args.test_time
         self.run_info['sample_interval'] = self.args.sample_interval
@@ -286,6 +313,7 @@ class controller(threading.Thread):
         self.run_info['coding'] = coding
         self.run_info['tcp_window'] = tcp_window
         self.run_info['promisc'] = coding
+        self.run_info['ratio'] = ratio
 
         # Update the data storage with the new run info
         self.data.add_run_info(self.run_info)

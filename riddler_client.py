@@ -98,6 +98,10 @@ class tcp_handler(SocketServer.BaseRequestHandler):
     def handle_obj(self, obj):
         if obj.cmd == interface.CLIENT_EVENT:
             self.handle_event(obj.event)
+
+        elif obj.cmd == interface.CLIENT_ARGS:
+            self.handle_args(obj.args)
+
         else:
             print("Received unknown command")
 
@@ -115,6 +119,9 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         else:
             print("Received unknown event: {}".format(event))
 
+    def handle_args(self, args):
+        self.server.args = args
+        self.server.riddler.set_args(args)
 
     def send(self, cmd, **vals):
         self.lock.acquire()

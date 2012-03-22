@@ -10,7 +10,7 @@ client_port = 6677
 #
 # Test settings
 #
-test_profile = 'udp_rates'  # Profiles to run (udp_rates, tcp_algos, tcp_windows, hold_times, or power_meas).
+test_profile = 'udp_rates'  # Profiles to run (udp_rates, udp_ratios, tcp_algos, tcp_windows, hold_times, or power_meas).
 test_time  = 10          # Time for each loop to run
 test_sleep = 5          # Time to sleep between runs
 test_loops = 15         # Number of repetitions for each run
@@ -28,7 +28,14 @@ packet_length = 100     # Not implemented yet
 #
 rate_start = 50       # Initial rate of each swipe in kbit/s
 rate_stop  = 1500        # Last rate of each swipe in kbit/s
-rate_step  = 50         # Rate increment for each run in kbit/s
+rate_step  = 100         # Rate increment for each run in kbit/s
+
+#
+# Settings for udp_ratio
+#
+ratio_start = 10    # Percentage
+ratio_stop  = 100   # Percentage
+ratio_step  = 10    # Percentage
 
 #
 # Settings for hold_times

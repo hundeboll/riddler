@@ -22,6 +22,9 @@ except ImportError:
 parser.add_argument("--rate_start", type=int)
 parser.add_argument("--rate_stop", type=int)
 parser.add_argument("--rate_step", type=int)
+parser.add_argument("--ratio_start", type=int)
+parser.add_argument("--ratio_stop", type=int)
+parser.add_argument("--ratio_step", type=int)
 parser.add_argument("--hold_time", type=int)
 parser.add_argument("--hold_start", type=int)
 parser.add_argument("--hold_stop", type=int)
@@ -202,6 +205,10 @@ class riddler:
         # Dump data to pickle file
         data.dump_data(self.data, path)
         print("Data saved to '{0}'".format(path))
+
+    def set_args(self, args):
+        self.args = args
+        self.controller.args = args
 
 
 def print_help():

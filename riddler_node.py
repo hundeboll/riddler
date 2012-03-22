@@ -2,6 +2,7 @@ import threading
 import socket
 import pickle
 import time
+import copy
 import riddler_interface as interface
 
 nodes = []
@@ -15,6 +16,7 @@ class node(threading.Thread):
         self.mesh_host = ""
         self.mesh_port = 8877
         self.dests = []
+        self.enable_ratio = False
         self.sources = []
         self.samples = []
         self.store_samples = False
@@ -160,6 +162,10 @@ class node(threading.Thread):
     def get_dests(self):
         return map(lambda n: {'name': n.name, 'host': n.mesh_host, 'port': n.mesh_port}, self.dests)
 
+    # Set if this node should apply the ratio given by a run_info
+    def set_enable_ratio(self, b):
+        self.enable_ratio = b
+
     # Return result of current run
     def get_result(self):
         return self.run_result
@@ -183,6 +189,11 @@ class node(threading.Thread):
 
     # Tell the node to prepare a new run
     def prepare_run(self, run_info):
+        # Adjust rate according to ratio, if enabled
+        run_info = copy.deepcopy(run_info)
+        if self.enable_ratio and run_info['ratio']:
+            run_info['rate'] = run_info['rate'] * run_info['ratio']/100
+
         self.samples = []
         self.run_info = run_info
         self.run_error = False

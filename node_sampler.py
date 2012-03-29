@@ -214,6 +214,7 @@ class sampler(threading.Thread):
         if not output:
             return
 
+        sample['mac'] = re.findall("/([0-9a-f:]{17})", output)[0]
         nexthops = re.findall("(?P<orig>[0-9a-f:]{17}) +\d.\d{3}s +\((?P<tq>\d+)\) (?P=orig)", output)
         for nexthop in nexthops:
             sample['nexthops'][nexthop[0]] = nexthop[1]

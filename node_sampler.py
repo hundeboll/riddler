@@ -8,6 +8,7 @@ import node_power as power
 import re
 
 nc_path = "/sys/kernel/debug/batman_adv/bat0/bat_stats"
+orig_path = "/sys/kernel/debug/batman_adv/bat0/originators"
 
 class sampler(threading.Thread):
     def __init__(self, controller, args):
@@ -36,6 +37,7 @@ class sampler(threading.Thread):
             self.sample_ip()
             self.sample_cpu()
             self.sample_power()
+            self.sample_originators()
             self.report_samples()
             delay = self.run_info['sample_interval'] - (time.time() - start)
             if delay > 0:
@@ -200,3 +202,22 @@ class sampler(threading.Thread):
         sample['power_amp'] = self.power.read_amp()
         sample['power_volt'] = self.power.read_volt()
         self.append_sample(sample)
+
+    def sample_originators(self):
+        sample = {'nexthops': {}}
+        if not os.path.exists(orig_path):
+            return
+
+        # Read the file (why don't we just open() the file?)
+        cmd = ["cat", orig_path]
+        output = interface.exec_cmd(cmd)
+        if not output:
+            return
+
+        nexthops = re.findall("(?P<orig>[0-9a-f:]{17}) +\d.\d{3}s +\((?P<tq>\d+)\) (?P=orig)", line)
+        for nexthop in nexthops:
+            sample['nexthops'][nexthop[0]] = nexthop[1]
+
+        self.append_sample(sample)
+
+

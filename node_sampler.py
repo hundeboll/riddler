@@ -214,10 +214,8 @@ class sampler(threading.Thread):
         if not output:
             return
 
-        nexthops = re.findall("(?P<orig>[0-9a-f:]{17}) +\d.\d{3}s +\((?P<tq>\d+)\) (?P=orig)", line)
+        nexthops = re.findall("(?P<orig>[0-9a-f:]{17}) +\d.\d{3}s +\((?P<tq>\d+)\) (?P=orig)", output)
         for nexthop in nexthops:
             sample['nexthops'][nexthop[0]] = nexthop[1]
 
         self.append_sample(sample)
-
-

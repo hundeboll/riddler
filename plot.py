@@ -79,12 +79,18 @@ class plot:
                 self.graph.plot_cpu(node, data, coding)
                 self.graph.plot_power(node, data, coding)
 
+            if coding:
+                self.graph.plot_tx_packets(data, node)
+
     def plot_udp_rate_relay(self, node):
         if self.args.plots not in ('all', 'system', node):
             return
 
         for coding in (True, False):
             data = self.data.udp_relay_data(node, coding)
+
+            if coding:
+                self.graph.plot_tx_packets(data, node)
 
             if self.args.plots in ('all', node) and coding:
                 self.graph.plot_coded(node, data)
@@ -120,6 +126,7 @@ class plot:
 
         for coding in (True, False):
             data = self.data.udp_ratio_relay_data(node, coding)
+            self.graph.plot_udp_ratio_power(node, data, coding)
 
             if self.args.plots in ('all', node) and coding:
                 self.graph.plot_udp_ratio_coded(node, data)

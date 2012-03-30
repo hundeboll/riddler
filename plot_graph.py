@@ -182,6 +182,16 @@ class graph:
         self.plot(data['rates'], data['throughput'], label[coding])
         self.finish_fig()
 
+    def plot_tx_packets(self, data, node):
+        self.setup_fig(
+                name='system',
+                title="Packets Transmitted",
+                xlabel="Total Offered Load [kbit/s]",
+                ylabel="Packets")
+
+        self.plot(data['rates'], data['iw_tx_pkts'], node.title())
+        self.finish_fig()
+
     def plot_udp_ratio_throughput(self, node, data, coding):
         self.setup_fig(
                 name=node,
@@ -194,6 +204,22 @@ class graph:
         y = data['throughput']['y']
         z = data['throughput']['z']
         self.ax.set_zlabel('Throughput [kbit/s]')
+        self.ax.plot_surface(x, y, z, rstride=1, cstride=1, color=color[coding])
+        print label[coding]
+        self.ax.legend((label[coding]))
+
+    def plot_udp_ratio_power(self, node, data, coding):
+        self.setup_fig(
+                name=node,
+                title="Power for {0}".format(node.title()),
+                xlabel="Ratio [%]",
+                ylabel="Offered Load [kbit/s]",
+                projection='3d')
+
+        x = data['power']['x']
+        y = data['power']['y']
+        z = data['power']['z']
+        self.ax.set_zlabel('Power [W]')
         self.ax.plot_surface(x, y, z, rstride=1, cstride=1, color=color[coding])
         print label[coding]
         self.ax.legend((label[coding]))

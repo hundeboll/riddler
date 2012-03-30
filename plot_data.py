@@ -186,6 +186,7 @@ class data:
         data['power']      = self.average_samples(rd, 'power_watt', 'rate')
         data['iw_rx']      = self.difference_samples(rd, 'iw rx bytes', 'rate')
         data['ip_rx']      = self.difference_samples(rd, 'ip_rx_bytes', 'rate')
+        data['iw_tx_pkts'] = self.difference_samples(rd, 'iw tx packets', 'rate')
 
         self.update_system_data('udp_sources', data, coding)
 
@@ -203,6 +204,7 @@ class data:
 
         data = {}
         data['coded'] = self.difference_samples_3d(rd, 'nc Coded', 'ratio', 'rate')
+        data['power'] = self.average_samples_3d(rd, 'power_watt', 'ratio', 'rate')
         return data
 
     def udp_relay_data(self, node, coding):
@@ -211,13 +213,14 @@ class data:
 
         # Read out data from objects
         data = {}
-        data['rates']     = self.keys(rd, 'rate')
-        data['cpu']       = self.average_samples(rd, 'cpu', 'rate')
-        data['power']     = self.average_samples(rd, 'power_watt', 'rate')
-        data['coded']     = self.difference_samples(rd, 'nc Coded', 'rate')
-        data['fwd']       = self.difference_samples(rd, 'nc Forwarded', 'rate')
-        data['fwd_coded'] = self.difference_samples(rd, 'nc FwdCoded', 'rate')
-        data['tx']        = self.difference_samples(rd, 'iw tx bytes', 'rate')
+        data['rates']      = self.keys(rd, 'rate')
+        data['cpu']        = self.average_samples(rd, 'cpu', 'rate')
+        data['power']      = self.average_samples(rd, 'power_watt', 'rate')
+        data['coded']      = self.difference_samples(rd, 'nc Coded', 'rate')
+        data['fwd']        = self.difference_samples(rd, 'nc Forwarded', 'rate')
+        data['fwd_coded']  = self.difference_samples(rd, 'nc FwdCoded', 'rate')
+        data['tx']         = self.difference_samples(rd, 'iw tx bytes', 'rate')
+        data['iw_tx_pkts'] = self.difference_samples(rd, 'iw tx packets', 'rate')
 
         data['ratio_coded'] = data['coded']/data['fwd_coded']/2
         data['ratio_fwd']   = data['fwd']/data['fwd_coded']

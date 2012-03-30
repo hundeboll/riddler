@@ -138,7 +138,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     # Send list of nodes to client
     def export_nodes(self, nodes):
-        nodes = [node.name for node in nodes]
+        nodes = [{'name': node.name, 'mac': node.mesh_mac} for node in nodes]
         self.send(interface.CLIENT_NODES, nodes=nodes)
 
     def export_args(self, args):

@@ -185,6 +185,7 @@ class node(threading.Thread):
     def handle_node_info(self, obj):
         self.mesh_host = obj.mesh_host
         self.mesh_port = obj.mesh_port
+        self.mesh_mac  = obj.mesh_mac
         self.reply.set()
 
     # Tell the node to prepare a new run
@@ -245,6 +246,9 @@ class node(threading.Thread):
 
     # Save received measurement sample for later extraction
     def handle_sample(self, obj):
+        # Add name to sample
+        obj.sample['node'] = self.name
+
         # Only store sample if a test is running
         if self.store_samples:
             self.samples.append(obj.sample)

@@ -171,5 +171,5 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         args = self.server.args
         output = interface.exec_cmd(["batctl", "o"])
         mac = re.findall("((?:[0-9a-f]{2}:){5}[0-9a-f]{2})", output)[0]
-        obj = interface.node(interface.NODE_INFO, mesh_host=args.mesh_host, mesh_port=args.mesh_port, mesh_ac=mac)
+        obj = interface.node(interface.NODE_INFO, mesh_host=args.mesh_host, mesh_port=args.mesh_port, mesh_mac=mac)
         self.report(obj)

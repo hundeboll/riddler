@@ -368,7 +368,7 @@ class monitor:
 
     def add_nodes(self, obj):
         for node in obj.nodes:
-            self.add_node(node)
+            self.add_node(node['name'])
 
     def add_node(self, node):
         self.timestamps[node] = None

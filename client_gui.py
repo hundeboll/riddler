@@ -11,6 +11,7 @@ matplotlib.use('Qt4Agg')
 
 import client_live_monitor as live_monitor
 import client_test_monitor as test_monitor
+import client_topology as topology
 import client_control as control
 import riddler_interface as interface
 
@@ -20,8 +21,8 @@ class main_window(QMainWindow):
         super(main_window, self).__init__(parent)
         self.setWindowTitle("Riddler Client")
 
-        self.test_monitor = test_monitor.monitor(parent=self)
         self.live_monitor = live_monitor.monitor(parent=self)
+        self.topology = topology.topology(parent=self)
         self.control = control.control(parent=self)
 
         menu = self.menuBar().addMenu("File")
@@ -29,13 +30,12 @@ class main_window(QMainWindow):
 
         self.addToolBar(self.control.toolbar)
         self.addToolBar(self.live_monitor.gui.toolbar)
-        self.addToolBar(self.test_monitor.gui.toolbar)
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self.control, "Controller")
         self.tabs.addTab(self.live_monitor.gui, "Live Monitor")
-        self.tabs.addTab(self.test_monitor.gui, "Test Monitor")
+        self.tabs.addTab(self.topology, "Topology")
         self.tabs.setTabPosition(QTabWidget.West)
         self.setCentralWidget(self.tabs)
 
@@ -65,6 +65,7 @@ class main_window(QMainWindow):
     def set_socket(self, sock):
         self.control.set_socket(sock)
         self.live_monitor.add_subscriptions(sock)
+        self.topology.set_socket(sock)
 
 
 if __name__ == "__main__":

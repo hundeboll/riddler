@@ -599,7 +599,7 @@ class parameters(QWidget):
         self.socket = socket
 
     def add_node(self, obj):
-        print(obj.nodes)
+        print([node['name'] for node in obj.nodes])
 
     def add_run_info(self, obj):
         print(obj.run_info['rate'])

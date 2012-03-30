@@ -168,5 +168,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
     # Send our own information to the controller
     def send_node_info(self):
         args = self.server.args
-        obj = interface.node(interface.NODE_INFO, mesh_host=args.mesh_host, mesh_port=args.mesh_port)
+        output = interface.exec_cmd(["batctl", "o"])
+        mac = re.findall("((?:[0-9a-f]{2}:){5}[0-9a-f]{2})", output)[0]
+        obj = interface.node(interface.NODE_INFO, mesh_host=args.mesh_host, mesh_port=args.mesh_port, mesh_ac=mac)
         self.report(obj)

@@ -2,6 +2,7 @@ import SocketServer
 import pickle
 import socket
 import threading
+import re
 import riddler_interface as interface
 import node_tester as tester
 import node_sampler as sampler

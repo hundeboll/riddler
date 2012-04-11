@@ -264,6 +264,9 @@ class monitor_gui(QWidget):
         self.add_fig('nc Decoded',    "Decoded",           "Packets", show=True)
         self.add_fig('nc Overheard',  "Overheard",         "Packets", show=True)
 
+        self.add_fig('iw 1c:7e:e5:5c:9a:d7 rx packets', "RX Alice", "Packets", show=True)
+        self.add_fig('iw 34:08:04:99:f2:f6 rx packets', "RX Bob", "Packets", show=True)
+
 
         self.add_node.connect(self._add_node)
         self.update_data.connect(self._update_data)
@@ -400,6 +403,10 @@ class monitor:
         self.add_bytes('iw tx bytes', node, sample)
         self.add_bytes('ip_rx_bytes', node, sample)
         self.add_bytes('ip_tx_bytes', node, sample)
+
+        if node == "relay":
+            self.add_diff('iw 1c:7e:e5:5c:9a:d7 rx packets', node, sample)
+            self.add_diff('iw 34:08:04:99:f2:f6 rx packets', node, sample)
 
     def add_timestamp(self, node, timestamp):
         if self.timestamps[node]:

@@ -26,7 +26,7 @@ packet_length = 100     # Not implemented yet
 #
 # Settings for udp_rates, hold_times, power_meas
 #
-rate_start = 50       # Initial rate of each swipe in kbit/s
+rate_start = 100       # Initial rate of each swipe in kbit/s
 rate_stop  = 1500        # Last rate of each swipe in kbit/s
 rate_step  = 100         # Rate increment for each run in kbit/s
 

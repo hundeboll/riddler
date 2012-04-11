@@ -37,12 +37,14 @@ class data:
         self.nodes = []
         self.sources = []
         self.relays = []
+        self.macs = {}
         self.rd = {}
 
     def add_nodes(self, nodes):
         for node in nodes:
             name = node.name
             self.rd[name] = []
+            self.macs[node.mac] = name
             if node.dests:
                 self.sources.append(name)
             else:

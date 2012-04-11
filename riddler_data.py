@@ -71,12 +71,11 @@ class data:
         d = self.rd[node][self.run_no][-1]
         d.result = result
 
-    def get_run_data(self, node, conditions):
+    def get_run_data_node(self, node, conditions):
         d = self.rd[node]
         test = lambda rd, k, v: rd[0].run_info[k] == v
 
-        for key in conditions:
-            val = conditions[key]
+        for key,val in conditions.items():
             d = filter(lambda rd: test(rd, key, val), d)
         return d
 

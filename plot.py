@@ -41,6 +41,7 @@ class plot:
                 self.plot_udp_rate_relay(node)
 
             self.plot_udp_rate_system()
+            self.plot_udp_mac_capture()
 
         elif self.data.profile == 'udp_ratios':
             for node in self.data.sources:
@@ -109,6 +110,14 @@ class plot:
             self.graph.plot_udp_system_throughput(source_agg, coding)
             self.graph.plot_udp_system_power(source_agg, relay_agg, coding)
             self.graph.plot_udp_system_power_per_bit(source_agg, relay_agg, coding)
+
+    def plot_udp_mac_capture(self):
+        if self.args.plots not in ('all', 'system'):
+            return
+
+        for coding in (True, False):
+            data = self.data.udp_mac_capture(coding)
+            self.graph.plot_udp_mac_capture(data, coding)
 
     def plot_udp_ratio_source(self, node):
         if self.args.plots not in ('all', 'system', node):

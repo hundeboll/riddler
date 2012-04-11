@@ -175,7 +175,7 @@ class data:
 
     def udp_source_data(self, node, coding):
         # Get data objects from storage
-        rd = self.data.get_run_data(node, {'coding': coding})
+        rd = self.data.get_run_data_node(node, {'coding': coding})
 
         # Read out data from objects
         data = {}
@@ -193,14 +193,14 @@ class data:
         return data
 
     def udp_ratio_source_data(self, node, coding):
-        rd = self.data.get_run_data(node, {'coding': coding})
+        rd = self.data.get_run_data_node(node, {'coding': coding})
 
         data = {}
         data['throughput'] = self.average_result_3d(rd, 'throughput', 'ratio', 'rate')
         return data
 
     def udp_ratio_relay_data(self, node, coding):
-        rd = self.data.get_run_data(node, {'coding': coding})
+        rd = self.data.get_run_data_node(node, {'coding': coding})
 
         data = {}
         data['coded'] = self.difference_samples_3d(rd, 'nc Coded', 'ratio', 'rate')
@@ -209,7 +209,7 @@ class data:
 
     def udp_relay_data(self, node, coding):
         # Get data objects from storage
-        rd = self.data.get_run_data(node, {'coding': coding})
+        rd = self.data.get_run_data_node(node, {'coding': coding})
 
         # Read out data from objects
         data = {}
@@ -231,7 +231,7 @@ class data:
         return data
 
     def tcp_source_data(self, node, coding):
-        rd = self.data.get_run_data(node, {'coding': coding})
+        rd = self.data.get_run_data_node(node, {'coding': coding})
 
         data = {}
         data['algos']       = self.keys(rd, 'tcp_algo')
@@ -240,10 +240,37 @@ class data:
         return data
 
     def tcp_window_source_data(self, node, coding):
-        rd = self.data.get_run_data(node, {'coding': coding})
+        rd = self.data.get_run_data_node(node, {'coding': coding})
 
         data = {}
         data['tcp_windows'] = self.keys(rd, 'tcp_window')
         data['throughput']  = self.average_result(rd, 'throughput', 'tcp_window')
 
         return data
+
+    def udp_mac_capture(self, coding):
+        sample_diff = lambda s, f: s[-1][f] - s[0][f]
+
+        # This is slow as hell - yes, I know!
+        rd = {}
+        loops = {}
+        vals = {}
+        rates = []
+        diffs = []
+
+        for node in self.sources:
+            rd[node] = self.data.get_run_data_node(node, {'coding': coding})
+
+        for i in range(len(rd[node])):
+            for node in self.sources:
+                loops[node] = map(lambda d: d.samples, rd[node][i])
+                vals[node] = numpy.array(map(lambda s: sample_diff(s, 'iw tx packets'), loops[node]))
+
+            rate = rd[node][i][0].run_info['rate']
+            time = rd[node][i][0].run_info['test_time']
+            diff = vals['alice'] - vals['bob']
+            diff_avg = numpy.average(numpy.absolute(diff))
+            rates.append(rate)
+            diffs.append(diff_avg)
+
+        return {'rates': rates, 'diffs': diffs}

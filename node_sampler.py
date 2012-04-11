@@ -111,22 +111,40 @@ class sampler(threading.Thread):
             return
 
         # Parse the output
-        # (implement support for multiple stations)
-        for line in output.split("\n"):
-            match = re.findall("\s+(.+):\s+(\d+)", line)
+        for line in output.split('\n'):
+            # Find the mac address for the next set of counters
+            match = re.findall("((?:[0-9a-f]{2}:){5}[0-9a-f]{2})", line)
+            if match:
+                mac = "iw " + match[0]
+                continue
+
+            # Read out the counter for this line (for this mac)
+            match = re.findall("\s+(.+):\s+(.+)", line)
             if not match:
                 continue
 
-            key = "iw " + match[0][0]
+            # Generate a key specific to this mac and counter
+            mac_key = mac + " " + match[0][0]
 
-            # Initialize fields to zero
-            if not sample.has_key(key):
-                sample[key] = 0
+            # We want integers to be integers
+            try:
+                # Try to convert
+                val = int(match[0][1])
 
-            # Sum fields from all stations
-            # Should be saved individually, but then we must
-            # now the names for each mac address.
-            sample[key] += int(match[0][1])
+                # Okay, the convert did not fail, so compose the key
+                key = "iw " + match[0][0]
+
+                # Update or set the value for this counter
+                if key in sample:
+                    sample[key] += val
+                else:
+                    sample[key] = val
+            except ValueError:
+                # The convert failed, so just use the string version
+                val = match[0][1]
+            finally:
+                # Set the value for this mac
+                sample[mac_key] = val
 
         # Add the sample to the set
         self.append_sample(sample)

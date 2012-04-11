@@ -155,11 +155,11 @@ class graph:
                 name=node,
                 title="Coded vs. Forwarded Packets for {}".format(node.title()),
                 xlabel="Total Offered Load [kbit/s]",
-                ylabel="Ratio [packets/sum]")
+                ylabel="Packets")
 
-        self.plot(data['rates'], data['ratio_coded'], "Coded")
-        self.plot(data['rates'], data['ratio_fwd'],   "Forwarded")
-        self.plot(data['rates'], data['ratio_total'], "Total")
+        self.plot(data['rates'], data['coded']/2, "Coded")
+        self.plot(data['rates'], data['fwd'],   "Forwarded")
+        self.plot(data['rates'], data['fwd'] + data['coded']/2, "Total")
         self.finish_fig()
 
     def plot_udp_system_throughput(self, data, coding):
@@ -283,8 +283,19 @@ class graph:
         tp *= 8 # From bytes to bits
         y = w/tp
 
+        self.ax.set_yscale('log')
         self.plot(x, y, label[coding])
         self.finish_fig(loc="upper right")
+
+    def plot_udp_mac_capture(self, data, coding):
+        self.setup_fig(
+                name='system',
+                title="MAC Capture between Alice and Bob",
+                xlabel="Offered Load [kbps]",
+                ylabel="TX Difference [packets]")
+
+        self.plot(data['rates'], data['diffs'], label[coding])
+        self.finish_fig()
 
     def plot_tcp_throughput(self, node, data, coding):
         self.setup_fig(

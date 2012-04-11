@@ -44,7 +44,7 @@ class data:
         for node in nodes:
             name = node.name
             self.rd[name] = []
-            self.macs[name] = node.mac
+            self.macs[name] = node.mesh_mac
             if node.dests:
                 self.sources.append(name)
             else:

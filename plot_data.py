@@ -2,6 +2,8 @@ import numpy
 import cPickle as pickle
 from operator import itemgetter
 
+macs = {'alice': '1c:7e:e5:5c:9a:d7', 'relay': '1c:7e:e5:5c:97:e5', 'bob': '34:08:04:99:f2:f6'}
+
 class data:
     def __init__(self, path):
         self.load_pickle(path)
@@ -16,6 +18,7 @@ class data:
         self.relays = self.data.relays
         self.sources = self.data.sources
         self.nodes = self.data.nodes
+        self.macs = macs
 
     # Read specified field in sorted order
     def keys(self, rd, field):
@@ -221,6 +224,9 @@ class data:
         data['fwd_coded']  = self.difference_samples(rd, 'nc FwdCoded', 'rate')
         data['tx']         = self.difference_samples(rd, 'iw tx bytes', 'rate')
         data['iw_tx_pkts'] = self.difference_samples(rd, 'iw tx packets', 'rate')
+        data['capture_rx'] = self.udp_mac_capture_rx(rd, 'rate')
+        data['coded_diff'] = self.udp_rx_coded_diff(rd, 'rate')
+
 
         data['ratio_coded'] = data['coded']/data['fwd_coded']/2
         data['ratio_fwd']   = data['fwd']/data['fwd_coded']
@@ -274,3 +280,56 @@ class data:
             diffs.append(diff_avg)
 
         return {'rates': rates, 'diffs': diffs}
+
+    def udp_mac_capture_rx(self, rd, par):
+        sample_diff = lambda s, f: s[-1][f] - s[0][f]
+
+        data = {}
+
+        # For each new parameter
+        for r in rd:
+            key = r[0].run_info[par]
+            vals = []
+
+            # For each loop with this parameter
+            for loop in r:
+                rx = []
+                for node in self.sources:
+                    field = "iw {} rx packets".format(self.macs[node])
+                    val = sample_diff(loop.samples, field)
+                    rx.append(val)
+
+                # Calculate and save the Mean Absolute Deviation (MAD)
+                #rx = numpy.array(rx)
+                #mad = numpy.abs(rx - rx.mean()).sum() / len(rx)
+
+                # Until now, we can live with the difference of two sources
+                vals.append(numpy.absolute(rx[0] - rx[1]))
+
+            data[key] = numpy.average(vals)
+
+        return self.sort_data(data)
+
+    def udp_rx_coded_diff(self, rd, par):
+        sample_diff = lambda s, f: s[-1][f] - s[0][f]
+
+        data = {}
+
+        for r in rd:
+            key = r[0].run_info[par]
+            vals = []
+
+            for loop in r:
+                rx = []
+                for node in self.sources:
+                    field = "iw {} rx packets".format(self.macs[node])
+                    val = sample_diff(loop.samples, field)
+                    rx.append(val)
+                coded = sample_diff(loop.samples, "nc Coded")
+                #print("rx: {}  coded: {}".format(min(rx), coded))
+                diff = (min(rx) - coded/2)
+                vals.append(diff)
+
+            data[key] = numpy.average(vals)
+
+        return self.sort_data(data)

@@ -1,8 +1,6 @@
-import sys
 import os
 import threading
 import time
-import subprocess
 import riddler_interface as interface
 import node_power as power
 import re

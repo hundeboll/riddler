@@ -297,6 +297,26 @@ class graph:
         self.plot(data['rates'], data['diffs'], label[coding])
         self.finish_fig()
 
+    def plot_udp_mac_capture_rx(self, node, data, coding):
+        self.setup_fig(
+                name=node,
+                title="RX difference between Alice and Bob on {}".format(node.title()),
+                xlabel="Offered Load [kbps]",
+                ylabel="Difference [packets]")
+
+        self.plot(data['rates'], data['capture_rx'], label[coding])
+        self.finish_fig()
+
+    def plot_udp_rx_coded_diff(self, node, data):
+        self.setup_fig(
+                name=node,
+                title="Difference between RX and coded on {}".format(node.title()),
+                xlabel="Offered Load [kbps]",
+                ylabel="Difference [packets]")
+
+        self.plot(data['rates'], data['coded_diff'], "With coding")
+        self.finish_fig()
+
     def plot_tcp_throughput(self, node, data, coding):
         self.setup_fig(
                 name= 'system',

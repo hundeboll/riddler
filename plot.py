@@ -95,9 +95,13 @@ class plot:
 
             if self.args.plots in ('all', node) and coding:
                 self.graph.plot_coded(node, data)
+                self.graph.plot_udp_rx_coded_diff(node, data)
 
             if self.args.plots in ('all', node):
                 self.graph.plot_power(node, data, coding)
+                self.graph.plot_udp_mac_capture_rx(node, data, coding)
+
+            print(data['capture_rx']/data['fwd'])
 
     def plot_udp_rate_system(self):
         if self.args.plots not in ('all', 'system'):

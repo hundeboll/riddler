@@ -235,7 +235,7 @@ class toolbar(QToolBar):
         print("Start")
         if not self.socket:
             return
-        self.parentWidget().send_args()
+        #self.parentWidget().send_args()
         self.socket.send(interface.CLIENT_EVENT, event=interface.STARTED)
 
     def stop_test(self):

@@ -76,24 +76,22 @@ class sampler(threading.Thread):
     # Read stats from the batman-adv module
     def sample_nc(self):
         sample = {}
-        if not os.path.exists(nc_path):
-            return
 
         # Read the file (why don't we just open() the file?)
-        cmd = ["cat", nc_path]
+        cmd = ["ethtool", "-S", "bat0"]
         output = interface.exec_cmd(cmd)
         if not output:
             return
 
         # Parse the contents of the file
         for line in output.split("\n"):
-            match = re.findall("(.+):\s+(\d+)", line)
+            match = re.findall("\s+([a-z_]+):\s+(\d+)", line)
             if match:
-                key = "nc " + match[0][0]
+                key = "bat_" + match[0][0]
                 sample[key] = int(match[0][1])
 
         # Add some extra numbers
-        sample['nc FwdCoded'] = sample['nc Coded'] + sample['nc Forwarded']
+        sample['bat_nc_fwd_coded'] = sample['bat_nc_code'] + sample['bat_forward']
 
         # Add the sample to the set
         self.append_sample(sample)

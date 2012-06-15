@@ -257,12 +257,13 @@ class monitor_gui(QWidget):
         self.add_fig('ip_rx_bytes',   "IP RX Rate",        "Rate [kbit/s]", show=False)
         self.add_fig('cpu',           "CPU Usage",         "Usage [%]", ylim=105, scale=False, show=True)
         self.add_fig('power_watt',    "Power Consumption", "Usage [W]", show=True)
-        self.add_fig('nc Coded',         "Coded Packets",     "Packets", show=True)
-        self.add_fig('nc Failed',     "Packets Failed to Decode", "Packets", show=False)
+        self.add_fig('bat_nc_code',   "Coded Packets",     "Packets", show=True)
+        self.add_fig('bat_nc_decode_failed', "Failed to Decode", "Packets", show=False)
         self.add_fig('iw tx failed',  "TX Failed",         "Packets", show=False)
         self.add_fig('iw tx retries', "TX Retries",        "Packets", show=True)
-        self.add_fig('nc Decoded',    "Decoded",           "Packets", show=True)
-        self.add_fig('nc Overheard',  "Overheard",         "Packets", show=True)
+        self.add_fig('bat_nc_decode', "Decoded",           "Packets", show=True)
+        self.add_fig('bat_nc_overheard',"Overheard",         "Packets", show=True)
+        self.add_fig('bat_forward',   "Forward",         "Packets", show=True)
 
         self.add_node.connect(self._add_node)
         self.update_data.connect(self._update_data)
@@ -391,10 +392,11 @@ class monitor:
         self.add_val('power_watt',    node, sample)
         self.add_diff('iw tx retries', node, sample)
         self.add_diff('iw tx failed',  node, sample)
-        self.add_diff('nc Failed', node, sample)
-        self.add_diff('nc Decoded', node, sample)
-        self.add_diff('nc Overheard', node, sample)
-        self.add_diff('nc Coded', node, sample)
+        self.add_diff('bat_nc_decode_failed', node, sample)
+        self.add_diff('bat_nc_decode', node, sample)
+        self.add_diff('bat_nc_overheard', node, sample)
+        self.add_diff('bat_nc_code', node, sample)
+        self.add_diff('bat_forward', node, sample)
         self.add_bytes('iw rx bytes', node, sample)
         self.add_bytes('iw tx bytes', node, sample)
         self.add_bytes('ip_rx_bytes', node, sample)
@@ -456,28 +458,3 @@ class monitor:
         self.diff[node][name].pop(0)
         self.diff[node][name].append(this_diff)
         self.gui.update_data.emit(name, node, self.timestamps[node], self.diff[node][name])
-
-    def add_coded(self, node, sample):
-        coded = sample.get('nc Coded', 0)
-        fwd = sample.get('nc Forwarded', 0)
-
-        # Initialize last sample
-        if not self.coded_last[node]:
-            self.coded_last[node] = coded
-            self.fwd_last[node] = fwd
-            return
-
-        # Calculate number and ratio since last sample
-        this_coded = coded - self.coded_last[node]
-        this_fwd = fwd - self.fwd_last[node]
-        this_total = this_coded + this_fwd
-        this_ratio = 0 if not this_total else this_coded/float(this_total)
-
-        # Save values for use in next calculation
-        self.coded_last[node] = coded
-        self.fwd_last[node] = fwd
-
-        # Update plot data
-        self.ratio[node].pop(0)
-        self.ratio[node].append(this_ratio)
-        self.gui.update_data.emit('coded', node, self.timestamps[node], self.ratio[node])

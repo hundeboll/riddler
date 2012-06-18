@@ -37,6 +37,7 @@ class main_window(QMainWindow):
         self.tabs.addTab(self.live_monitor.gui, "Live Monitor")
         self.tabs.addTab(self.topology, "Topology")
         self.tabs.setTabPosition(QTabWidget.West)
+        self.tabs.setCurrentWidget(self.live_monitor.gui)
         self.setCentralWidget(self.tabs)
 
         # Add key bindings to scroll tabs

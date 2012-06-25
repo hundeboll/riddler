@@ -153,29 +153,33 @@ class sampler(threading.Thread):
         if not output:
             return
 
+        # Remove first to lines
+        for line in output.split("\n", 2):
+            o = line
+
         # Parse the output
-        n = re.findall("\s+(\d+)", output)
+        n = re.findall("\s+(\d+)", o)
         sample = {
-                'ip_rx_bytes':          int(n[3]),
-                'ip_rx_packets':        int(n[4]),
-                'ip_rx_errors':         int(n[5]),
-                'ip_rx_dropped':        int(n[6]),
-                'ip_rx_overrun':        int(n[7]),
-                'ip_rx_errors_length':  int(n[9]),
-                'ip_rx_errors_crc':     int(n[10]),
-                'ip_rx_errors_frame':   int(n[11]),
-                'ip_rx_errors_fifo':    int(n[12]),
-                'ip_rx_errors_missed':  int(n[13]),
-                'ip_tx_bytes':          int(n[14]),
-                'ip_tx_packets':        int(n[15]),
-                'ip_tx_errors':         int(n[16]),
-                'ip_tx_dropped':        int(n[17]),
-                'ip_tx_carrier':        int(n[18]),
-                'ip_tx_collsns':        int(n[19]),
-                'ip_tx_errors_aborted': int(n[20]),
-                'ip_tx_errors_fifo':    int(n[21]),
-                'ip_tx_errors_window':  int(n[22]),
-                'ip_tx_errors_heartbeat': int(n[23]),
+                'ip_rx_bytes':          int(n[0]),
+                'ip_rx_packets':        int(n[1]),
+                'ip_rx_errors':         int(n[2]),
+                'ip_rx_dropped':        int(n[3]),
+                'ip_rx_overrun':        int(n[4]),
+                'ip_rx_errors_length':  int(n[6]),
+                'ip_rx_errors_crc':     int(n[7]),
+                'ip_rx_errors_frame':   int(n[8]),
+                'ip_rx_errors_fifo':    int(n[9]),
+                'ip_rx_errors_missed':  int(n[10]),
+                'ip_tx_bytes':          int(n[11]),
+                'ip_tx_packets':        int(n[12]),
+                'ip_tx_errors':         int(n[13]),
+                'ip_tx_dropped':        int(n[14]),
+                'ip_tx_carrier':        int(n[15]),
+                'ip_tx_collsns':        int(n[16]),
+                'ip_tx_errors_aborted': int(n[17]),
+                'ip_tx_errors_fifo':    int(n[18]),
+                'ip_tx_errors_window':  int(n[19]),
+                'ip_tx_errors_heartbeat': int(n[20]),
                 }
 
         # Add the sample to the set

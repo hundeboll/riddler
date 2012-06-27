@@ -134,16 +134,22 @@ class client(threading.Thread):
             self.report_error(output)
             return None
 
-        vals = match.groupdict()
-        return {
-                'dest':         self.dest_node['name'],
-                'transfered':   int(vals['transfered']),     # kB
-                'throughput':   int(vals['transfered'])*8/t, # Kbit/s
-                'jitter':       float(vals['jitter']),       # milliseconds
-                'lost':         int(vals['lost']),           # packets
-                'total':        int(vals['packets']),        # packets
-                'ratio':        int(vals['ratio']),          # percentage
-                }
+        try:
+            vals = match.groupdict()
+            return {
+                    'dest':         self.dest_node['name'],
+                    'transfered':   float(vals['transfered']),     # kB
+                    'throughput':   float(vals['transfered'])*8/t, # Kbit/s
+                    'jitter':       float(vals['jitter']),         # milliseconds
+                    'lost':         int(vals['lost']),             # packets
+                    'total':        int(vals['packets']),          # packets
+                    'ratio':        float(vals['ratio']),          # percentage
+                    }
+        except Exception as e:
+            err = "Failed to parse output: {}\n{}".format(e, output)
+            print(err)
+            self.report_error(err)
+            return None
 
     # Send back a result to the controller
     def report_result(self, result):

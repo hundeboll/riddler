@@ -76,7 +76,24 @@ class setup:
         state = "on" if run_info['promisc'] else "off"
         cmd = ['ip', 'link', 'set', 'dev', iface, 'promisc', state]
         r = subprocess.call(cmd)
-        return False if r else True
+        if r:
+            return False
+
+        if state == "on":
+            cmd = ["iw", "phy0", "interface", "add", "mon0", "type", "monitor", "flags", "none"]
+            if not interface.exec_cmd(cmd):
+                self.error = "Failed to create mon0: {}".format(cmd)
+                return False
+
+            cmd = ["ip", "link", "set", "dev", "mon0", "up"]
+            if not interface.exec_cmd(cmd):
+                self.error = "Failed to up mon0: {}".format(cmd)
+                return False
+
+            cmd = ["iw", "mon0", "del"]
+            if not interface.exec_cmd(cmd):
+                self.error = "Failed to del mon0: {}".format(cmd)
+                return False
 
     # Read data from file
     def read(self, path):

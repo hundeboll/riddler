@@ -52,6 +52,7 @@ args = parser.parse_args()
 class riddler:
     def __init__(self, args):
         self.args = args
+        self.nodes = []
         self.controller = None
         self.data = None
 
@@ -60,7 +61,9 @@ class riddler:
         self.client.set_riddler(self)
 
         # Load node objects from network config
-        self.load_nodes()
+        if not self.load_nodes():
+            self.quit()
+            return
 
         # Connect to nodes
         self.start_nodes()
@@ -138,7 +141,8 @@ class riddler:
             c = __import__(self.args.nodes_file)
             self.nodes = c.node.nodes
         except ImportError:
-            print("Unable to load nodes file: {0}".format(nodes_file))
+            print("Unable to load nodes file: {0}".format(self.args.nodes_file))
+            return False
 
         # Add client object to each node
         for node in self.nodes:
@@ -147,6 +151,8 @@ class riddler:
         # Add node objects to client server
         for node in self.nodes:
             self.client.export_node(node)
+
+        return True
 
     # Start node thread and wait for information from each node
     def start_nodes(self):

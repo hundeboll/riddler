@@ -2,7 +2,7 @@ import os
 import threading
 import time
 import riddler_interface as interface
-import node_power as power
+#import node_power as power
 import re
 
 nc_path = "/sys/kernel/debug/batman_adv/bat0/bat_stats"
@@ -20,7 +20,7 @@ class sampler(threading.Thread):
         self.samples = {}
 
         # The power sampler needs it own thread
-        self.power = power.power(args)
+        #self.power = power.power(args)
 
         self.end = threading.Event()
         self.start()
@@ -34,7 +34,7 @@ class sampler(threading.Thread):
             self.sample_iw()
             self.sample_ip()
             self.sample_cpu()
-            self.sample_power()
+            #self.sample_power()
             self.sample_originators()
             self.report_samples()
             delay = self.run_info['sample_interval'] - (time.time() - start)
@@ -46,8 +46,8 @@ class sampler(threading.Thread):
     # Stop the sampler thread
     def stop(self):
         self.end.set()
-        self.power.stop()
-        self.power.join()
+        #self.power.stop()
+        #self.power.join()
 
     # Get a new configuration
     def set_run_info(self, run_info):

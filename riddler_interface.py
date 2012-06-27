@@ -1,4 +1,4 @@
-import pickle
+import cPickle as pickle
 import struct
 import socket
 import sys

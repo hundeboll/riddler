@@ -1,5 +1,5 @@
 import SocketServer
-import pickle
+import cPickle as pickle
 import socket
 import threading
 import re

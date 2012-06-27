@@ -26,7 +26,7 @@ class client(threading.Thread):
             cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p, "-w", w]
         elif self.run_info['protocol'] == 'udp':
             r = str(self.run_info['rate']*1024)
-            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p]
+            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-fk"]
 
         # Start a little watchdog to make sure we don't hang here forever
         self.timer.start()

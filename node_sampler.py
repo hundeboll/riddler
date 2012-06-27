@@ -31,17 +31,29 @@ class sampler(threading.Thread):
             # Do the sampling
             start = time.time()
             self.sample_nc()
+            nc = time.time()
             self.sample_iw()
+            iw = time.time()
             self.sample_ip()
+            ip = time.time()
             self.sample_cpu()
+            cpu = time.time()
             #self.sample_power()
             self.sample_originators()
+            orig = time.time()
             self.report_samples()
+            report = time.time()
             delay = self.run_info['sample_interval'] - (time.time() - start)
             if delay > 0:
                 time.sleep(delay)
             else:
                 self.report_error("Missed deadline with {} seconds".format(delay*-1))
+                print("nc:     {}".format(nc - start))
+                print("iw:     {}".format(iw - start))
+                print("ip:     {}".format(ip - start))
+                print("cpu:    {}".format(cpu - start))
+                print("orig:   {}".format(orig - start))
+                print("report: {}".format(report - start))
 
     # Stop the sampler thread
     def stop(self):

@@ -26,7 +26,7 @@ class client(threading.Thread):
             cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p, "-w", w]
         elif self.run_info['protocol'] == 'udp':
             r = str(self.run_info['rate']*1024)
-            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-yC"]
+            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p]
 
         # Start a little watchdog to make sure we don't hang here forever
         self.timer.start()
@@ -51,7 +51,7 @@ class client(threading.Thread):
         elif self.run_info['protocol'] == 'tcp':
             result = self.parse_tcp_output(stdout)
         elif self.run_info['protocol'] == 'udp':
-            result = self.parse_udp_output(stdout)
+            result = self.parse_udp_human_output(stdout)
 
         # Send back our result
         if result:
@@ -122,6 +122,28 @@ class client(threading.Thread):
             print("  Failed to parse result: {0}".format(e))
             self.report_error(output)
             return None
+
+    # Screen scrape the output from a iperf UDP client
+    def parse_udp_human_output(self, output):
+        t = self.run_info['test_time']
+
+        report = re.compile("\[\s*(?P<index>\d+)\].+sec\s+(?P<transfered>\d+) KBytes +(?P<throughput>\d+) Kbits/sec +(?P<jitter>\d+\.\d+) ms +(?P<lost>\d+)/ *(?P<packets>\d+) +\((?P<ratio>\d*\.?\d+)%\)")
+        match = report.search(output)
+        if not match:
+            print("  Failed to parse result: {0}".format(output))
+            self.report_error(output)
+            return None
+
+        vals = match.groupdict()
+        return {
+                'dest':         self.dest_node['name'],
+                'transfered':   int(vals['transfered']),     # kB
+                'throughput':   int(vals['transfered'])*8/t, # Kbit/s
+                'jitter':       float(vals['jitter']),       # milliseconds
+                'lost':         int(vals['lost']),           # packets
+                'total':        int(vals['packets']),        # packets
+                'ratio':        int(vals['ratio']),          # percentage
+                }
 
     # Send back a result to the controller
     def report_result(self, result):

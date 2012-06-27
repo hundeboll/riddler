@@ -81,19 +81,21 @@ class setup:
 
         if state == "on":
             cmd = ["iw", "phy0", "interface", "add", "mon0", "type", "monitor", "flags", "none"]
-            if not interface.exec_cmd(cmd):
+            if interface.exec_cmd(cmd) == False:
                 self.error = "Failed to create mon0: {}".format(cmd)
                 return False
 
             cmd = ["ip", "link", "set", "dev", "mon0", "up"]
-            if not interface.exec_cmd(cmd):
+            if interface.exec_cmd(cmd) == False:
                 self.error = "Failed to up mon0: {}".format(cmd)
                 return False
 
             cmd = ["iw", "mon0", "del"]
-            if not interface.exec_cmd(cmd):
+            if interface.exec_cmd(cmd) == False:
                 self.error = "Failed to del mon0: {}".format(cmd)
                 return False
+
+        return True
 
     # Read data from file
     def read(self, path):

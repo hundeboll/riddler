@@ -28,15 +28,22 @@ class client(threading.Thread):
             r = str(self.run_info['rate']*1024)
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-fk"]
 
+        ping_cmd = ["ping", "-n", "-q", h]
+
         # Start a little watchdog to make sure we don't hang here forever
         self.timer.start()
 
         # Start the client in a separate process and wait for it to finish
         print("  Starting {0} client".format(self.run_info['protocol']))
         self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.ping_p = subprocess.Popen(ping_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
         self.running = True
         self.p.wait()
         self.running = False
+
+        # Stop ping and read output
+        ping_result = self.kill_ping()
 
         # Read the output from iperf
         (stdout, stderr) = self.p.communicate()
@@ -54,7 +61,12 @@ class client(threading.Thread):
             result = self.parse_udp_human_output(stdout)
 
         # Send back our result
-        if result:
+        if not ping_result or not result:
+            e = "Missing result: ping:'{}' or iperf:'{}'".format(ping_result, result)
+            print(e)
+            self.report_error(e)
+        else:
+            result.update(ping_result)
             self.report_result(result)
 
     # Brutally kill a running subprocesses
@@ -80,6 +92,39 @@ class client(threading.Thread):
 
         # We are done
         self.running = False
+
+    def kill_ping(self):
+        try:
+            self.ping_p.terminate()
+
+            if not self.ping_p.poll():
+                self.ping_p.terminate()
+
+            if not self.ping_p.poll():
+                self.ping_p.kill()
+        except OSError as e:
+            err = "Ping process fucked up: {}".format(e)
+            print(err)
+            self.report_error(err)
+
+        (out,err) = self.ping_p.communicate()
+
+        if err:
+            e = "Ping failed: {}".format(err)
+            print(e)
+            self.report_error(e)
+            return None
+
+        regex = re.compile("rtt min/avg/max/mdev = (?P<ping_min>\d*.?\d*)/(?P<ping_avg>\d*.?\d*)/(?P<ping_max>\d*.?\d*)/(?P<ping_mdev>\d*.?\d*) ms")
+        match = regex.search(out)
+
+        if not match:
+            e = "Parsing ping output failed: {}".format(out)
+            print(e)
+            self.report_error(e)
+            return None
+
+        return match.groupdict()
 
     # Screen scrape the output from a iperf TCP client
     def parse_tcp_output(self, output):

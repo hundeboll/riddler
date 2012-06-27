@@ -101,8 +101,6 @@ class plot:
                 self.graph.plot_power(node, data, coding)
                 self.graph.plot_udp_mac_capture_rx(node, data, coding)
 
-            print(data['capture_rx']/data['fwd'])
-
     def plot_udp_rate_system(self):
         if self.args.plots not in ('all', 'system'):
             return

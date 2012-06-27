@@ -69,7 +69,7 @@ class node(threading.Thread):
                 if e.errno != 0:
                     # Error number 0 is self made, so don't print it
                     print("{0}: {1}".format(self.name.title(), e))
-                if e.errno in (113, 111):
+                if e.errno in (1, 113, 111):
                     # Connection refused. Wait a bit
                     time.sleep(5)
 
@@ -172,6 +172,8 @@ class node(threading.Thread):
 
     # Return received samples from current run
     def get_samples(self):
+        if self.run_error:
+            return None
         return self.samples
 
     # Wait for node to answer last command

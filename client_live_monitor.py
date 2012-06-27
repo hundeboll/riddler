@@ -72,14 +72,14 @@ class toolbar(QToolBar):
         self.addWidget(button)
         return menu
 
-    def add_fig(self, fig):
+    def add_fig(self, fig, visible):
         self.figs[fig.name] = fig
         self.save_menu.addAction(fig.title, fig.save_fig)
         v = self.view_menu.addAction(fig.title, fig.toggle_hide)
         p = self.pause_menu.addAction(fig.title, fig.toggle_pause)
 
         v.setCheckable(True)
-        v.setChecked(True)
+        v.setChecked(visible)
         p.setCheckable(True)
 
     def save_all(self):
@@ -308,7 +308,7 @@ class monitor_gui(QWidget):
 
     def add_fig(self, name, title, ylabel, ylim=None, scale=1.1, show=False):
         fig = live_fig(name, title, ylabel, ylim, scale, show, parent=self)
-        self.toolbar.add_fig(fig)
+        self.toolbar.add_fig(fig, show)
         self.figs[name] = fig
         self.add_fig_to_column(fig)
 

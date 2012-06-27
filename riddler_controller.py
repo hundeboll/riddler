@@ -265,7 +265,7 @@ class controller(threading.Thread):
             self.test_count = len(self.rates) * args.test_loops * len(self.codings)
             self.protocol = 'udp'
             self.run_info_format = "\n# Loop: {loop:2d}/{loops:<2d} | Rate: {rate:4d} kb/s | Coding: {coding:1b} | ETA: {eta:s}"
-            self.result_format = "{:10s} {throughput:6d} kb/s {lost:4d}/{total:<4d} {ratio:4.1f}%"
+            self.result_format = "{:10s} {throughput:6.1f} kb/s {lost:4d}/{total:<4d} {ratio:4.1f}%"
 
         if args.test_profile == "udp_ratios":
             self.codings = [True, False]
@@ -274,7 +274,7 @@ class controller(threading.Thread):
             self.test_count = len(self.rates) * len(self.ratios) * args.test_loops * len(self.codings)
             self.protocol = 'udp'
             self.run_info_format = "\n# Loop: {loop:2d}/{loops:<2d} | Ratio: {ratio:02d}% | Rate: {rate:4d} kb/s | Coding: {coding:1b} | ETA: {eta:s}"
-            self.result_format = "{:10s} {throughput:6d} kb/s {lost:4d}/{total:<4d} {ratio:4.1f}%"
+            self.result_format = "{:10s} {throughput:6.1f} kb/s {lost:4d}/{total:<4d} {ratio:4.1f}%"
 
         if args.test_profile == 'hold_times':
             self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)

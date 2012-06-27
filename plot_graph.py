@@ -151,6 +151,9 @@ class graph:
         return positions,data,width,color,label
 
     def plot_coded(self, node, data):
+        if not len(data['coded']) or not len(data[fwd]):
+            return
+
         self.setup_fig(
                 name=node,
                 title="Coded vs. Forwarded Packets for {}".format(node.title()),
@@ -163,6 +166,9 @@ class graph:
         self.finish_fig()
 
     def plot_udp_system_throughput(self, data, coding):
+        if not len(data['throughput']):
+            return
+
         self.setup_fig(
                 name='system',
                 title="System Throughput",
@@ -173,6 +179,9 @@ class graph:
         self.finish_fig()
 
     def plot_throughput(self, node, data, coding):
+        if not len(data['throughput']):
+            return
+
         self.setup_fig(
                 name=node,
                 title="Throughput for {0}".format(node.title()),
@@ -183,6 +192,9 @@ class graph:
         self.finish_fig()
 
     def plot_tx_packets(self, data, node):
+        if not len(data['iw_tx_pkts']):
+            return
+
         self.setup_fig(
                 name='system',
                 title="Packets Transmitted",
@@ -193,6 +205,9 @@ class graph:
         self.finish_fig()
 
     def plot_udp_ratio_throughput(self, node, data, coding):
+        if not len(data['throughput']):
+            return
+
         self.setup_fig(
                 name=node,
                 title="Throughput for {0}".format(node.title()),
@@ -209,6 +224,9 @@ class graph:
         self.ax.legend((label[coding]))
 
     def plot_udp_ratio_power(self, node, data, coding):
+        if not len(data['power']):
+            return
+
         self.setup_fig(
                 name=node,
                 title="Power for {0}".format(node.title()),
@@ -225,6 +243,9 @@ class graph:
         self.ax.legend((label[coding]))
 
     def plot_udp_ratio_coded(self, node, data):
+        if not len(data['coded']):
+            return
+
         self.setup_fig(
                 name=node,
                 title="Coded for {0}".format(node.title()),
@@ -239,6 +260,9 @@ class graph:
         self.ax.plot_surface(x, y, z, rstride=1, cstride=1, color=color[True])
 
     def plot_cpu(self, node, data, coding):
+        if not len(data['cpu']):
+            return
+
         self.setup_fig(
                 name=node,
                 title="CPU Usage for {}".format(node.title()),
@@ -250,6 +274,9 @@ class graph:
         self.finish_fig()
 
     def plot_power(self, node, data, coding):
+        if not len(data['power']):
+            return
+
         self.setup_fig(
                 name=node,
                 title="Power for {}".format(node.title()),
@@ -260,6 +287,9 @@ class graph:
         self.finish_fig()
 
     def plot_udp_system_power(self, source_data, relay_data, coding):
+        if not len(relay_data['power']) or not len(source_data['power']):
+            return
+
         self.setup_fig(
                 name='system',
                 title="System Energy Consumption",
@@ -271,6 +301,11 @@ class graph:
         self.finish_fig()
 
     def plot_udp_system_power_per_bit(self, source_data, relay_data, coding):
+        if not source_data['power'].any() or not source_data['throughput'].any():
+            return
+        if not relay_data['power'].any() or not source_data['throughput'].any():
+            return
+
         self.setup_fig(
                 name='system',
                 title="System Energy per Bit",
@@ -288,6 +323,9 @@ class graph:
         self.finish_fig(loc="upper right")
 
     def plot_udp_mac_capture(self, data, coding):
+        if not len(data['diffs']):
+            return
+
         self.setup_fig(
                 name='system',
                 title="MAC Capture between Alice and Bob",
@@ -298,6 +336,9 @@ class graph:
         self.finish_fig()
 
     def plot_udp_mac_capture_rx(self, node, data, coding):
+        if not len(data['capture_rx']):
+            return
+
         self.setup_fig(
                 name=node,
                 title="RX difference between Alice and Bob on {}".format(node.title()),
@@ -308,6 +349,9 @@ class graph:
         self.finish_fig()
 
     def plot_udp_rx_coded_diff(self, node, data):
+        if not len(data['coded_diff']):
+            return
+
         self.setup_fig(
                 name=node,
                 title="Difference between RX and coded on {}".format(node.title()),
@@ -318,6 +362,9 @@ class graph:
         self.finish_fig()
 
     def plot_tcp_throughput(self, node, data, coding):
+        if not len(data['algos']) or not len(data['throughput']):
+            return
+
         self.setup_fig(
                 name= 'system',
                 title="TCP Throughput",
@@ -337,6 +384,9 @@ class graph:
         self.update_bar_tops('system', "TCP Throughput", data['throughput'], coding)
 
     def plot_tcp_window_throughput(self, node, data, coding):
+        if not len(data['tcp_windows']) or not len(data['throughput']):
+            return
+
         self.setup_fig(
                 name='system',
                 title="TCP Throughput",

@@ -31,8 +31,17 @@ class data:
         # Yeah, we love it
         return numpy.array(map(lambda i: i[1], sorted(data.iteritems())))
 
+    def result_has_key(self, rd, field):
+        return rd[0][0].result.has_key(field)
+
+    def sample_has_key(self, rd, field):
+        return rd[0][0].samples[0].has_key(field)
+
     # Average over a field in a result set
     def average_result(self, rd, field, par):
+        if not self.result_has_key(rd, field):
+            return numpy.array([])
+
         avg = {}
         # For each run_no in test
         for r in rd:
@@ -59,6 +68,9 @@ class data:
         return {'x': x_, 'y': y_, 'z': z_}
 
     def average_result_3d(self, rd, field, x_par, y_par):
+        if not self.result_has_key(rd, field):
+            return numpy.array([])
+
         c = []
         for r in rd:
             x = r[0].run_info[x_par]
@@ -70,6 +82,9 @@ class data:
         return self.prepare_grids(c)
 
     def average_samples_3d(self, rd, field, x_par, y_par):
+        if not self.sample_has_key(rd, field):
+            return numpy.array([])
+
         c = []
         for r in rd:
             x = r[0].run_info[x_par]
@@ -81,6 +96,9 @@ class data:
 
 
     def difference_samples_3d(self, rd, field, x_par, y_par):
+        if not self.sample_has_key(rd, field):
+            return numpy.array([])
+
         sample_diff = lambda r, f: r.samples[-1][f] - r.samples[0][f]
         c = []
 
@@ -98,6 +116,8 @@ class data:
         avg = []
         # For each loop in run_no
         for loop in r:
+            if not loop.samples:
+                continue
             # Read sample field for each sample set in loop
             samples = map(lambda s: s[field], loop.samples)
             # Average over samples in this loop
@@ -106,6 +126,9 @@ class data:
 
     # Average over a field in a sample set (from multiple loops)
     def average_samples(self, rd, field, par):
+        if not self.sample_has_key(rd, field):
+            return numpy.array([])
+
         avg = {}
         # For each run_no in test
         for r in rd:
@@ -117,6 +140,9 @@ class data:
 
     # Read the difference from the first and last sample in each sample set
     def difference_samples(self, rd, field, par):
+        if not self.sample_has_key(rd, field):
+            return numpy.array([])
+
         sample_diff = lambda r, f: r.samples[-1][f] - r.samples[0][f]
         avg = {}
         # For each run_no in test
@@ -130,6 +156,9 @@ class data:
         return self.sort_data(avg)
 
     def sum_samples(self, rd, field, par):
+        if not self.sample_has_key(rd, field):
+            return numpy.array([])
+
         avg = {}
         for r in rd:
             key = r[0].run_info[par]
@@ -163,6 +192,9 @@ class data:
         # Add data to existing data
         self.avg_count[name][coding] += 1
         for key,val in data.items():
+            if not len(val):
+                continue
+
             # Add to summed data
             self.agg_data[name][coding][key] += val
 
@@ -296,6 +328,8 @@ class data:
                 rx = []
                 for node in self.sources:
                     field = "iw {} rx packets".format(self.macs[node])
+                    if not self.sample_has_key(rd, field):
+                        continue
                     val = sample_diff(loop.samples, field)
                     rx.append(val)
 
@@ -304,7 +338,8 @@ class data:
                 #mad = numpy.abs(rx - rx.mean()).sum() / len(rx)
 
                 # Until now, we can live with the difference of two sources
-                vals.append(numpy.absolute(rx[0] - rx[1]))
+                if rx:
+                    vals.append(numpy.absolute(rx[0] - rx[1]))
 
             data[key] = numpy.average(vals)
 
@@ -323,8 +358,12 @@ class data:
                 rx = []
                 for node in self.sources:
                     field = "iw {} rx packets".format(self.macs[node])
+                    if not self.sample_has_key(rd, field):
+                        continue
                     val = sample_diff(loop.samples, field)
                     rx.append(val)
+                if not self.sample_has_key(rd, "nc Coded"):
+                    continue
                 coded = sample_diff(loop.samples, "nc Coded")
                 #print("rx: {}  coded: {}".format(min(rx), coded))
                 diff = (min(rx) - coded/2)

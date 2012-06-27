@@ -114,6 +114,9 @@ class topology(QWidget):
             self.topology_graph.add_node(node['name'], node['mac'])
 
     def add_sample(self, obj):
+        if 'mac' not in obj.sample:
+            return
+
         src = obj.sample['mac']
         dsts = obj.sample['nexthops']
         for dst,tq in dsts.items():

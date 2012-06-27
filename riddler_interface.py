@@ -66,10 +66,13 @@ def recv(sock):
 
     l = fromstruct(l)
 
-    while len(s) < l:
-        s += sock.recv(l)
-        if not s:
-            return None
+    try:
+        while len(s) < l:
+            s += sock.recv(l)
+            if not s:
+                return None
+    except MemoryError as e:
+        raise socket.error(1, "Invalid length: {} ({})".format(l, e))
 
     try:
         return pickle.loads(s)

@@ -80,10 +80,11 @@ class setup:
             return False
 
         if state == "on":
-            cmd = ["iw", "phy0", "interface", "add", "mon0", "type", "monitor", "flags", "none"]
-            if interface.exec_cmd(cmd) == False:
-                self.error = "Failed to create mon0: {}".format(cmd)
-                return False
+            if not os.path.exists("/sys/class/net/mon0"):
+                cmd = ["iw", "phy0", "interface", "add", "mon0", "type", "monitor", "flags", "none"]
+                if interface.exec_cmd(cmd) == False:
+                    self.error = "Failed to create mon0: {}".format(cmd)
+                    return False
 
             cmd = ["ip", "link", "set", "dev", "mon0", "up"]
             if interface.exec_cmd(cmd) == False:

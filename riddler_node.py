@@ -173,6 +173,7 @@ class node(threading.Thread):
     # Return received samples from current run
     def get_samples(self):
         if self.run_error:
+            print("Sample error from {}".format(self.name))
             return None
         return self.samples
 
@@ -181,6 +182,8 @@ class node(threading.Thread):
         while not self.end.is_set():
             if self.reply.wait(.1):
                 break
+        if self.run_error:
+            print("Wait error from {}".format(self.name))
         return self.run_error
 
     # Save information received from node
@@ -197,6 +200,7 @@ class node(threading.Thread):
         if self.enable_ratio and run_info['ratio']:
             run_info['rate'] = run_info['rate'] * run_info['ratio']/100
 
+        print("Prepare run on {}".format(self.name))
         self.samples = []
         self.run_info = run_info
         self.run_error = False

@@ -57,6 +57,7 @@ class controller(threading.Thread):
     def control(self):
         self.start_time = time.time()
         self.init_ranges()
+        self.initial_eta = self.test_time * self.test_count
         profile = self.args.test_profile
 
         # Select control function based on configured profile
@@ -82,11 +83,8 @@ class controller(threading.Thread):
         # Yeah, the test actually completed by itself
         if not self.end.is_set():
             total_time = time.time() - self.start_time
-            if total_time > 60*60:
-                time_str = "{}h {:2}m".format(int(total_time/60/60), int((total_time/60)%60))
-            else:
-                time_str = "{}m {:2}s".format(int(total_time/60), int(total_time%60))
-            print("Test completed in {}".format(time_str))
+            print("Original ETA was {}".format(self.format_time(self.initial_eta)))
+            print("Test completed in {}".format(self.format_time(total_time)))
 
     # Control function to swipe UDP rates
     def test_rates(self):
@@ -221,6 +219,7 @@ class controller(threading.Thread):
             return False
 
         # Invalidate current run
+        print("Error from pause")
         self.error = True
 
         # Pause until told otherwise
@@ -244,6 +243,7 @@ class controller(threading.Thread):
     # Called by user or timer to recover
     def recover(self):
         # Invalidate the current run
+        print("Error from recover")
         self.error = True
 
         # Restart timer to keep recovering
@@ -351,11 +351,17 @@ class controller(threading.Thread):
         for node in self.nodes:
             # Check if an error occurred in the run
             if node.wait():
+                print("controller wait error from {}".format(node.name))
                 self.error = True
 
             # Check if the node has sent samples
             if not node.get_samples():
+                print("controller sample error from {}".format(node.name))
                 self.error = True
+
+        if self.error:
+            for node in self.nodes:
+                node.reconnect()
 
     # Tell the nodes to clean up and wait for them to report back
     def finish_run(self):
@@ -382,6 +388,13 @@ class controller(threading.Thread):
         for node in self.nodes:
             samples = node.get_samples()
             self.data.add_samples(node.name, samples)
+
+    def format_time(self, total_time):
+        if total_time > 60*60:
+            time_str = "{}h {:2}m".format(int(total_time/60/60), int((total_time/60)%60))
+        else:
+            time_str = "{}m {:2}s".format(int(total_time/60), int(total_time%60))
+        return time_str
 
     # Report the result to the user
     def print_result(self, node, result):

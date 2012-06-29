@@ -1,9 +1,10 @@
 import os
 import threading
 import time
+import re
+import subprocess
 import riddler_interface as interface
 #import node_power as power
-import re
 
 nc_path = "/sys/kernel/debug/batman_adv/bat0/bat_stats"
 orig_path = "/sys/kernel/debug/batman_adv/bat0/originators"
@@ -61,6 +62,21 @@ class sampler(threading.Thread):
         #self.power.stop()
         #self.power.join()
 
+    def run_cmd(self, cmd):
+        self.cmd = cmd
+        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.recover_timer = threading.Timer(1, self.timeout_cmd)
+        self.process.wait()
+        (out,err) = self.process.communicate()
+        if err:
+            raise IOError(err)
+        return out
+
+    def timeoout_cmd(self):
+        if not self.process.poll():
+            self.process.kill()
+        self.report_error("Sample command timed out: {}".forma(self.cmd))
+
     # Get a new configuration
     def set_run_info(self, run_info):
         self.run_info = run_info
@@ -91,8 +107,10 @@ class sampler(threading.Thread):
 
         # Read the file (why don't we just open() the file?)
         cmd = ["ethtool", "-S", "bat0"]
-        output = interface.exec_cmd(cmd)
-        if not output:
+        try:
+            output = self.run_cmd(cmd)
+        except IOError as e:
+            self.report_error(e)
             return
 
         # Parse the contents of the file
@@ -114,8 +132,10 @@ class sampler(threading.Thread):
 
         # Run the command
         cmd = ["iw", "dev", self.args.wifi_iface, "station", "dump"]
-        output = interface.exec_cmd(cmd)
-        if not output:
+        try:
+            output = self.run_cmd(cmd)
+        except IOError as e:
+            self.report_error(e)
             return
 
         # Parse the output
@@ -161,8 +181,10 @@ class sampler(threading.Thread):
     def sample_ip(self):
         # Run the command
         cmd = ["ip", "-s", "-s", "link", "show", self.args.wifi_iface]
-        output = interface.exec_cmd(cmd)
-        if not output:
+        try:
+            output = self.run_cmd(cmd)
+        except IOError as e:
+            self.report_error(e)
             return
 
         # Remove first to lines
@@ -200,8 +222,7 @@ class sampler(threading.Thread):
     # Sample CPU utilization
     def sample_cpu(self):
         # Run the command
-        cmd = ["cat", "/proc/stat"]
-        cpu = interface.exec_cmd(cmd)
+        cpu = open("/proc/cpu").read()
         if not cpu:
             return
 
@@ -239,8 +260,7 @@ class sampler(threading.Thread):
             return
 
         # Read the file (why don't we just open() the file?)
-        cmd = ["cat", orig_path]
-        output = interface.exec_cmd(cmd)
+        output = open(orig_path).read()
         if not output:
             return
 

@@ -67,7 +67,9 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             print("  Killing sampler")
             self.sampler.stop()
             if self.sampler.is_alive():
-                self.sampler.join()
+                self.sampler.join(1)
+            if self.sampler.is_alive():
+                print("  Sampler wouldn't die")
 
         print("  Closing connection")
 

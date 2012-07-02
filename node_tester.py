@@ -30,6 +30,7 @@ class client(threading.Thread):
 
         interval = str(t/10.0)
         ping_cmd = ["/usr/bin/ping", "-i", interval, "-n", "-q", h]
+        print(" ".join(ping_cmd))
 
         # Start a little watchdog to make sure we don't hang here forever
         self.timer.start()
@@ -94,9 +95,14 @@ class client(threading.Thread):
         # We are done
         self.running = False
 
-    def kill_ping(self):
+    def kill_ping(self, force=False):
         if not self.p_ping or self.p_ping.poll():
+            print("  ping not running")
             # Ping not running
+            return
+
+        if force:
+            self.ping_p.kill()
             return
 
         self.ping_p.send_signal(2)
@@ -109,15 +115,28 @@ class client(threading.Thread):
             return None
 
         regex = re.compile("rtt min/avg/max/mdev = (?P<ping_min>\d*.?\d*)/(?P<ping_avg>\d*.?\d*)/(?P<ping_max>\d*.?\d*)/(?P<ping_mdev>\d*.?\d*) ms")
-        match = regex.search(out)
+        stats = regex.search(out)
 
-        if not match:
+        regex = re.compile("(?P<ping_tx>\d+) packets transmitted, (?P<ping_rx>\d+) received, (?P<ping_loss>\d+)% packet loss, time (?P<ping_time>\d+)ms")
+        counts = regex.search(out)
+
+        if counts and counts.group('ping_rx') == 0:
+            # Ping didn't get anything through
+            e = "  Ping failed to measure delay: {}".format(counts.groupdict)
+            print(e)
+            self.report_error(e)
+            return None
+
+        if not stats:
             e = "Parsing ping output failed: {}".format(out)
             print(e)
             self.report_error(e)
             return None
 
-        return match.groupdict()
+        ret = dict()
+        ret.update(stats.groupdict())
+        ret.update(counts.groupdict())
+        return ret
 
     # Screen scrape the output from a iperf TCP client
     def parse_tcp_output(self, output):

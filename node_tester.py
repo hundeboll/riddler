@@ -104,7 +104,11 @@ class client(threading.Thread):
 
         if force:
             print("  Force ping to die")
-            self.ping_p.kill()
+            try:
+                if not self.ping_p.poll():
+                    self.ping_p.kill()
+            except Exception as e:
+                print("  Killing ping failed: {}".format(e))
             return
 
         self.ping_p.send_signal(2)

@@ -29,7 +29,7 @@ class client(threading.Thread):
             r = str(self.run_info['rate']*1024)
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-fk"]
 
-        interval = str(int(t)/10.0)
+        interval = str(int(t)/20.0)
         ping_cmd = ["/usr/bin/ping", "-i", interval, "-n", "-q", h]
 
         # Start a little watchdog to make sure we don't hang here forever
@@ -122,10 +122,10 @@ class client(threading.Thread):
         regex = re.compile("rtt min/avg/max/mdev = (?P<ping_min>\d*.?\d*)/(?P<ping_avg>\d*.?\d*)/(?P<ping_max>\d*.?\d*)/(?P<ping_mdev>\d*.?\d*) ms")
         stats = regex.search(out)
 
-        regex = re.compile("(?P<ping_tx>\d+) packets transmitted, (?P<ping_rx>\d+) received, (?P<ping_loss>\d+)% packet loss, time (?P<ping_time>\d+)ms")
+        regex = re.compile("(?P<ping_tx>\d+) packets transmitted, (?P<ping_rx>\d+) received,(?: \+(?P<ping_err>\d+) errors,)? (?P<ping_loss>\d+)% packet loss, time (?P<ping_time>\d+)ms")
         counts = regex.search(out)
 
-        if counts and counts.group('ping_rx') == 0:
+        if counts and counts.group('ping_rx') == "0":
             # Ping didn't get anything through
             e = "  Ping failed to measure delay: {}".format(counts.groupdict)
             print(e)
@@ -145,10 +145,11 @@ class client(threading.Thread):
                 'ping_avg': float(s['ping_avg']),
                 'ping_max': float(s['ping_max']),
                 'ping_mdev': float(s['ping_mdev']),
-                'ping_tx': float(c['ping_tx']),
-                'ping_rx': float(c['ping_rx']),
+                'ping_tx': int(c['ping_tx']),
+                'ping_rx': int(c['ping_rx']),
                 'ping_loss': float(c['ping_loss']),
                 'ping_time': float(c['ping_time']),
+                'ping_err': int(0 if not d['ping_err'] else d['ping_err']),
                 }
 
     # Screen scrape the output from a iperf TCP client

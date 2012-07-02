@@ -28,7 +28,8 @@ class client(threading.Thread):
             r = str(self.run_info['rate']*1024)
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-fk"]
 
-        ping_cmd = ["ping", "-n", "-q", h]
+        interval = str(t/10.0)
+        ping_cmd = ["/usr/bin/ping", "-i", interval, "-n", "-q", h]
 
         # Start a little watchdog to make sure we don't hang here forever
         self.timer.start()
@@ -94,22 +95,14 @@ class client(threading.Thread):
         self.running = False
 
     def kill_ping(self):
-        try:
-            self.ping_p.terminate()
+        if not self.p_ping or self.p_ping.poll():
+            # Ping not running
+            return
 
-            if not self.ping_p.poll():
-                self.ping_p.terminate()
-
-            if not self.ping_p.poll():
-                self.ping_p.kill()
-        except OSError as e:
-            err = "Ping process fucked up: {}".format(e)
-            print(err)
-            self.report_error(err)
-
+        self.ping_p.send_signal(2)
         (out,err) = self.ping_p.communicate()
 
-        if err:
+        if err or not out:
             e = "Ping failed: {}".format(err)
             print(e)
             self.report_error(e)

@@ -359,7 +359,7 @@ class controller(threading.Thread):
                 print("controller sample error from {}".format(node.name))
                 self.error = True
 
-        if self.error:
+        if self.error and not self.end.is_set():
             for node in self.nodes:
                 node.reconnect()
 

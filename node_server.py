@@ -54,6 +54,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         for client in self.tester_clients:
             print("  Killing client")
             client.kill_client()
+            client.kill_ping()
             if client.is_alive():
                 client.join()
 

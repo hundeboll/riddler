@@ -79,8 +79,7 @@ class setup:
         if r:
             return False
 
-        return True
-        if state == "on":
+        if state == "on" and os.path.exists("/sys/class/net/mesh0"):
             if not os.path.exists("/sys/class/net/mon0"):
                 cmd = ["iw", "phy0", "interface", "add", "mon0", "type", "monitor", "flags", "none"]
                 if interface.exec_cmd(cmd) == False:

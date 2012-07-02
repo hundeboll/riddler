@@ -11,6 +11,7 @@ class client(threading.Thread):
         self.dest_node = dest_node
         self.run_info = run_info
         self.running = False
+        self.ping_p = None
         self.timer = threading.Timer(run_info['test_time']*2, self.kill_client)
         self.end = threading.Event()
 
@@ -28,7 +29,7 @@ class client(threading.Thread):
             r = str(self.run_info['rate']*1024)
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-fk"]
 
-        interval = str(t/10.0)
+        interval = str(int(t)/10.0)
         ping_cmd = ["/usr/bin/ping", "-i", interval, "-n", "-q", h]
         print(" ".join(ping_cmd))
 
@@ -96,12 +97,13 @@ class client(threading.Thread):
         self.running = False
 
     def kill_ping(self, force=False):
-        if not self.p_ping or self.p_ping.poll():
+        if not self.ping_p or self.ping_p.poll():
             print("  ping not running")
             # Ping not running
             return
 
         if force:
+            print("  Force ping to die")
             self.ping_p.kill()
             return
 

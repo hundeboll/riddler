@@ -72,7 +72,7 @@ class sampler(threading.Thread):
             raise IOError(err)
         return out
 
-    def timeoout_cmd(self):
+    def timeout_cmd(self):
         if not self.process.poll():
             self.process.kill()
         self.report_error("Sample command timed out: {}".forma(self.cmd))
@@ -222,7 +222,7 @@ class sampler(threading.Thread):
     # Sample CPU utilization
     def sample_cpu(self):
         # Run the command
-        cpu = open("/proc/cpu").read()
+        cpu = open("/proc/stat").read()
         if not cpu:
             return
 

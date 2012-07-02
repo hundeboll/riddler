@@ -102,7 +102,7 @@ class node(threading.Thread):
             try:
                 self.socket.shutdown(socket.SHUT_RDWR)
             except socket.error as e:
-                if e.errno != 107:
+                if e.errno not in (107,9):
                     # We tried to close a non-connected socket
                     # Don't be too noisy
                     raise e
@@ -200,7 +200,6 @@ class node(threading.Thread):
         if self.enable_ratio and run_info['ratio']:
             run_info['rate'] = run_info['rate'] * run_info['ratio']/100
 
-        print("Prepare run on {}".format(self.name))
         self.samples = []
         self.run_info = run_info
         self.run_error = False

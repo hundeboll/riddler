@@ -31,7 +31,6 @@ class client(threading.Thread):
 
         interval = str(int(t)/10.0)
         ping_cmd = ["/usr/bin/ping", "-i", interval, "-n", "-q", h]
-        print(" ".join(ping_cmd))
 
         # Start a little watchdog to make sure we don't hang here forever
         self.timer.start()
@@ -98,7 +97,7 @@ class client(threading.Thread):
 
     def kill_ping(self, force=False):
         if not self.ping_p or self.ping_p.poll():
-            print("  ping not running")
+            print("  Ping not running")
             # Ping not running
             return
 
@@ -139,10 +138,18 @@ class client(threading.Thread):
             self.report_error(e)
             return None
 
-        ret = dict()
-        ret.update(stats.groupdict())
-        ret.update(counts.groupdict())
-        return ret
+        s = stats.groupdict()
+        c = counts.groupdict()
+        return {
+                'ping_min': float(s['ping_min']),
+                'ping_avg': float(s['ping_avg']),
+                'ping_max': float(s['ping_max']),
+                'ping_mdev': float(s['ping_mdev']),
+                'ping_tx': float(c['ping_tx']),
+                'ping_rx': float(c['ping_rx']),
+                'ping_loss': float(c['ping_loss']),
+                'ping_time': float(c['ping_time']),
+                }
 
     # Screen scrape the output from a iperf TCP client
     def parse_tcp_output(self, output):

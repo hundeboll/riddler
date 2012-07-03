@@ -149,7 +149,7 @@ class client(threading.Thread):
                 'ping_rx': int(c['ping_rx']),
                 'ping_loss': float(c['ping_loss']),
                 'ping_time': float(c['ping_time']),
-                'ping_err': int(0 if not d['ping_err'] else d['ping_err']),
+                'ping_err': int(0 if not c['ping_err'] else c['ping_err']),
                 }
 
     # Screen scrape the output from a iperf TCP client

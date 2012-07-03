@@ -1,8 +1,8 @@
 import riddler_node as node
 
-alice = node.node("alice", "10.0.1.105")
-relay = node.node("relay", "10.0.1.102")
-bob = node.node("bob", "10.0.1.104")
+alice = node.node("alice", "o105.personal.es.aau.dk")
+relay = node.node("relay", "o102.personal.es.aau.dk")
+bob = node.node("bob", "o104.personal.es.aau.dk")
 """
 bob = node.node("bob", "localhost", 9988)
 alice = node.node("alice", "panda0.personal.es.aau.dk")

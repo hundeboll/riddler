@@ -79,6 +79,7 @@ class plot:
                 self.graph.plot_throughput(node, data, coding)
                 self.graph.plot_cpu(node, data, coding)
                 self.graph.plot_power(node, data, coding)
+                self.graph.plot_delay(node, data, coding)
 
             if coding:
                 self.graph.plot_tx_packets(data, node)

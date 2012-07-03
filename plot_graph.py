@@ -151,7 +151,7 @@ class graph:
         return positions,data,width,color,label
 
     def plot_coded(self, node, data):
-        if not len(data['coded']) or not len(data[fwd]):
+        if not len(data['coded']) or not len(data['fwd']):
             return
 
         self.setup_fig(
@@ -272,6 +272,20 @@ class graph:
 
         self.plot(data['rates'], data['cpu'], label[coding])
         self.finish_fig()
+
+    def plot_delay(self, node, data, coding):
+        if not len(data['ping_avg']):
+            return
+
+        self.setup_fig(
+                name=node,
+                title="Delay for {}".format(node.title()),
+                xlabel="Offered load [kbit/s]",
+                ylabel="Round Trip Time [ms]")
+
+        self.plot(data['rates'], data['ping_avg'], label[coding])
+        self.finish_fig()
+
 
     def plot_power(self, node, data, coding):
         if not len(data['power']):

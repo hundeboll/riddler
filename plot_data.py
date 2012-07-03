@@ -32,10 +32,18 @@ class data:
         return numpy.array(map(lambda i: i[1], sorted(data.iteritems())))
 
     def result_has_key(self, rd, field):
-        return rd[0][0].result.has_key(field)
+        if not rd[0][0].result.has_key(field):
+            print("Missing result key: {}".format(field))
+            return False
+        else:
+            return True
 
     def sample_has_key(self, rd, field):
-        return rd[0][0].samples[0].has_key(field)
+        if not rd[0][0].samples[0].has_key(field):
+            print("Missing sample key: {}".format(field))
+            return False
+        else:
+            return True
 
     # Average over a field in a result set
     def average_result(self, rd, field, par):
@@ -222,6 +230,7 @@ class data:
         data['iw_rx']      = self.difference_samples(rd, 'iw rx bytes', 'rate')
         data['ip_rx']      = self.difference_samples(rd, 'ip_rx_bytes', 'rate')
         data['iw_tx_pkts'] = self.difference_samples(rd, 'iw tx packets', 'rate')
+        data['ping_avg']   = self.average_result(rd, 'ping_avg', 'rate')
 
         self.update_system_data('udp_sources', data, coding)
 
@@ -238,7 +247,7 @@ class data:
         rd = self.data.get_run_data_node(node, {'coding': coding})
 
         data = {}
-        data['coded'] = self.difference_samples_3d(rd, 'nc Coded', 'ratio', 'rate')
+        data['coded'] = self.difference_samples_3d(rd, 'bat_nc_code', 'ratio', 'rate')
         data['power'] = self.average_samples_3d(rd, 'power_watt', 'ratio', 'rate')
         return data
 
@@ -251,9 +260,9 @@ class data:
         data['rates']      = self.keys(rd, 'rate')
         data['cpu']        = self.average_samples(rd, 'cpu', 'rate')
         data['power']      = self.average_samples(rd, 'power_watt', 'rate')
-        data['coded']      = self.difference_samples(rd, 'nc Coded', 'rate')
-        data['fwd']        = self.difference_samples(rd, 'nc Forwarded', 'rate')
-        data['fwd_coded']  = self.difference_samples(rd, 'nc FwdCoded', 'rate')
+        data['coded']      = self.difference_samples(rd, 'bat_nc_code', 'rate')
+        data['fwd']        = self.difference_samples(rd, 'bat_forward', 'rate')
+        data['fwd_coded']  = self.difference_samples(rd, 'bat_nc_fwd_coded', 'rate')
         data['tx']         = self.difference_samples(rd, 'iw tx bytes', 'rate')
         data['iw_tx_pkts'] = self.difference_samples(rd, 'iw tx packets', 'rate')
         data['capture_rx'] = self.udp_mac_capture_rx(rd, 'rate')
@@ -329,7 +338,7 @@ class data:
                 for node in self.sources:
                     field = "iw {} rx packets".format(self.macs[node])
                     if not self.sample_has_key(rd, field):
-                        continue
+                        return numpy.array([])
                     val = sample_diff(loop.samples, field)
                     rx.append(val)
 
@@ -359,12 +368,12 @@ class data:
                 for node in self.sources:
                     field = "iw {} rx packets".format(self.macs[node])
                     if not self.sample_has_key(rd, field):
-                        continue
+                        return numpy.array([])
                     val = sample_diff(loop.samples, field)
                     rx.append(val)
-                if not self.sample_has_key(rd, "nc Coded"):
-                    continue
-                coded = sample_diff(loop.samples, "nc Coded")
+                if not self.sample_has_key(rd, "bat_nc_code"):
+                    return numpy.array([])
+                coded = sample_diff(loop.samples, "bat_nc_code")
                 #print("rx: {}  coded: {}".format(min(rx), coded))
                 diff = (min(rx) - coded/2)
                 vals.append(diff)

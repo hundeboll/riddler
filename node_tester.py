@@ -127,7 +127,7 @@ class client(threading.Thread):
 
         if counts and counts.group('ping_rx') == "0":
             # Ping didn't get anything through
-            e = "  Ping failed to measure delay: {}".format(counts.groupdict)
+            e = "  Ping failed to measure delay: {}".format(counts.groupdict())
             print(e)
             self.report_error(e)
             return None

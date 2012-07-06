@@ -79,6 +79,11 @@ class setup:
         if r:
             return False
 
+        cmd = ['iw', 'phy0', 'set', 'rts', str(run_info['rts'])]
+        r = subprocess.call(cmd)
+        if r:
+            return False
+
         if state == "on" and os.path.exists("/sys/class/net/mesh0"):
             if not os.path.exists("/sys/class/net/mon0"):
                 cmd = ["iw", "phy0", "interface", "add", "mon0", "type", "monitor", "flags", "none"]

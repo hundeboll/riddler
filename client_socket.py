@@ -65,6 +65,7 @@ class sock(threading.Thread):
             except socket.timeout:
                 continue
             except socket.error as e:
+                print(e)
                 self.disconnect()
 
     def stop(self):

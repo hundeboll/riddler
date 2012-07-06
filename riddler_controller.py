@@ -314,6 +314,7 @@ class controller(threading.Thread):
         self.run_info['tcp_window'] = tcp_window
         self.run_info['promisc'] = coding
         self.run_info['ratio'] = ratio
+        self.run_info['rts'] = self.args.rts_threshold
 
         # Update the data storage with the new run info
         self.data.add_run_info(self.run_info)

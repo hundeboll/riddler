@@ -25,6 +25,12 @@ class NetworkGraph(object):
             self.node_size = len(node)*250
         self.lock.release()
 
+    def check_node(self, mac):
+        self.lock.acquire()
+        ret = mac in self.nodelist
+        self.lock.release()
+        return ret
+
     def add_path(self, src, dst, tq):
         # Add packet to graph
         self.lock.acquire()
@@ -117,9 +123,12 @@ class topology(QWidget):
         if 'mac' not in obj.sample:
             return
 
+
         src = obj.sample['mac']
         dsts = obj.sample['nexthops']
         for dst,tq in dsts.items():
+            if not self.topology_graph.check_node(dst):
+                continue
             self.topology_graph.add_path(src, dst, tq)
 
         for dst in self.topology_graph.paths_from(src):

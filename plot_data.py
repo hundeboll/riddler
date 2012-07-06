@@ -265,8 +265,8 @@ class data:
         data['fwd_coded']  = self.difference_samples(rd, 'bat_nc_fwd_coded', 'rate')
         data['tx']         = self.difference_samples(rd, 'iw tx bytes', 'rate')
         data['iw_tx_pkts'] = self.difference_samples(rd, 'iw tx packets', 'rate')
-        data['capture_rx'] = self.udp_mac_capture_rx(rd, 'rate')
-        data['coded_diff'] = self.udp_rx_coded_diff(rd, 'rate')
+        data['capture_rx'] = numpy.array([]) #self.udp_mac_capture_rx(rd, 'rate')
+        data['coded_diff'] = numpy.array([]) #self.udp_rx_coded_diff(rd, 'rate')
 
 
         data['ratio_coded'] = data['coded']/data['fwd_coded']/2

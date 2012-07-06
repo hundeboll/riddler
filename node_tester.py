@@ -29,8 +29,7 @@ class client(threading.Thread):
             r = str(self.run_info['rate']*1024)
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-fk"]
 
-        interval = str(int(t)/20.0)
-        ping_cmd = ["/usr/bin/ping", "-i", interval, "-n", "-q", h]
+        ping_cmd = ["/usr/bin/ping", "-i", ".2", "-Q", "0x10", "-n", "-q", h]
 
         # Start a little watchdog to make sure we don't hang here forever
         self.timer.start()

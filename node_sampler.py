@@ -28,8 +28,8 @@ class sampler(threading.Thread):
 
     # Start the sampling in a separate thread
     def run(self):
-        interval = self.run_info['sample_interval']
         while not self.end.is_set():
+            interval = self.run_info['sample_interval']
             # Do the sampling
             start = time.time()
             self.sample_nc()

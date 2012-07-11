@@ -28,6 +28,7 @@ class sampler(threading.Thread):
 
     # Start the sampling in a separate thread
     def run(self):
+        interval = self.run_info['sample_interval']
         while not self.end.is_set():
             # Do the sampling
             start = time.time()
@@ -35,25 +36,25 @@ class sampler(threading.Thread):
             nc = time.time()
             self.sample_iw()
             iw = time.time()
-            self.sample_ip()
-            ip = time.time()
+            #self.sample_ip()
+            #ip = time.time()
             self.sample_cpu()
             cpu = time.time()
             #self.sample_power()
-            self.sample_originators()
-            orig = time.time()
+            #self.sample_originators()
+            #orig = time.time()
             self.report_samples()
             report = time.time()
-            delay = self.run_info['sample_interval'] - (time.time() - start)
+            delay = interval - (time.time() - start)
             if delay > 0:
                 time.sleep(delay)
             else:
-                self.report_error("Missed deadline with {} seconds".format(delay*-1))
+                self.report_error("Missed deadline with {} seconds".format(delay*-interval))
                 print("nc:     {}".format(nc - start))
                 print("iw:     {}".format(iw - start))
-                print("ip:     {}".format(ip - start))
+                #print("ip:     {}".format(ip - start))
                 print("cpu:    {}".format(cpu - start))
-                print("orig:   {}".format(orig - start))
+                #print("orig:   {}".format(orig - start))
                 print("report: {}".format(report - start))
 
     # Stop the sampler thread

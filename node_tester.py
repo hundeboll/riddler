@@ -29,7 +29,7 @@ class client(threading.Thread):
             r = str(self.run_info['rate']*1024)
             cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-fk"]
 
-        ping_cmd = ["/usr/bin/ping", "-i", ".2", "-Q", "0x10", "-n", "-q", h]
+        #ping_cmd = ["/usr/bin/ping", "-i", ".2", "-Q", "0x10", "-n", "-q", h]
 
         # Start a little watchdog to make sure we don't hang here forever
         self.timer.start()
@@ -37,14 +37,14 @@ class client(threading.Thread):
         # Start the client in a separate process and wait for it to finish
         print("  Starting {0} client".format(self.run_info['protocol']))
         self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        self.ping_p = subprocess.Popen(ping_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #self.ping_p = subprocess.Popen(ping_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         self.running = True
         self.p.wait()
         self.running = False
 
         # Stop ping and read output
-        ping_result = self.kill_ping()
+        #ping_result = self.kill_ping()
 
         # Read the output from iperf
         (stdout, stderr) = self.p.communicate()
@@ -62,12 +62,12 @@ class client(threading.Thread):
             result = self.parse_udp_human_output(stdout)
 
         # Send back our result
-        if not ping_result or not result:
-            e = "Missing result: ping:'{}' or iperf:'{}'".format(ping_result, result)
+        #if not ping_result or not result:
+        if not result:
+            e = "Missing result :("
             print(e)
             self.report_error(e)
         else:
-            result.update(ping_result)
             self.report_result(result)
 
     # Brutally kill a running subprocesses
@@ -197,7 +197,7 @@ class client(threading.Thread):
     def parse_udp_human_output(self, output):
         t = self.run_info['test_time']
 
-        report = re.compile("\[\s*(?P<index>\d+)\].+sec\s+(?P<transfered>\d*.?\d+) KBytes +(?P<throughput>\d*.?\d+) Kbits/sec +(?P<jitter>\d+\.\d+) ms +(?P<lost>\d+)/ *(?P<packets>\d+) +\((?P<ratio>\d*\.?\d+)%\)")
+        report = re.compile("\[\s*(?P<index>\d+)\].+sec\s+(?P<transfered>\d*.?\d+) KBytes +(?P<throughput>\d*.?\d+) Kbits/sec +-?(?P<delay>\d+\.\d+) ms +(?P<jitter>\d+\.\d+) ms +(?P<lost>\d+)/ *(?P<packets>\d+) +\((?P<ratio>\d*\.?\d+)%\)")
         match = report.search(output)
         if not match:
             print("  Failed to parse result: {0}".format(output))
@@ -214,6 +214,7 @@ class client(threading.Thread):
                     'lost':         int(vals['lost']),             # packets
                     'total':        int(vals['packets']),          # packets
                     'ratio':        float(vals['ratio']),          # percentage
+                    'ping_avg':     float(vals['delay']),
                     }
         except Exception as e:
             err = "Failed to parse output: {}\n{}".format(e, output)

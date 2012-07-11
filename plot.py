@@ -118,9 +118,9 @@ class plot:
         if self.args.plots not in ('all', 'system'):
             return
 
-        for coding in (True, False):
-            data = self.data.udp_mac_capture(coding)
-            self.graph.plot_udp_mac_capture(data, coding)
+        #for coding in (True, False):
+        #    data = self.data.udp_mac_capture(coding)
+        #    self.graph.plot_udp_mac_capture(data, coding)
 
     def plot_udp_ratio_source(self, node):
         if self.args.plots not in ('all', 'system', node):

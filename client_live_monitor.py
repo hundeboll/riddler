@@ -153,7 +153,7 @@ class live_fig(QGroupBox):
         self.canvas.blit(self.ax.bbox)
 
     def update_data(self, node, x, y):
-        self.data[node] = (x, y)
+        self.data[node] = (range(len(x)), y)
         self.rescale(max(y))
 
     def clear_data(self):
@@ -255,14 +255,15 @@ class monitor_gui(QWidget):
         self.figs = {}
         self.add_fig('iw tx bytes',   "TX Rate",           "Rate [kbit/s]", show=True)
         self.add_fig('iw rx bytes',   "RX Rate",           "Rate [kbit/s]", show=True)
+        self.add_fig('iw tx failed',  "TX Failed",         "Packets", show=False)
+        self.add_fig('iw tx retries', "TX Retries",        "Packets", show=True)
         self.add_fig('ip_tx_bytes',   "IP TX Rate",        "Rate [kbit/s]", show=False)
         self.add_fig('ip_rx_bytes',   "IP RX Rate",        "Rate [kbit/s]", show=False)
         self.add_fig('cpu',           "CPU Usage",         "Usage [%]", ylim=105, scale=False, show=True)
-        self.add_fig('power_watt',    "Power Consumption", "Usage [W]", show=True)
+        self.add_fig('power_watt',    "Power Consumption", "Usage [W]", show=False)
         self.add_fig('bat_nc_code',   "Coded Packets",     "Packets", show=True)
-        self.add_fig('bat_nc_decode_failed', "Failed to Decode", "Packets", show=False)
-        self.add_fig('iw tx failed',  "TX Failed",         "Packets", show=False)
-        self.add_fig('iw tx retries', "TX Retries",        "Packets", show=True)
+        self.add_fig('bat_nc_recode', "Recoded Packets",   "Packets", show=True)
+        self.add_fig('bat_nc_decode_failed', "Failed to Decode", "Packets", show=True)
         self.add_fig('bat_nc_decode', "Decoded",           "Packets", show=True)
         self.add_fig('bat_nc_overheard',"Overheard",         "Packets", show=True)
         self.add_fig('bat_forward',   "Forward",         "Packets", show=True)
@@ -362,7 +363,7 @@ class monitor:
         socket.subscribe(self, interface.CLIENT_SAMPLE, self.add_sample)
 
     def controller_connected(self):
-        pass
+        self.gui.showEvent(0)
 
     def controller_disconnected(self):
         self.clear_data()
@@ -398,6 +399,7 @@ class monitor:
         self.add_diff('bat_nc_decode', node, sample)
         self.add_diff('bat_nc_overheard', node, sample)
         self.add_diff('bat_nc_code', node, sample)
+        self.add_diff('bat_nc_recode', node, sample)
         self.add_diff('bat_forward', node, sample)
         self.add_bytes('iw rx bytes', node, sample)
         self.add_bytes('iw tx bytes', node, sample)

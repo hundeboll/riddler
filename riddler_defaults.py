@@ -22,6 +22,7 @@ sample_interval = 1     # Seconds between each node sample
 hold_time = 10
 purge_time = 200
 packet_length = 100     # Not implemented yet
+rts_threshold = "off"
 
 #
 # Settings for udp_rates, hold_times, power_meas

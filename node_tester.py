@@ -197,7 +197,7 @@ class client(threading.Thread):
     def parse_udp_human_output(self, output):
         t = self.run_info['test_time']
 
-        report = re.compile("\[\s*(?P<index>\d+)\].+sec\s+(?P<transfered>\d*.?\d+) KBytes +(?P<throughput>\d*.?\d+) Kbits/sec +-?(?P<delay>\d+\.\d+) ms +(?P<jitter>\d+\.\d+) ms +(?P<lost>\d+)/ *(?P<packets>\d+) +\((?P<ratio>\d*\.?\d+)%\)")
+        report = re.compile("\[\s*(?P<index>\d+)\].+sec\s+(?P<transfered>\d*.?\d+) KBytes +(?P<throughput>\d*.?\d+) Kbits/sec +(?P<delay>-?\d+\.\d+) ms +(?P<jitter>\d+\.\d+) ms +(?P<lost>\d+)/ *(?P<packets>\d+) +\((?P<ratio>\d*\.?\d+)%\)")
         match = report.search(output)
         if not match:
             print("  Failed to parse result: {0}".format(output))

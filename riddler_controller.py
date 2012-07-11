@@ -356,7 +356,7 @@ class controller(threading.Thread):
                 self.error = True
 
             # Check if the node has sent samples
-            if not node.get_samples():
+            if node.dests and not node.get_samples():
                 print("controller sample error from {}".format(node.name))
                 self.error = True
 

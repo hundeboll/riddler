@@ -36,6 +36,8 @@ class plot:
             for node in self.data.sources:
                 self.plot_udp_rate_source(node)
 
+            return
+
             # For each relay
             for node in self.data.relays:
                 self.plot_udp_rate_relay(node)
@@ -62,6 +64,7 @@ class plot:
             for node in self.data.relays:
                 self.plot_tcp_window_relay(node)
 
+    def show_plots(self):
         if not self.args.hide:
             self.graph.show(self.args.plots)
 
@@ -170,3 +173,5 @@ class plot:
 if __name__ == "__main__":
     p = plot(args)
     p.plot()
+    p.show_plots()
+

@@ -195,7 +195,7 @@ class controller(threading.Thread):
                 if self.redo:
                     print("Discarding result because of previous error")
                     self.redo = False
-                    continue
+                    #continue
 
                 # Successful test
                 self.save_results()

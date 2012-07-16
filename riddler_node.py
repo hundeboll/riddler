@@ -210,6 +210,7 @@ class node(threading.Thread):
 
     # Set event to inform waiting callers
     def handle_prepare_done(self, obj):
+        self.run_error = False
         self.reply.set()
 
     # Be verbose about errors occurring during while configuring the node

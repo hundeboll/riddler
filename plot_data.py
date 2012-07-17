@@ -54,6 +54,8 @@ class data:
         # For each run_no in test
         for r in rd:
             key = r[0].run_info[par]
+            # Remove empty last result
+            if not r[-1].result: r.pop(-1)
             # Read result field for each loop in run_no
             val = map(lambda d: d.result[field], r)
             avg[key] = numpy.average(val)

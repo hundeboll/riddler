@@ -1,11 +1,12 @@
 import SocketServer
 import socket
 import threading
-import re
+import time
 import riddler_interface as interface
 import node_tester as tester
-import node_sampler as sampler
+#import node_sampler as sampler
 import node_setup as setup
+import subprocess
 
 class server:
     def __init__(self, args):
@@ -44,7 +45,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         self.tester_clients = []
         self.tester_server = None
         self.lock = threading.Lock()
-        self.sampler = sampler.sampler(self, self.server.args)
+        #self.sampler = sampler.sampler(self, self.server.args)
         self.setup = setup.setup(self.server.args)
         self.send_node_info()
 
@@ -64,13 +65,13 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             if self.tester_server.is_alive():
                 self.tester_server.join()
 
-        if self.sampler:
-            print("  Killing sampler")
-            self.sampler.stop()
-            if self.sampler.is_alive():
-                self.sampler.join(1)
-            if self.sampler.is_alive():
-                print("  Sampler wouldn't die")
+        #if self.sampler:
+            #print("  Killing sampler")
+            #self.sampler.stop()
+            #if self.sampler.is_alive():
+                #self.sampler.join(1)
+            #if self.sampler.is_alive():
+                #print("  Sampler wouldn't die")
 
         print("  Closing connection")
 
@@ -108,9 +109,9 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             self.report(interface.node(interface.PREPARE_ERROR, error=self.setup.error))
 
         # Inform the sampler about the new run
-        if not self.sampler.set_run_info(obj.run_info):
-            print(self.sampler.error)
-            self.report(interface.node(interface.PREPARE_ERROR, error=self.sampler.error))
+        #if not self.sampler.set_run_info(obj.run_info):
+            #print(self.sampler.error)
+            #self.report(interface.node(interface.PREPARE_ERROR, error=self.sampler.error))
 
         # (Re)start iperf server
         if self.tester_server:
@@ -127,6 +128,8 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         for node in obj.dests:
             client = tester.client(self, node, obj.run_info)
             self.tester_clients.append(client)
+
+        self.send_sample()
 
         # Report back to controller that we are ready
         self.report(interface.node(interface.PREPARE_DONE))
@@ -147,6 +150,8 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     def finish_run(self, obj):
         print("# Finish run")
+        self.send_sample()
+
         for client in self.tester_clients:
             print("  Killing client")
             client.kill_client()
@@ -171,7 +176,27 @@ class tcp_handler(SocketServer.BaseRequestHandler):
     # Send our own information to the controller
     def send_node_info(self):
         args = self.server.args
-        output = interface.exec_cmd(["batctl", "o"])
-        mac = re.findall("((?:[0-9a-f]{2}:){5}[0-9a-f]{2})", output)[0]
+        mac = open("/sys/class/net/{}/address".format(args.wifi_iface)).read()
         obj = interface.node(interface.NODE_INFO, mesh_host=args.mesh_host, mesh_port=args.mesh_port, mesh_mac=mac)
         self.report(obj)
+
+    def send_sample(self):
+        sample = {'timestamp': time.time()}
+
+        # Sample bat stats
+        cmd = ["ethtool", "-S", "bat0"]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p.wait()
+        nc,d = p.communicate()
+
+        # Sample iw
+        cmd = ["iw", "dev", self.server.args.wifi_iface, "station", "dump"]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p.wait()
+        iw,d = p.communicate()
+
+        # Sample cpu
+        cpu = open("/proc/stat").read()
+
+        sample = interface.node(interface.SAMPLE, sample=sample, nc=nc, iw=iw, cpu=cpu)
+        self.report(sample)

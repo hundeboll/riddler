@@ -1,8 +1,8 @@
 import threading
 import socket
-import pickle
 import time
 import copy
+import re
 import riddler_interface as interface
 
 nodes = []
@@ -20,6 +20,8 @@ class node(threading.Thread):
         self.sources = []
         self.samples = []
         self.store_samples = False
+        self.total_cpu = None
+        self.total_idle = None
         self.run_result = None
         self.run_error = False
         nodes.append(self)
@@ -242,18 +244,22 @@ class node(threading.Thread):
 
     # Tell node to clean up after test run
     def finish_run(self):
-        self.store_samples = False
         self.reply.clear()
         interface.send_node(self.socket, interface.FINISH_RUN)
 
     # Set event to inform waiting callers
     def handle_finish_done(self, obj):
+        self.store_samples = False
         self.reply.set()
 
     # Save received measurement sample for later extraction
     def handle_sample(self, obj):
         # Add name to sample
         obj.sample['node'] = self.name
+
+        self.parse_nc(obj)
+        self.parse_iw(obj)
+        self.parse_cpu(obj)
 
         # Only store sample if a test is running
         if self.store_samples:
@@ -266,3 +272,59 @@ class node(threading.Thread):
     def handle_sample_error(self, obj):
         self.run_error = True
         print("Sampling failed at {0}: {1}".format(self.name, obj.error))
+
+    def parse_nc(self, obj):
+        if not hasattr(obj, 'nc'):
+            return
+
+        for line in obj.nc.splitlines()[1:]:
+            t = line.split(": ")
+            key = "bat_" + t[0].lstrip()
+            val = int(t[1])
+            obj.sample[key] = val
+
+    def parse_iw(self, obj):
+        if not hasattr(obj, 'iw'):
+            return
+
+        for line in obj.iw.splitlines():
+            match = re.findall("\s+(.+):\s+(.+)", line)
+            if not match:
+                continue
+
+            # We want integers to be integers
+            try:
+                # Try to convert
+                val = int(match[0][1])
+
+                # Okay, the convert did not fail, so compose the key
+                key = "iw " + match[0][0]
+
+                # Update or set the value for this counter
+                if key in obj.sample:
+                    obj.sample[key] += val
+                else:
+                    obj.sample[key] = val
+            except ValueError:
+                # The convert failed, so just use the string version
+                pass
+
+    def parse_cpu(self, obj):
+        if not hasattr(obj, 'cpu'):
+            return
+
+        # Save temporary values for later calculations
+        last_cpu = self.total_cpu
+        last_idle = self.total_idle
+
+        # Parse the output
+        line = obj.cpu.split("\n")[0]
+        self.total_cpu = sum(map(lambda x: float(x), line.split()[1:]))
+        self.total_idle = float(line.split()[4])
+        if not last_cpu:
+            return
+
+        # Calculate the utilization since last sample
+        total = self.total_cpu - last_cpu
+        idle = self.total_idle - last_idle
+        obj.sample['cpu'] = int(100*(total - idle)/total)

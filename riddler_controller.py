@@ -355,11 +355,6 @@ class controller(threading.Thread):
                 print("controller wait error from {}".format(node.name))
                 self.error = True
 
-            # Check if the node has sent samples
-            if node.dests and not node.get_samples():
-                print("controller sample error from {}".format(node.name))
-                self.error = True
-
         if self.error and not self.end.is_set():
             for node in self.nodes:
                 node.reconnect()

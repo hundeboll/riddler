@@ -181,22 +181,30 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         self.report(obj)
 
     def send_sample(self):
-        sample = {'timestamp': time.time()}
+        try:
+            sample = {'timestamp': time.time()}
 
-        # Sample bat stats
-        cmd = ["ethtool", "-S", "bat0"]
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait()
-        nc,d = p.communicate()
+            # Sample bat stats
+            print("  Sample bat stats")
+            cmd = ["ethtool", "-S", "bat0"]
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p.wait()
+            nc,d = p.communicate()
 
-        # Sample iw
-        cmd = ["iw", "dev", self.server.args.wifi_iface, "station", "dump"]
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait()
-        iw,d = p.communicate()
+            # Sample iw
+            print("  Sample iw")
+            cmd = ["iw", "dev", self.server.args.wifi_iface, "station", "dump"]
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p.wait()
+            iw,d = p.communicate()
 
-        # Sample cpu
-        cpu = open("/proc/stat").read()
+            # Sample cpu
+            print("  Sample cpu")
+            cpu = open("/proc/stat").read()
 
-        sample = interface.node(interface.SAMPLE, sample=sample, nc=nc, iw=iw, cpu=cpu)
-        self.report(sample)
+            print("  Send sample")
+            sample = interface.node(interface.SAMPLE, sample=sample, nc=nc, iw=iw, cpu=cpu)
+            self.report(sample)
+        except Exception as e:
+            err = interface.node(interface.SAMPLE_ERROR, error=e)
+            self.report(err)

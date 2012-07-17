@@ -36,8 +36,8 @@ class client(threading.Thread):
 
         # Start the client in a separate process and wait for it to finish
         print("  Starting {0} client".format(self.run_info['protocol']))
-        self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        #self.ping_p = subprocess.Popen(ping_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        #self.ping_p = subprocess.Popen(ping_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 
         self.running = True
         self.p.wait()
@@ -259,7 +259,7 @@ class server(threading.Thread):
 
         # Start the iperf server in a separate process and wait for it be killed
         print("  Starting {0} server".format(self.protocol))
-        self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         self.running = True
         self.p.wait()
 

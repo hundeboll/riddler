@@ -112,6 +112,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         #if not self.sampler.set_run_info(obj.run_info):
             #print(self.sampler.error)
             #self.report(interface.node(interface.PREPARE_ERROR, error=self.sampler.error))
+        self.send_sample()
 
         # (Re)start iperf server
         if self.tester_server:
@@ -129,7 +130,6 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             client = tester.client(self, node, obj.run_info)
             self.tester_clients.append(client)
 
-        self.send_sample()
 
         # Report back to controller that we are ready
         self.report(interface.node(interface.PREPARE_DONE))
@@ -187,14 +187,14 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             # Sample bat stats
             print("  Sample bat stats")
             cmd = ["ethtool", "-S", "bat0"]
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
             p.wait()
             nc,d = p.communicate()
 
             # Sample iw
             print("  Sample iw")
             cmd = ["iw", "dev", self.server.args.wifi_iface, "station", "dump"]
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
             p.wait()
             iw,d = p.communicate()
 

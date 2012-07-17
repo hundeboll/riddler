@@ -189,21 +189,14 @@ class data:
             self.avg_data[name] = {coding: {}, not coding: {}}
             self.avg_count[name] = {coding: 0, not coding: 0}
 
-            # Read length of data
-            l = len(data.values()[0])
-
-            # Initialize zeros
-            for key in data:
-                self.agg_data[name][coding][key] = numpy.zeros(l)
-                self.agg_data[name][not coding][key] = numpy.zeros(l)
-                self.avg_data[name][coding][key] = numpy.zeros(l)
-                self.avg_data[name][not coding][key] = numpy.zeros(l)
-
         # Add data to existing data
         self.avg_count[name][coding] += 1
         for key,val in data.items():
             if not len(val):
                 continue
+
+            if key not in self.agg_data[name][coding]:
+                self.agg_data[name][coding][key] = numpy.zeros(len(val))
 
             # Add to summed data
             self.agg_data[name][coding][key] += val
@@ -227,8 +220,8 @@ class data:
         data['rates']      = self.keys(rd, 'rate')
         data['throughput'] = self.average_result(rd, 'throughput', 'rate')
         data['jitter']     = self.average_result(rd, 'jitter', 'rate')
-        data['cpu']        = self.average_samples(rd, 'cpu', 'rate')
         data['power']      = self.average_samples(rd, 'power_watt', 'rate')
+        data['cpu']        = self.difference_samples(rd, 'cpu', 'rate')
         data['iw_rx']      = self.difference_samples(rd, 'iw rx bytes', 'rate')
         data['ip_rx']      = self.difference_samples(rd, 'ip_rx_bytes', 'rate')
         data['iw_tx_pkts'] = self.difference_samples(rd, 'iw tx packets', 'rate')
@@ -260,20 +253,21 @@ class data:
         # Read out data from objects
         data = {}
         data['rates']      = self.keys(rd, 'rate')
-        data['cpu']        = self.average_samples(rd, 'cpu', 'rate')
         data['power']      = self.average_samples(rd, 'power_watt', 'rate')
+        data['cpu']        = self.difference_samples(rd, 'cpu', 'rate')
         data['coded']      = self.difference_samples(rd, 'bat_nc_code', 'rate')
+        data['recoded']    = self.difference_samples(rd, 'bat_nc_recode', 'rate')
         data['fwd']        = self.difference_samples(rd, 'bat_forward', 'rate')
-        data['fwd_coded']  = self.difference_samples(rd, 'bat_nc_fwd_coded', 'rate')
+        #data['fwd_coded']  = self.difference_samples(rd, 'bat_nc_fwd_coded', 'rate')
         data['tx']         = self.difference_samples(rd, 'iw tx bytes', 'rate')
         data['iw_tx_pkts'] = self.difference_samples(rd, 'iw tx packets', 'rate')
         data['capture_rx'] = numpy.array([]) #self.udp_mac_capture_rx(rd, 'rate')
         data['coded_diff'] = numpy.array([]) #self.udp_rx_coded_diff(rd, 'rate')
 
 
-        data['ratio_coded'] = data['coded']/data['fwd_coded']/2
-        data['ratio_fwd']   = data['fwd']/data['fwd_coded']
-        data['ratio_total'] = data['ratio_coded'] + data['ratio_fwd']
+        #data['ratio_coded'] = data['coded']/data['fwd_coded']/2
+        #data['ratio_fwd']   = data['fwd']/data['fwd_coded']
+        #data['ratio_total'] = data['ratio_coded'] + data['ratio_fwd']
 
         self.update_system_data('udp_relays', data, coding)
 

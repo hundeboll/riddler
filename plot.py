@@ -36,8 +36,6 @@ class plot:
             for node in self.data.sources:
                 self.plot_udp_rate_source(node)
 
-            return
-
             # For each relay
             for node in self.data.relays:
                 self.plot_udp_rate_relay(node)
@@ -81,7 +79,7 @@ class plot:
             if self.args.plots in ('all', node):
                 self.graph.plot_throughput(node, data, coding)
                 self.graph.plot_cpu(node, data, coding)
-                self.graph.plot_power(node, data, coding)
+                #self.graph.plot_power(node, data, coding)
                 self.graph.plot_delay(node, data, coding)
 
             if coding:
@@ -102,8 +100,9 @@ class plot:
                 self.graph.plot_udp_rx_coded_diff(node, data)
 
             if self.args.plots in ('all', node):
-                self.graph.plot_power(node, data, coding)
+                #self.graph.plot_power(node, data, coding)
                 self.graph.plot_udp_mac_capture_rx(node, data, coding)
+                self.graph.plot_cpu(node, data, coding)
 
     def plot_udp_rate_system(self):
         if self.args.plots not in ('all', 'system'):
@@ -114,8 +113,9 @@ class plot:
             relay_agg,relay_avg = self.data.get_system_data('udp_relays', coding)
 
             self.graph.plot_udp_system_throughput(source_agg, coding)
-            self.graph.plot_udp_system_power(source_agg, relay_agg, coding)
-            self.graph.plot_udp_system_power_per_bit(source_agg, relay_agg, coding)
+            self.graph.plot_udp_system_delay(source_avg, coding)
+            #self.graph.plot_udp_system_power(source_agg, relay_agg, coding)
+            #self.graph.plot_udp_system_power_per_bit(source_agg, relay_agg, coding)
 
     def plot_udp_mac_capture(self):
         if self.args.plots not in ('all', 'system'):

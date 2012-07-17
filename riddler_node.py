@@ -206,6 +206,8 @@ class node(threading.Thread):
         self.run_info = run_info
         self.run_error = False
         self.run_result = None
+        self.total_cpu = None
+        self.total_idle = None
         self.reply.clear()
 
         interface.send_node(self.socket, interface.PREPARE_RUN, dests=self.get_dests(), run_info=run_info)
@@ -223,8 +225,8 @@ class node(threading.Thread):
     # Tell node to start a test run
     def start_run(self):
         self.reply.clear()
-        interface.send_node(self.socket, interface.START_RUN)
         self.store_samples = True
+        interface.send_node(self.socket, interface.START_RUN)
 
     # Save received result and set event to inform waiting callers
     def handle_run_result(self, obj):
@@ -257,9 +259,9 @@ class node(threading.Thread):
         # Add name to sample
         obj.sample['node'] = self.name
 
-        self.parse_nc(obj)
-        self.parse_iw(obj)
-        self.parse_cpu(obj)
+        obj = self.parse_nc(obj)
+        obj = self.parse_iw(obj)
+        obj = self.parse_cpu(obj)
 
         # Only store sample if a test is running
         if self.store_samples:
@@ -275,7 +277,7 @@ class node(threading.Thread):
 
     def parse_nc(self, obj):
         if not hasattr(obj, 'nc'):
-            return
+            return obj
 
         for line in obj.nc.splitlines()[1:]:
             t = line.split(": ")
@@ -283,9 +285,11 @@ class node(threading.Thread):
             val = int(t[1])
             obj.sample[key] = val
 
+        return obj
+
     def parse_iw(self, obj):
         if not hasattr(obj, 'iw'):
-            return
+            return obj
 
         for line in obj.iw.splitlines():
             match = re.findall("\s+(.+):\s+(.+)", line)
@@ -309,9 +313,11 @@ class node(threading.Thread):
                 # The convert failed, so just use the string version
                 pass
 
+        return obj
+
     def parse_cpu(self, obj):
         if not hasattr(obj, 'cpu'):
-            return
+            return obj
 
         # Save temporary values for later calculations
         last_cpu = self.total_cpu
@@ -322,9 +328,11 @@ class node(threading.Thread):
         self.total_cpu = sum(map(lambda x: float(x), line.split()[1:]))
         self.total_idle = float(line.split()[4])
         if not last_cpu:
-            return
+            return obj
 
         # Calculate the utilization since last sample
         total = self.total_cpu - last_cpu
         idle = self.total_idle - last_idle
         obj.sample['cpu'] = int(100*(total - idle)/total)
+
+        return obj

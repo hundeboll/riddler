@@ -161,8 +161,9 @@ class graph:
                 ylabel="Packets")
 
         self.plot(data['rates'], data['coded']/2, "Coded")
+        self.plot(data['rates'], data['recoded']/2, "Recoded")
         self.plot(data['rates'], data['fwd'],   "Forwarded")
-        self.plot(data['rates'], data['fwd'] + data['coded']/2, "Total")
+        self.plot(data['rates'], data['fwd'] + data['coded']/2 + data['recoded']/2, "Total")
         self.finish_fig()
 
     def plot_udp_system_throughput(self, data, coding):
@@ -281,11 +282,23 @@ class graph:
                 name=node,
                 title="Delay for {}".format(node.title()),
                 xlabel="Offered load [kbit/s]",
-                ylabel="Round Trip Time [ms]")
+                ylabel="End-to-end delay [ms]")
 
         self.plot(data['rates'], data['ping_avg'], label[coding])
         self.finish_fig()
 
+    def plot_udp_system_delay(self, avg_data, coding):
+        if not len(avg_data['ping_avg']):
+            return
+
+        self.setup_fig(
+                name="system",
+                title="System delay",
+                xlabel="Offered load [kbit/s]",
+                ylabel="Average end-to-end delay [ms]")
+
+        self.plot(avg_data['rates'], avg_data['ping_avg'], label[coding])
+        self.finish_fig()
 
     def plot_power(self, node, data, coding):
         if not len(data['power']):

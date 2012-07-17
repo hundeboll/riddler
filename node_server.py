@@ -112,7 +112,6 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         #if not self.sampler.set_run_info(obj.run_info):
             #print(self.sampler.error)
             #self.report(interface.node(interface.PREPARE_ERROR, error=self.sampler.error))
-        self.send_sample()
 
         # (Re)start iperf server
         if self.tester_server:
@@ -132,11 +131,14 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
 
         # Report back to controller that we are ready
+        time.sleep(1)
         self.report(interface.node(interface.PREPARE_DONE))
         print("  Prepare done")
 
     def start_run(self, obj):
         print("# Start run")
+        self.send_sample()
+
         for client in self.tester_clients:
             client.start()
 
@@ -144,6 +146,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         # wait for us, so we send an empty result immediately.
         if not self.tester_clients:
             print("  Sending dummy result")
+            time.sleep(1)
             obj = interface.node(interface.RUN_RESULT, result=None)
             self.report(obj)
         print("  Run done")
@@ -161,6 +164,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             self.tester_server.kill()
 
         # Report back to controller that we are done
+        time.sleep(1)
         self.report(interface.node(interface.FINISH_DONE))
         print("  Finish done")
 

@@ -231,7 +231,6 @@ class node(threading.Thread):
     # Save received result and set event to inform waiting callers
     def handle_run_result(self, obj):
         if obj.result:
-            self.store_samples = False
             self.run_result = obj.result
 
             # Send result to connected clients
@@ -328,6 +327,7 @@ class node(threading.Thread):
         self.total_cpu = sum(map(lambda x: float(x), line.split()[1:]))
         self.total_idle = float(line.split()[4])
         if not last_cpu:
+            obj.sample['cpu'] = 0
             return obj
 
         # Calculate the utilization since last sample

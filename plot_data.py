@@ -225,7 +225,10 @@ class data:
         data['iw_rx']      = self.difference_samples(rd, 'iw rx bytes', 'rate')
         data['ip_rx']      = self.difference_samples(rd, 'ip_rx_bytes', 'rate')
         data['iw_tx_pkts'] = self.difference_samples(rd, 'iw tx packets', 'rate')
+        data['iw_tx_retries'] = self.difference_samples(rd, 'iw tx retries', 'rate')
         data['ping_avg']   = self.average_result(rd, 'ping_avg', 'rate')
+        data['decoded']    = self.difference_samples(rd, 'bat_nc_decode', 'rate')
+        data['overheard']  = self.difference_samples(rd, 'bat_nc_overheard', 'rate')
 
         self.update_system_data('udp_sources', data, coding)
 
@@ -257,10 +260,13 @@ class data:
         data['cpu']        = self.difference_samples(rd, 'cpu', 'rate')
         data['coded']      = self.difference_samples(rd, 'bat_nc_code', 'rate')
         data['recoded']    = self.difference_samples(rd, 'bat_nc_recode', 'rate')
+        data['decoded']    = self.difference_samples(rd, 'bat_nc_decode', 'rate')
+        data['overheard']  = self.difference_samples(rd, 'bat_nc_overheard', 'rate')
         data['fwd']        = self.difference_samples(rd, 'bat_forward', 'rate')
         #data['fwd_coded']  = self.difference_samples(rd, 'bat_nc_fwd_coded', 'rate')
         data['tx']         = self.difference_samples(rd, 'iw tx bytes', 'rate')
         data['iw_tx_pkts'] = self.difference_samples(rd, 'iw tx packets', 'rate')
+        data['iw_tx_retries'] = self.difference_samples(rd, 'iw tx retries', 'rate')
         data['capture_rx'] = numpy.array([]) #self.udp_mac_capture_rx(rd, 'rate')
         data['coded_diff'] = numpy.array([]) #self.udp_rx_coded_diff(rd, 'rate')
 

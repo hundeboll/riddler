@@ -81,6 +81,7 @@ class plot:
                 self.graph.plot_cpu(node, data, coding)
                 #self.graph.plot_power(node, data, coding)
                 self.graph.plot_delay(node, data, coding)
+                self.graph.plot_tx_retries(node, data, coding)
 
             if coding:
                 self.graph.plot_tx_packets(data, node)
@@ -103,6 +104,7 @@ class plot:
                 #self.graph.plot_power(node, data, coding)
                 self.graph.plot_udp_mac_capture_rx(node, data, coding)
                 self.graph.plot_cpu(node, data, coding)
+                self.graph.plot_tx_retries(node, data, coding)
 
     def plot_udp_rate_system(self):
         if self.args.plots not in ('all', 'system'):

@@ -153,6 +153,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     def finish_run(self, obj):
         print("# Finish run")
+        time.sleep(1)
         self.send_sample()
 
         for client in self.tester_clients:

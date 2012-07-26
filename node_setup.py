@@ -58,7 +58,7 @@ class setup:
 
         # Write TCP window sizes
         window = run_info['tcp_window']
-        self.write(ipv4_path)
+        self.write(ipv4_path + window_write, window)
 
         # Write and enable the selected algorithm
         algo = run_info['tcp_algo']

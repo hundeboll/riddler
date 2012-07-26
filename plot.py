@@ -116,6 +116,11 @@ class plot:
 
             self.graph.plot_udp_system_throughput(source_agg, coding)
             self.graph.plot_udp_system_delay(source_avg, coding)
+            self.graph.plot_system_cpu(source_avg, relay_avg, coding)
+            self.graph.plot_udp_system_retries(source_avg, relay_avg, coding)
+            self.graph.plot_system_tx(source_agg, relay_agg, coding)
+            if coding:
+                self.graph.plot_coded("system", relay_avg)
             #self.graph.plot_udp_system_power(source_agg, relay_agg, coding)
             #self.graph.plot_udp_system_power_per_bit(source_agg, relay_agg, coding)
 

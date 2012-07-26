@@ -228,6 +228,7 @@ class data:
         data['iw_tx_retries'] = self.difference_samples(rd, 'iw tx retries', 'rate')
         data['ping_avg']   = self.average_result(rd, 'ping_avg', 'rate')
         data['decoded']    = self.difference_samples(rd, 'bat_nc_decode', 'rate')
+        data['decode_failed']    = self.difference_samples(rd, 'bat_nc_decode_failed', 'rate')
         data['overheard']  = self.difference_samples(rd, 'bat_nc_overheard', 'rate')
 
         self.update_system_data('udp_sources', data, coding)
@@ -261,6 +262,7 @@ class data:
         data['coded']      = self.difference_samples(rd, 'bat_nc_code', 'rate')
         data['recoded']    = self.difference_samples(rd, 'bat_nc_recode', 'rate')
         data['decoded']    = self.difference_samples(rd, 'bat_nc_decode', 'rate')
+        data['decode_failed']    = self.difference_samples(rd, 'bat_nc_decode_failed', 'rate')
         data['overheard']  = self.difference_samples(rd, 'bat_nc_overheard', 'rate')
         data['fwd']        = self.difference_samples(rd, 'bat_forward', 'rate')
         #data['fwd_coded']  = self.difference_samples(rd, 'bat_nc_fwd_coded', 'rate')

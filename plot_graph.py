@@ -44,6 +44,7 @@ bar_colors = {
         }
 label = {True: "With Coding", False: "Without Coding"}
 color = {True: c["chameleon2"], False: c["skyblue2"]}
+marker = {True: 'v', False: 'o'}
 
 class graph:
     def __init__(self):
@@ -123,6 +124,9 @@ class graph:
         else:
             self.fig.gca().plot(x, y, linewidth=2, label=l)
 
+    def plot_coding(self, x, y, coding):
+            self.fig.gca().plot(x, y, linewidth=2, label=label[coding], color=color[coding], marker=marker[coding])
+
     def get_bar_tops(self, name, title, data, coding):
         if title not in self.bar_tops:
             self.bar_tops[title] = {}
@@ -159,16 +163,18 @@ class graph:
 
         self.setup_fig(
                 name=node,
-                title="Coded vs. Forwarded Packets for {}".format(node.title()),
+                title="Packet counts for {}".format(node.title()),
                 xlabel="Total Offered Load [kbit/s]",
                 ylabel="Packets")
 
-        self.plot(data['rates'], data['coded']/2, "Coded")
-        self.plot(data['rates'], data['recoded']/2, "Recoded")
-        self.plot(data['rates'], data['decoded'], "Decoded")
-        self.plot(data['rates'], data['overheard'], "Overheard")
-        self.plot(data['rates'], data['fwd'],   "Forwarded")
-        self.plot(data['rates'], data['fwd'] + data['coded']/2 + data['recoded']/2, "Total")
+        rates = numpy.array(data['rates'])*2
+        self.plot(rates, data['coded']/2, "Coded")
+        self.plot(rates, data['recoded']/2, "Recoded")
+        self.plot(rates, data['decoded'], "Decoded")
+        self.plot(rates, data['decode_failed'], "Decode failed")
+        self.plot(rates, data['overheard'], "Overheard")
+        self.plot(rates, data['fwd'],   "Forwarded")
+        self.plot(rates, data['fwd'] + data['coded']/2 + data['recoded']/2, "Total")
         self.finish_fig()
 
     def plot_udp_system_throughput(self, data, coding):
@@ -181,7 +187,7 @@ class graph:
                 xlabel="Total Offered Load [kbit/s]",
                 ylabel="Measured Throughput [kbit/s]")
 
-        self.plot(data['rates'], data['throughput'], label[coding], color[coding])
+        self.plot_coding(data['rates'], data['throughput'], coding)
         self.finish_fig()
 
     def plot_throughput(self, node, data, coding):
@@ -194,7 +200,7 @@ class graph:
                 xlabel="Total Offered Load [kbit/s]",
                 ylabel="Measured Throughput")
 
-        self.plot(data['rates'], data['throughput'], label[coding], color[coding])
+        self.plot_coding(data['rates'], data['throughput'], coding)
         self.finish_fig()
 
     def plot_tx_packets(self, data, node):
@@ -210,6 +216,22 @@ class graph:
         self.plot(data['rates'], data['iw_tx_pkts'], node.title())
         self.finish_fig()
 
+    def plot_system_tx(self, source, relay, coding):
+        if not len(source['iw_tx_pkts']) or not len(relay['iw_tx_pkts']):
+            return
+
+        self.setup_fig(
+                name='system',
+                title="Total System Packet TX",
+                xlabel="Total Offered Load [kbit/s]",
+                ylabel="Packets/s")
+
+        rates = (source['rates'] + relay['rates'])
+        tx = source['iw_tx_pkts'] + relay['iw_tx_pkts']
+
+        self.plot_coding(rates, tx, coding)
+        self.finish_fig()
+
     def plot_tx_retries(self, node, data, coding):
         if not len(data['iw_tx_retries']):
             return
@@ -220,7 +242,23 @@ class graph:
                 xlabel="Total Offered Load [kbit/s]",
                 ylabel="Packets")
 
-        self.plot(data['rates'], data['iw_tx_retries'], label[coding], color[coding])
+        self.plot_coding(data['rates'], data['iw_tx_retries'], coding)
+        self.finish_fig()
+
+    def plot_udp_system_retries(self, source_avg, relay_avg, coding):
+        if not len(source_avg['iw_tx_retries']) or not len(relay_avg['iw_tx_retries']):
+            return
+
+        self.setup_fig(
+                name='system',
+                title="Average System TX Retries",
+                xlabel="Total Offered Load [kbit/s]",
+                ylabel="Average Retry Count Per Node [packets]")
+
+        retries = source_avg['iw_tx_retries'] + relay_avg['iw_tx_retries']
+        rates = source_avg['rates'] + relay_avg['rates']
+
+        self.plot_coding(rates, retries, coding)
         self.finish_fig()
 
     def plot_udp_ratio_throughput(self, node, data, coding):
@@ -289,7 +327,31 @@ class graph:
                 ylabel="CPU Usage [%]")
         self.ax.set_ylim(0,100)
 
-        self.plot(data['rates'], data['cpu'], label[coding], color[coding])
+        self.plot_coding(data['rates'], data['cpu'], coding)
+        self.finish_fig()
+
+    def plot_system_cpu(self, avg_source, avg_relay, coding):
+        if not len(avg_source['cpu']) or not len(avg_relay['cpu']):
+            return
+
+        self.setup_fig(
+                name="system",
+                title="Average Relay CPU Usage",
+                xlabel="Offered load [kbit/s]",
+                ylabel="CPU Usage [%]")
+
+        self.ax.set_ylim(0,100)
+        self.plot_coding(avg_relay['rates'], avg_relay['cpu'], coding)
+        self.finish_fig()
+
+        self.setup_fig(
+                name="system",
+                title="Average Source CPU Source",
+                xlabel="Total Offered load [kbit/s]",
+                ylabel="CPU Usage [%]")
+
+        self.ax.set_ylim(0,100)
+        self.plot_coding(avg_source['rates'], avg_source['cpu'], coding)
         self.finish_fig()
 
     def plot_delay(self, node, data, coding):
@@ -302,7 +364,7 @@ class graph:
                 xlabel="Offered load [kbit/s]",
                 ylabel="End-to-end delay [ms]")
 
-        self.plot(data['rates'], data['ping_avg'], label[coding], color[coding])
+        self.plot_coding(data['rates'], data['ping_avg'], coding)
         self.finish_fig()
 
     def plot_udp_system_delay(self, avg_data, coding):
@@ -312,10 +374,10 @@ class graph:
         self.setup_fig(
                 name="system",
                 title="System delay",
-                xlabel="Offered load [kbit/s]",
+                xlabel="Total Offered load [kbit/s]",
                 ylabel="Average end-to-end delay [ms]")
 
-        self.plot(avg_data['rates'], avg_data['ping_avg'], label[coding], color[coding])
+        self.plot_coding(avg_data['rates']*2, avg_data['ping_avg'], coding)
         self.finish_fig()
 
     def plot_power(self, node, data, coding):
@@ -328,7 +390,7 @@ class graph:
                 xlabel="Offered load [kbit/s]",
                 ylabel="Consumed Energy [W]")
 
-        self.plot(data['rates'], data['power'], label[coding], color[coding])
+        self.plot_coding(data['rates'], data['power'], coding)
         self.finish_fig()
 
     def plot_udp_system_power(self, source_data, relay_data, coding):
@@ -342,7 +404,7 @@ class graph:
                 ylabel="Consumed Energy [W]")
         x = source_data['rates'] + relay_data['rates']
         y = source_data['power'] + relay_data['power']
-        self.plot(x, y, label[coding], color[coding])
+        self.plot_coding(x, y, coding)
         self.finish_fig()
 
     def plot_udp_system_power_per_bit(self, source_data, relay_data, coding):
@@ -364,7 +426,7 @@ class graph:
         y = w/tp
 
         self.ax.set_yscale('log')
-        self.plot(x, y, label[coding], color[coding])
+        self.plot_coding(x, y, coding)
         self.finish_fig(loc="upper right")
 
     def plot_udp_mac_capture(self, data, coding):
@@ -377,7 +439,7 @@ class graph:
                 xlabel="Offered Load [kbps]",
                 ylabel="TX Difference [packets]")
 
-        self.plot(data['rates'], data['diffs'], label[coding], color[coding])
+        self.plot_coding(data['rates'], data['diffs'], coding)
         self.finish_fig()
 
     def plot_udp_mac_capture_rx(self, node, data, coding):
@@ -390,7 +452,7 @@ class graph:
                 xlabel="Offered Load [kbps]",
                 ylabel="Difference [packets]")
 
-        self.plot(data['rates'], data['capture_rx'], label[coding], color[coding])
+        self.plot_coding(data['rates'], data['capture_rx'], coding)
         self.finish_fig()
 
     def plot_udp_rx_coded_diff(self, node, data):

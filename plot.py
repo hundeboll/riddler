@@ -73,7 +73,7 @@ class plot:
         if self.args.plots not in ('all', 'system', node):
             return
 
-        for coding in (True, False):
+        for coding in (False, True):
             data = self.data.udp_source_data(node, coding)
 
             if self.args.plots in ('all', node):
@@ -90,7 +90,7 @@ class plot:
         if self.args.plots not in ('all', 'system', node):
             return
 
-        for coding in (True, False):
+        for coding in (False, True):
             data = self.data.udp_relay_data(node, coding)
 
             if coding:
@@ -110,7 +110,7 @@ class plot:
         if self.args.plots not in ('all', 'system'):
             return
 
-        for coding in (True, False):
+        for coding in (False, True):
             source_agg,source_avg = self.data.get_system_data('udp_sources', coding)
             relay_agg,relay_avg = self.data.get_system_data('udp_relays', coding)
 
@@ -118,7 +118,7 @@ class plot:
             self.graph.plot_udp_system_delay(source_avg, coding)
             self.graph.plot_system_cpu(source_avg, relay_avg, coding)
             self.graph.plot_udp_system_retries(source_avg, relay_avg, coding)
-            self.graph.plot_system_tx(source_agg, relay_agg, coding)
+            self.graph.plot_system_tx(source_agg, relay_agg, coding, self.data.run_info)
             if coding:
                 self.graph.plot_coded("system", relay_avg)
             #self.graph.plot_udp_system_power(source_agg, relay_agg, coding)
@@ -128,7 +128,7 @@ class plot:
         if self.args.plots not in ('all', 'system'):
             return
 
-        #for coding in (True, False):
+        #for coding in (False, True):
         #    data = self.data.udp_mac_capture(coding)
         #    self.graph.plot_udp_mac_capture(data, coding)
 
@@ -136,7 +136,7 @@ class plot:
         if self.args.plots not in ('all', 'system', node):
             return
 
-        for coding in (True, False):
+        for coding in (False, True):
             data = self.data.udp_ratio_source_data(node, coding)
 
             if self.args.plots in ('all', node):
@@ -146,7 +146,7 @@ class plot:
         if self.args.plots not in ('all', 'system', node):
             return
 
-        for coding in (True, False):
+        for coding in (False, True):
             data = self.data.udp_ratio_relay_data(node, coding)
             self.graph.plot_udp_ratio_power(node, data, coding)
 
@@ -157,7 +157,7 @@ class plot:
         if self.args.plots not in ('all', 'system', node):
             return
 
-        for coding in (True, False):
+        for coding in (False, True):
             data = self.data.tcp_source_data(node, coding)
             self.graph.plot_tcp_throughput(node, data, coding)
 
@@ -168,7 +168,7 @@ class plot:
         if self.args.plots not in ('all', 'system', node):
             return
 
-        for coding in (True, False):
+        for coding in (False, True):
             data = self.data.tcp_window_source_data(node, coding)
             self.graph.plot_tcp_window_throughput(node, data, coding)
             print data

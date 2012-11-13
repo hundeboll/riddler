@@ -10,8 +10,8 @@ client_port = 6677
 #
 # Test settings
 #
-test_profile = 'udp_rates'  # Profiles to run (udp_rates, udp_ratios, tcp_algos, tcp_windows, hold_times, or power_meas).
-test_time  = 10          # Time for each loop to run
+test_profile = 'tcp_algos'  # Profiles to run (udp_rates, udp_ratios, tcp_algos, tcp_windows, hold_times, or power_meas).
+test_time  = 20          # Time for each loop to run
 test_sleep = 5          # Time to sleep between runs
 test_loops = 3         # Number of repetitions for each run
 sample_interval = 1     # Seconds between each node sample
@@ -19,8 +19,8 @@ sample_interval = 1     # Seconds between each node sample
 #
 # Settings for udp_rates, tcp_algos, power_meas
 #
-hold_time = 30
-purge_time = 200
+hold_time = 10
+purge_time = 1500
 packet_length = 100     # Not implemented yet
 rts_threshold = "off"
 

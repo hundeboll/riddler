@@ -22,7 +22,7 @@ class main_window(QMainWindow):
         self.setWindowTitle("Riddler Client")
 
         self.live_monitor = live_monitor.monitor(parent=self)
-        self.topology = topology.topology(parent=self)
+        #self.topology = topology.topology(parent=self)
         self.control = control.control(parent=self)
 
         menu = self.menuBar().addMenu("File")
@@ -35,7 +35,7 @@ class main_window(QMainWindow):
         self.tabs = QTabWidget()
         self.tabs.addTab(self.control, "Controller")
         self.tabs.addTab(self.live_monitor.gui, "Live Monitor")
-        self.tabs.addTab(self.topology, "Topology")
+        #self.tabs.addTab(self.topology, "Topology")
         self.tabs.setTabPosition(QTabWidget.West)
         self.tabs.setCurrentWidget(self.live_monitor.gui)
         self.setCentralWidget(self.tabs)
@@ -66,7 +66,7 @@ class main_window(QMainWindow):
     def set_socket(self, sock):
         self.control.set_socket(sock)
         self.live_monitor.add_subscriptions(sock)
-        self.topology.set_socket(sock)
+        #self.topology.set_socket(sock)
 
 
 if __name__ == "__main__":

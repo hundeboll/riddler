@@ -44,7 +44,7 @@ bar_colors = {
         }
 label = {True: "With Coding", False: "Without Coding"}
 color = {True: c["chameleon2"], False: c["skyblue2"]}
-marker = {True: 'v', False: 'o'}
+marker = {True: 'o', False: 'v'}
 
 class graph:
     def __init__(self):
@@ -216,7 +216,7 @@ class graph:
         self.plot(data['rates'], data['iw_tx_pkts'], node.title())
         self.finish_fig()
 
-    def plot_system_tx(self, source, relay, coding):
+    def plot_system_tx(self, source, relay, coding, run_info):
         if not len(source['iw_tx_pkts']) or not len(relay['iw_tx_pkts']):
             return
 
@@ -226,8 +226,8 @@ class graph:
                 xlabel="Total Offered Load [kbit/s]",
                 ylabel="Packets/s")
 
-        rates = (source['rates'] + relay['rates'])
-        tx = source['iw_tx_pkts'] + relay['iw_tx_pkts']
+        rates = source['rates']
+        tx = (source['iw_tx_pkts'] + relay['iw_tx_pkts'])/run_info['test_time']
 
         self.plot_coding(rates, tx, coding)
         self.finish_fig()

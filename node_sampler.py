@@ -106,6 +106,9 @@ class sampler(threading.Thread):
     def sample_nc(self):
         sample = {}
 
+        if not os.path.exists("/sys/class/net/bat0"):
+            return
+
         # Read the file (why don't we just open() the file?)
         cmd = ["ethtool", "-S", "bat0"]
         try:

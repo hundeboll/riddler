@@ -214,6 +214,7 @@ class data:
     def udp_source_data(self, node, coding):
         # Get data objects from storage
         rd = self.data.get_run_data_node(node, {'coding': coding})
+        self.run_info = rd[0][0].run_info
 
         # Read out data from objects
         data = {}
@@ -253,6 +254,7 @@ class data:
     def udp_relay_data(self, node, coding):
         # Get data objects from storage
         rd = self.data.get_run_data_node(node, {'coding': coding})
+        self.run_info = rd[0][0].run_info
 
         # Read out data from objects
         data = {}

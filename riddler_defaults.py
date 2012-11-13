@@ -11,8 +11,8 @@ client_port = 6677
 # Test settings
 #
 test_profile = 'udp_rates'  # Profiles to run (udp_rates, udp_ratios, tcp_algos, tcp_windows, hold_times, or power_meas).
-test_time  = 5          # Time for each loop to run
-test_sleep = 2          # Time to sleep between runs
+test_time  = 20          # Time for each loop to run
+test_sleep = 5          # Time to sleep between runs
 test_loops = 3         # Number of repetitions for each run
 sample_interval = 1     # Seconds between each node sample
 
@@ -27,9 +27,9 @@ rts_threshold = "off"
 #
 # Settings for udp_rates, hold_times, power_meas
 #
-rate_start = 1000       # Initial rate of each swipe in kbit/s
-rate_stop  = 10000        # Last rate of each swipe in kbit/s
-rate_step  = 1000         # Rate increment for each run in kbit/s
+rate_start = 100       # Initial rate of each swipe in kbit/s
+rate_stop  = 1000        # Last rate of each swipe in kbit/s
+rate_step  = 100         # Rate increment for each run in kbit/s
 
 #
 # Settings for udp_ratio

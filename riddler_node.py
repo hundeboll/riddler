@@ -258,9 +258,9 @@ class node(threading.Thread):
         # Add name to sample
         obj.sample['node'] = self.name
 
-        obj = self.parse_nc(obj)
-        obj = self.parse_iw(obj)
-        obj = self.parse_cpu(obj)
+        #obj = self.parse_nc(obj)
+        #obj = self.parse_iw(obj)
+        #obj = self.parse_cpu(obj)
 
         # Only store sample if a test is running
         if self.store_samples:

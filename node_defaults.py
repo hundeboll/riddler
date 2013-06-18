@@ -1,7 +1,7 @@
 # Default configuration for riddler nodes
 # Options must be valid python code
 
-wifi_iface = "wlan0"
+wifi_iface = "wlp0s29f7u1"
 host = ""
 port = 8899
 mesh_host = "localhost"

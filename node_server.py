@@ -46,7 +46,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         self.tester_server = None
         self.lock = threading.Lock()
         self.sampler = sampler.sampler(self, self.server.args)
-        #self.setup = setup.setup(self.server.args)
+        self.setup = setup.setup(self.server.args)
         self.send_node_info()
 
     # Stop running threads before connection closes

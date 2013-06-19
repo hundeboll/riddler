@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 import riddler_interface as interface
 
 bat_path = "/sys/class/net/bat0/mesh/"
@@ -80,10 +81,12 @@ class setup:
         self.fox_process = subprocess.Popen(cmd)
 
         if run_info['coding'] in ('loss', 'noloss'):
+            time.sleep(1)
             self.fox_process.terminate()
             del self.fox_process
 
         if run_info['coding'] == 'nohelper' and run_info['helper']:
+            time.sleep(1)
             self.fox_process.terminate()
             del self.fox_process
 

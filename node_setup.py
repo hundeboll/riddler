@@ -51,7 +51,6 @@ class setup:
         if run_info['coding'] is 'noloss':
             if os.path.exists(bat_path + loss_file):
                 self.write(bat_path + loss_file, 0)
-            self.write(
             e1 = 0
             e2 = 0
             e3 = 0

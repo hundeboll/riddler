@@ -160,6 +160,9 @@ class node(threading.Thread):
     def add_dest(self, node):
         self.dests.append(node)
 
+    def add_source(self, node):
+        self.sources.append(node)
+
     # Return nicely formatted dictionary with destinations of this node
     def get_dests(self):
         return map(lambda n: {'name': n.name, 'host': n.mesh_host, 'port': n.mesh_port}, self.dests)
@@ -205,6 +208,8 @@ class node(threading.Thread):
         if not self.sources and not self.dests:
             # Tell helpers that they are helpers
             run_info['helper'] = True
+        else:
+            run_info['helper'] = False
 
         self.samples = []
         self.run_info = run_info

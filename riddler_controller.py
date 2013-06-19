@@ -322,7 +322,7 @@ class controller(threading.Thread):
             self.codings = ['noloss', 'loss', 'nohelper', 'helper']
             self.test_count = len(self.args.errors) * args.test_loops * len(self.codings)
             self.result_format = "{:10s} {time:6.1f} s | {throughput:6.1f} kb/s | {transfered:6.1f} kB"
-            self.run_info_format = "\n#{loop:2d} | {rate:4.0f} | {coding:8s} | ETA: {eta:s}"
+            self.run_info_format = "\n#{loop:2d} | {rate:4.0f} kb/s | {coding:8s} | ETA: {eta:s}"
 
     # Configure the next run_info to be sent to each node
     def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None, tcp_window=None, ratio=None, errors=None):

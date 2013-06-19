@@ -83,7 +83,7 @@ class setup:
             self.fox_process.terminate()
             del self.fox_process
 
-        if run_info['coding'] == 'nohelper' and hasattr(run_info, 'helper'):
+        if run_info['coding'] == 'nohelper' and run_info['helper']:
             self.fox_process.terminate()
             del self.fox_process
 

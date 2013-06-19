@@ -81,15 +81,18 @@ class setup:
         cmd += ["-logtostderr", "0"];
         cmd += ["-colorlogtostderr", "0"];
 
+        print("  starting fox")
         self.fox_process = subprocess.Popen(cmd)
 
         if run_info['coding'] in ('loss', 'noloss'):
             time.sleep(1)
+            print("  killing fox due to (no)loss")
             self.fox_process.terminate()
             del self.fox_process
 
         if run_info['coding'] == 'nohelper' and run_info['helper']:
             time.sleep(1)
+            print("  killing fox due to nohelper")
             self.fox_process.terminate()
             del self.fox_process
 

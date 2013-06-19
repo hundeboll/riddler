@@ -16,6 +16,7 @@ window_write = "tcp_wmem"
 class setup:
     def __init__(self, args):
         self.error = None
+        self.fox_process = None
         self.args = args
 
     # Call the different setup functions
@@ -29,10 +30,52 @@ class setup:
         if not self.setup_iface(run_info):
             return False
 
+        if not self.setup_fox(run_info):
+            return False
+
+        return True
+
+    def setup_fox(self, run_info):
+        if run_info['profile'] not in 'rlnc':
+            return True
+
+        if not os.path.exists(self.args.fox_path)
+            self.error = "'{}' does not exist".format(self.args.fox_path)
+            return False
+
+        if self.fox_process and not self.fox_process.poll():
+            self.fox_process.kill()
+
+        if run_info['coding'] is 'noloss':
+            e1 = 0
+            e2 = 0
+            e3 = 0
+        else
+            e1 = run_info["errors"][0]
+            e2 = run_info["errors"][1]
+            e3 = run_info["errors"][2]
+
+        cmd = [self.args.fox_path]
+        cmd += ["-generation_size", run_info["gen_size"]]
+        cmd += ["-packet_size", run_info["packet_size"]]
+        cmd += ["-e1", e1]
+        cmd += ["-e2", e2]
+        cmd += ["-e3", e3]
+        cmd += ["-logtostderr", 0];
+        cmd += ["-colorlogtostderr", 1];
+
+        self.fox_process = subprocess.Popen(cmd)
+
+        if run_info['coding'] in ('loss', 'noloss'):
+            self.fox_process.kill()
+
         return True
 
     # Apply the received configuration for batman-adv
     def setup_batman(self, run_info):
+        if run_info['profile'] not in ('udp_rates', 'udp_ratios', 'tcp_algos', 'tcp_windows', 'hold_times', 'power_meas'):
+            return True
+
         nc = 1 if run_info['coding'] else 0
 
         # Make sure batman-adv is enabled
@@ -52,6 +95,9 @@ class setup:
 
     # Load and enable a TCP congestion avoidance algorithm
     def setup_tcp(self, run_info):
+        if run_info['profile'] not in ('tcp_algos', 'tcp_windows'):
+            return True
+
         # Make sure we actually need to do this
         if not run_info['protocol'] == 'tcp':
             return True
@@ -72,6 +118,8 @@ class setup:
         return True
 
     def setup_iface(self, run_info):
+        if run_info['profile'] not in ('udp_rates', 'udp_ratios', 'tcp_algos', 'tcp_windows', 'hold_times', 'power_meas'):
+            return True
         iface = self.args.wifi_iface
         state = "on" if run_info['promisc'] else "off"
         cmd = ['ip', 'link', 'set', 'dev', iface, 'promisc', state]

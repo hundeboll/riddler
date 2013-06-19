@@ -50,7 +50,7 @@ class setup:
             e1 = 0
             e2 = 0
             e3 = 0
-        else
+        else:
             e1 = run_info["errors"][0]
             e2 = run_info["errors"][1]
             e3 = run_info["errors"][2]

@@ -11,8 +11,8 @@ client_port = 6677
 # Test settings
 #
 test_profile = 'udp_rates'  # Profiles to run (udp_rates, udp_ratios, tcp_algos, tcp_windows, hold_times, or power_meas, rlnc).
-test_time  = 20          # Time for each loop to run
-test_sleep = 10          # Time to sleep between runs
+test_time  = 10          # Time for each loop to run
+test_sleep = 5          # Time to sleep between runs
 test_loops = 3         # Number of repetitions for each run
 sample_interval = 1     # Seconds between each node sample
 
@@ -76,9 +76,9 @@ tcp_algo = 'westwood'
 # Settings for rlnc
 #
 errors = [(10, 10, 30), (20, 20, 50)]
-rate = 2000
+rate = 3500
 gen_size = 64
 packet_size = 1454
 iperf_len = 1410
 fixed_overshoot = 1.08
-coder_timeout = 0.5
+coder_timeout = 1

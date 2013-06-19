@@ -165,16 +165,16 @@ class controller(threading.Thread):
                     return
 
     def test_rlnc(self):
-        error = self.args.errors
         rate = self.args.rate
 
         for loop in self.loops:
-            for coding in self.codings:
-                self.set_run_info(loop=loop, coding=coding, rate=rate)
-                self.execute_run()
+            for error in self.args.errors:
+                for coding in self.codings:
+                    self.set_run_info(loop=loop, coding=coding, rate=rate, errors=error)
+                    self.execute_run()
 
-                if self.end.is_set():
-                    return
+                    if self.end.is_set():
+                        return
 
     # Control the state of each node and execute a single test run
     def execute_run(self):
@@ -319,10 +319,10 @@ class controller(threading.Thread):
             self.codings = ['noloss', 'loss', 'nohelper', 'helper']
             self.test_count = len(self.args.errors) * args.test_loops * len(self.codings)
             self.result_format = "{:10s} {throughput:6.1f} kb/s | {transfered:6.1f} kB"
-            self.run_info_format = "{\n#{loop:2d} | {coding:8s} | ETA: {eta:s}"
+            self.run_info_format = "\n#{loop:2d} | {coding:8s} | ETA: {eta:s}"
 
     # Configure the next run_info to be sent to each node
-    def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None, tcp_window=None, ratio=None):
+    def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None, tcp_window=None, ratio=None, errors=None):
         self.update_run_no(loop)
         self.run_info['profile'] = self.args.test_profile
         self.run_info['test_time'] = self.args.test_time
@@ -341,6 +341,7 @@ class controller(threading.Thread):
         self.run_info['gen_size'] = self.args.gen_size
         self.run_info['packet_size'] = self.args.packet_size
         self.run_info['iperf_len'] = self.args.iperf_len
+        self.run_info['errors'] = errors
 
         # Update the data storage with the new run info
         self.data.add_run_info(self.run_info)

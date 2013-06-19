@@ -50,6 +50,7 @@ class setup:
             print("  Killing previous instance of fox")
             self.fox_process.terminate()
             del self.fox_process
+            time.sleep(1)
 
         if run_info['coding'] == 'noloss':
             if os.path.exists(bat_path + loss_file):

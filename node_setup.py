@@ -44,7 +44,8 @@ class setup:
             return False
 
         if self.fox_process and not self.fox_process.poll():
-            self.fox_process.kill()
+            self.fox_process.terminate()
+            del self.fox_process
 
         if run_info['coding'] is 'noloss':
             e1 = 0
@@ -68,7 +69,8 @@ class setup:
         self.fox_process = subprocess.Popen(cmd)
 
         if run_info['coding'] in ('loss', 'noloss'):
-            self.fox_process.kill()
+            self.fox_process.terminate()
+            del self.fox_process
 
         return True
 

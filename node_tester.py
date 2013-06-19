@@ -243,6 +243,7 @@ class server(threading.Thread):
         self.args = args
         self.protocol = run_info['protocol']
         self.tcp_window = run_info['tcp_window']
+        self.iperf_len = run_info['iperf_len']
         self.running = False
         self.end = threading.Event()
         self.start()
@@ -252,12 +253,13 @@ class server(threading.Thread):
         h = self.args.mesh_host
         p = str(self.args.mesh_port)
         w = str(self.tcp_window)
+        l = str(self.iperf_len)
 
         # Craft the iperf command based on the protocol
         if self.protocol == "tcp":
             self.cmd = ["iperf", "-s", "-B", h, "-p", p, "-w", w]
         elif self.protocol == "udp":
-            self.cmd = ["iperf", "-s", "-u", "-B", h, "-p", p]
+            self.cmd = ["iperf", "-s", "-u", "-B", h, "-p", p, "-l", l]
 
         # Start the iperf server in a separate process and wait for it be killed
         print("  Starting {0} server".format(self.protocol))

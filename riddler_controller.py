@@ -346,6 +346,7 @@ class controller(threading.Thread):
         self.run_info['iperf_len'] = self.args.iperf_len
         self.run_info['fixed_overshoot'] = self.args.fixed_overshoot
         self.run_info['coder_timeout'] = self.args.coder_timeout
+        self.run_info['ack_interval'] = self.args.ack_interval
         self.run_info['errors'] = errors
 
         # Update the data storage with the new run info

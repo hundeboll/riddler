@@ -82,3 +82,4 @@ packet_size = 1454
 iperf_len = 1410
 fixed_overshoot = 1.08
 coder_timeout = 1
+ack_interval = 2

@@ -75,6 +75,7 @@ class setup:
         cmd += ["-e3", str(e3)]
         cmd += ["-coder_timeout", str(run_info['coder_timeout'])]
         cmd += ["-fixed_overshoot", str(run_info['fixed_overshoot'])]
+        cmd += ["-ack_interval", str(run_info['ack_interval'])]
         cmd += ["-logtostderr", "0"];
         cmd += ["-colorlogtostderr", "0"];
 

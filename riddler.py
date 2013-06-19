@@ -53,6 +53,7 @@ parser.add_argument("--packet_size", type=int)
 parser.add_argument("--iperf_len", type=int)
 parser.add_argument("--fixed_overshoot", type=float)
 parser.add_argument("--coder_timeout", type=float)
+parser.add_argument("--ack_interval", type=int)
 parser.set_defaults(**defaults)
 args = parser.parse_args()
 

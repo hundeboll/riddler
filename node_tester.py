@@ -179,6 +179,7 @@ class client(threading.Thread):
             output = output.split()[1]
             vals = output.split(",")
 
+            print(vals[5])
             return {
                     'dest':         self.dest_node['name'],
                     'time':         float(vals[5].split('-')[1]), # seconds

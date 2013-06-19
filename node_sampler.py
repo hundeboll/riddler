@@ -104,6 +104,9 @@ class sampler(threading.Thread):
 
     # Read stats from the batman-adv module
     def sample_nc(self):
+        if self.run_info['profile'] not in ('udp_rates', 'udp_ratios', 'tcp_algos', 'tcp_windows', 'hold_times', 'power_meas'):
+            return
+
         sample = {}
 
         if not os.path.exists("/sys/class/net/bat0"):

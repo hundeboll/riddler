@@ -21,13 +21,14 @@ class client(threading.Thread):
         t = str(self.run_info['test_time'])
         p = str(self.dest_node['port'])
         w = str(self.run_info['tcp_window'])
+        l = str(self.run_info['iperf_len'])
 
         # Craft the iperf command depending on the given protocol
         if self.run_info['protocol'] == 'tcp':
             cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p, "-w", w]
         elif self.run_info['protocol'] == 'udp':
             r = str(self.run_info['rate']*1024)
-            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-fk", "-yc"]
+            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-l", l, "-fk", "-yc"]
 
         #ping_cmd = ["/usr/bin/ping", "-i", ".2", "-Q", "0x10", "-n", "-q", h]
 

@@ -76,7 +76,9 @@ tcp_algo = 'westwood'
 # Settings for rlnc
 #
 errors = [(10, 10, 30), (20, 20, 50)]
-rate = 2800
+rate = 2000
 gen_size = 64
 packet_size = 1454
 iperf_len = 1410
+fixed_overshoot = 1.08
+coder_timeout = 0.5

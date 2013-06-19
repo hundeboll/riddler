@@ -19,6 +19,8 @@ class setup:
         self.error = None
         self.args = args
 
+        subprocess.call(["killall", "-q", os.path.basename(args.fox_path)])
+
     # Call the different setup functions
     def apply_setup(self, run_info):
         if not self.setup_batman(run_info):
@@ -70,8 +72,10 @@ class setup:
         cmd += ["-e1", str(e1)]
         cmd += ["-e2", str(e2)]
         cmd += ["-e3", str(e3)]
+        cmd += ["-coder_timeout", str(run_info['coder_timeout'])]
+        cmd += ["-fixed_overshoot", str(run_info['fixed_overshoot'])]
         cmd += ["-logtostderr", "0"];
-        cmd += ["-colorlogtostderr", "1"];
+        cmd += ["-colorlogtostderr", "0"];
 
         self.fox_process = subprocess.Popen(cmd)
 

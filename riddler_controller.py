@@ -165,12 +165,15 @@ class controller(threading.Thread):
                     return
 
     def test_rlnc(self):
-        rate = self.args.rate
-
         for loop in self.loops:
             for error in self.args.errors:
                 for coding in self.codings:
-                    self.set_run_info(loop=loop, coding=coding, rate=rate, errors=error)
+                    if coding in ('noloss', 'loss'):
+                        loss_rate = self.args.rate
+                    else:
+                        loss_rate = self.args.rate * (1 - error[2]/100.0)
+
+                    self.set_run_info(loop=loop, coding=coding, errors=error, rate=loss_rate)
                     self.execute_run()
 
                     if self.end.is_set():
@@ -318,7 +321,7 @@ class controller(threading.Thread):
             self.protocol = 'udp'
             self.codings = ['noloss', 'loss', 'nohelper', 'helper']
             self.test_count = len(self.args.errors) * args.test_loops * len(self.codings)
-            self.result_format = "{:10s} {throughput:6.1f} kb/s | {transfered:6.1f} kB"
+            self.result_format = "{:10s} {time:6.1f} s | {throughput:6.1f} kb/s | {transfered:6.1f} kB"
             self.run_info_format = "\n#{loop:2d} | {coding:8s} | ETA: {eta:s}"
 
     # Configure the next run_info to be sent to each node
@@ -341,6 +344,8 @@ class controller(threading.Thread):
         self.run_info['gen_size'] = self.args.gen_size
         self.run_info['packet_size'] = self.args.packet_size
         self.run_info['iperf_len'] = self.args.iperf_len
+        self.run_info['fixed_overshoot'] = self.args.fixed_overshoot
+        self.run_info['coder_timeout'] = self.args.coder_timeout
         self.run_info['errors'] = errors
 
         # Update the data storage with the new run info

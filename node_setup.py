@@ -19,8 +19,13 @@ class setup:
     def __init__(self, args):
         self.error = None
         self.args = args
-
         subprocess.call(["killall", "-q", os.path.basename(args.fox_path)])
+
+    def __del__(self):
+        if hasattr(self, 'fox_process'):
+            print("  Killing current instance of fox")
+            self.fox_process.terminate()
+            del self.fox_process
 
     # Call the different setup functions
     def apply_setup(self, run_info):

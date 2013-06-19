@@ -69,7 +69,6 @@ class setup:
         cmd += ["-logtostderr", "0"];
         cmd += ["-colorlogtostderr", "1"];
 
-        print(cmd)
         self.fox_process = subprocess.Popen(cmd)
 
         if run_info['coding'] in ('loss', 'noloss'):

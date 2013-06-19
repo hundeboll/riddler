@@ -47,6 +47,7 @@ class setup:
             return False
 
         if hasattr(self, 'fox_process'):
+            print("  Killing previous instance of fox")
             self.fox_process.terminate()
             del self.fox_process
 

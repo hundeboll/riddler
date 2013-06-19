@@ -202,6 +202,10 @@ class node(threading.Thread):
         if self.enable_ratio and run_info['ratio']:
             run_info['rate'] = run_info['rate'] * run_info['ratio']/100
 
+        if not self.sources and not self.dests:
+            # Tell helpers that they are helpers
+            run_info['helper'] = True
+
         self.samples = []
         self.run_info = run_info
         self.run_error = False

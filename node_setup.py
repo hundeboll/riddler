@@ -83,6 +83,10 @@ class setup:
             self.fox_process.terminate()
             del self.fox_process
 
+        if run_info['coding'] == 'nohelper' and hasattr(run_info, 'helper'):
+            self.fox_process.terminate()
+            del self.fox_process
+
         return True
 
     # Apply the received configuration for batman-adv

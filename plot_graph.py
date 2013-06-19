@@ -41,7 +41,27 @@ c = {
 bar_colors = {
         True:  [c["chameleon1"], c["chameleon3"], c["chameleon2"]],
         False: [c["skyblue1"], c["skyblue2"], c["skyblue3"]],
+        'noloss':   [c["chameleon1"], c["chameleon3"], c["chameleon2"]],
+        'loss':     [c["skyblue1"], c["skyblue2"], c["skyblue3"]],
+        'helper':   [c["scarletred1"], c["scarletred2"], c["scarletred3"]],
+        'nohelper': [c["orange1"], c["orange2"], c["orange3"]],
         }
+bar_legends = {
+        True:       "{} with Coding",
+        False:      "{} without Coding",
+        'noloss':   "No RLNC without Loss",
+        'loss':     "No RLNC with Loss",
+        'helper':   "RLNC with Helper",
+        'nohelper': "RLNC without Helper",
+        }
+bar_pos = {
+    True:       0,
+    False:      1,
+    'noloss':   0,
+    'loss':     1,
+    'helper':   2,
+    'nohelper': 3,
+    }
 label = {True: "With Coding", False: "Without Coding"}
 color = {True: c["chameleon2"], False: c["skyblue2"]}
 marker = {True: 'o', False: 'v'}
@@ -51,7 +71,7 @@ class graph:
         self.figs = {}
         self.axes = {}
         self.bar_tops = {}
-        self.bar_colors = {True: {}, False: {}}
+        self.bar_colors = {}
 
     def show(self, plots):
         self.t = threading.Thread(None, self.hide)
@@ -132,8 +152,11 @@ class graph:
             self.bar_tops[title] = {}
 
         if name not in self.bar_tops[title]:
+            self.bar_tops[title][name] = {}
+
+        if coding not in self.bar_tops[title][name]:
             l = len(data)
-            self.bar_tops[title][name] = {True: numpy.zeros(l), False: numpy.zeros(l)}
+            self.bar_tops[title][name][coding] = numpy.zeros(l)
 
         return self.bar_tops[title][name][coding]
 
@@ -141,19 +164,18 @@ class graph:
         self.bar_tops[title][name][coding] += data
 
     def get_bar_args(self, node, coding, data):
+        if coding not in self.bar_colors:
+            self.bar_colors[coding] = {}
+
         # Get next bar color
         if node not in self.bar_colors[coding]:
             self.bar_colors[coding][node] = bar_colors[coding].pop(0)
-            self.bar_colors[not coding][node] = bar_colors[not coding].pop(0)
 
-        width = .2
+        width = .1
         color = self.bar_colors[coding][node]
         positions = range(len(data))
-        if coding:
-            positions = numpy.array(positions)+width
-            label = "{} with Coding".format(node.title())
-        else:
-            label = "{} without Coding".format(node.title())
+        label = bar_legends[coding]
+        positions = numpy.array(positions) + bar_pos[coding]*width
 
         return positions,data,width,color,label
 
@@ -511,3 +533,26 @@ class graph:
         self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
         self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower right')
         self.update_bar_tops('system', "TCP Throughput", data['throughput'], coding)
+
+    def plot_rlnc_throughput(self, node, data, coding):
+        if not len(data['errors']) or not len(data['throughput']):
+            return
+
+        self.setup_fig(
+                name='rlnc',
+                title='RLNC Throughput',
+                xlabel="Errors (e1, e2, e3) [%]",
+                ylabel="Measured Throughput [kbit/s]")
+        label_pos = numpy.array(range(len(data['errors'])))+.2
+        self.ax.set_xticks(label_pos)
+        self.ax.set_xticklabels(data['errors'])
+
+        # Get values for bar plot
+        bottoms = self.get_bar_tops('rlnc', "RLNC Throughput", data['throughput'], coding)
+        left,height,width,color,label = self.get_bar_args(node, coding, data['throughput'])
+
+        # Plot values and update the y-offset for next plot
+        self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
+        self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower center')
+        self.update_bar_tops('rlnc', "RLNC Throughput", data['throughput'], coding)
+

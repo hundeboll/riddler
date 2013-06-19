@@ -387,3 +387,12 @@ class data:
             data[key] = numpy.average(vals)
 
         return self.sort_data(data)
+
+    def rlnc_source_data(self, node, coding):
+        rd = self.data.get_run_data_node(node, {'coding': coding})
+
+        data = {}
+        data['errors']       = self.keys(rd, 'errors')
+        data['throughput']  = self.average_result(rd, 'throughput', 'errors')
+
+        return data

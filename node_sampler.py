@@ -12,7 +12,7 @@ orig_path = "/sys/kernel/debug/batman_adv/bat0/originators"
 class sampler(threading.Thread):
     def __init__(self, controller, args):
         super(sampler, self).__init__(None)
-        self.run_info = {'sample_interval': 1}
+        self.run_info = {'sample_interval': 1, 'profile': None}
         self.controller = controller
         self.args = args
 

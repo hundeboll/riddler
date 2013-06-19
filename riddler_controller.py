@@ -347,6 +347,7 @@ class controller(threading.Thread):
         self.run_info['fixed_overshoot'] = self.args.fixed_overshoot
         self.run_info['coder_timeout'] = self.args.coder_timeout
         self.run_info['ack_interval'] = self.args.ack_interval
+        self.run_info['fox_verbose'] = self.args.fox_verbose
         self.run_info['errors'] = errors
 
         # Update the data storage with the new run info

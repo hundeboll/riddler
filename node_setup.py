@@ -6,6 +6,7 @@ bat_path = "/sys/class/net/bat0/mesh/"
 nc_file = "network_coding"
 hold_file = "nc_hold"
 purge_file = "nc_purge"
+loss_file = "packet_loss"
 
 ipv4_path = "/proc/sys/net/ipv4/"
 current_algo = "tcp_congestion_control"
@@ -48,10 +49,15 @@ class setup:
             del self.fox_process
 
         if run_info['coding'] is 'noloss':
+            if os.path.exists(bat_path + loss_file):
+                self.write(bat_path + loss_file, 0)
+            self.write(
             e1 = 0
             e2 = 0
             e3 = 0
         else:
+            if os.path.exists(bat_path + loss_file):
+                self.write(bat_path + loss_file, 1)
             e1 = run_info["errors"][0]
             e2 = run_info["errors"][1]
             e3 = run_info["errors"][2]

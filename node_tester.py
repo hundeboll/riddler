@@ -27,7 +27,7 @@ class client(threading.Thread):
             cmd = ["iperf", "-c", h, "-t", t, "-yc", "-p", p, "-w", w]
         elif self.run_info['protocol'] == 'udp':
             r = str(self.run_info['rate']*1024)
-            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-fk"]
+            cmd = ["iperf", "-c", h, "-u", "-b", r, "-t", t, "-p", p, "-fk", "-yc"]
 
         #ping_cmd = ["/usr/bin/ping", "-i", ".2", "-Q", "0x10", "-n", "-q", h]
 
@@ -59,7 +59,7 @@ class client(threading.Thread):
         elif self.run_info['protocol'] == 'tcp':
             result = self.parse_tcp_output(stdout)
         elif self.run_info['protocol'] == 'udp':
-            result = self.parse_udp_human_output(stdout)
+            result = self.parse_udp_output(stdout)
 
         # Send back our result
         #if not ping_result or not result:

@@ -84,6 +84,7 @@ class setup:
         cmd += ["-fixed_overshoot", str(run_info['fixed_overshoot'])]
         cmd += ["-ack_interval", str(run_info['ack_interval'])]
         cmd += ["-helper_threshold", str(run_info['helper_threshold'])]
+        cmd += ["-packet_timeout_factor", str(run_info['packet_timeout_factor'])]
         cmd += ["-v", str(run_info['fox_verbose'])]
         cmd += ["-logtostderr", "0"];
         cmd += ["-colorlogtostderr", "0"];

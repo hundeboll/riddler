@@ -85,3 +85,4 @@ coder_timeout = 1
 ack_interval = 2
 fox_verbose = 0
 helper_threshold = 1
+packet_timeout_factor = 3

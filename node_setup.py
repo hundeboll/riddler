@@ -39,7 +39,7 @@ class setup:
         if run_info['profile'] not in 'rlnc':
             return True
 
-        if not os.path.exists(self.args.fox_path)
+        if not os.path.exists(self.args.fox_path):
             self.error = "'{}' does not exist".format(self.args.fox_path)
             return False
 

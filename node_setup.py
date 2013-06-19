@@ -17,7 +17,6 @@ window_write = "tcp_wmem"
 class setup:
     def __init__(self, args):
         self.error = None
-        self.fox_process = None
         self.args = args
 
     # Call the different setup functions
@@ -44,7 +43,7 @@ class setup:
             self.error = "'{}' does not exist".format(self.args.fox_path)
             return False
 
-        if self.fox_process and not self.fox_process.poll():
+        if hasattr(self, 'fox_process') and not self.fox_process.poll():
             self.fox_process.terminate()
             del self.fox_process
 

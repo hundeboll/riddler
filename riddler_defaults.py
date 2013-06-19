@@ -75,7 +75,7 @@ tcp_algo = 'westwood'
 #
 # Settings for rlnc
 #
-errors = [(10, 10, 30), (20, 20, 50), (30, 30, 80)]
+errors = [(30, 30, 80), (20, 20, 50), (10, 10, 30)]
 rate = 3600
 gen_size = 64
 packet_size = 1454

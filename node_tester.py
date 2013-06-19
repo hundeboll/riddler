@@ -181,8 +181,9 @@ class client(threading.Thread):
 
             return {
                     'dest':         self.dest_node['name'],
+                    'time':         float(vals[5].split('-')[1]), # seconds
                     'transfered':   int(vals[7])/8/1024,    # kB
-                    'throughput':   int(vals[7])*8/1024/t,  # kbit/s
+                    'throughput':   int(vals[8])/1024,      # kbit/s
                     'jitter':       float(vals[9]),         # seconds
                     'lost':         int(vals[10]),          # packets
                     'total':        int(vals[11]),          # packets

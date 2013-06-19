@@ -47,12 +47,16 @@ class setup:
             self.fox_process.terminate()
             del self.fox_process
 
-        if run_info['coding'] is 'noloss':
+        if run_info['coding'] == 'noloss':
             if os.path.exists(bat_path + loss_file):
                 self.write(bat_path + loss_file, 0)
             e1 = 0
             e2 = 0
             e3 = 0
+        elif run_info['coding'] == 'nohelper':
+            e1 = 99
+            e2 = 99
+            e3 = run_info["errors"][2]
         else:
             if os.path.exists(bat_path + loss_file):
                 self.write(bat_path + loss_file, 1)

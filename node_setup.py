@@ -56,13 +56,13 @@ class setup:
             e3 = run_info["errors"][2]
 
         cmd = [self.args.fox_path]
-        cmd += ["-generation_size", run_info["gen_size"]]
-        cmd += ["-packet_size", run_info["packet_size"]]
-        cmd += ["-e1", e1]
-        cmd += ["-e2", e2]
-        cmd += ["-e3", e3]
-        cmd += ["-logtostderr", 0];
-        cmd += ["-colorlogtostderr", 1];
+        cmd += ["-generation_size", str(run_info["gen_size"])]
+        cmd += ["-packet_size", str(run_info["packet_size"])]
+        cmd += ["-e1", str(e1)]
+        cmd += ["-e2", str(e2)]
+        cmd += ["-e3", str(e3)]
+        cmd += ["-logtostderr", "0"];
+        cmd += ["-colorlogtostderr", "1"];
 
         self.fox_process = subprocess.Popen(cmd)
 

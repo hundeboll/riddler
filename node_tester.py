@@ -179,10 +179,10 @@ class client(threading.Thread):
             output = output.split()[1]
             vals = output.split(",")
 
-            print(vals[5])
+            print(vals[6])
             return {
                     'dest':         self.dest_node['name'],
-                    'time':         float(vals[5].split('-')[1]), # seconds
+                    'time':         float(vals[6].split('-')[1]), # seconds
                     'transfered':   int(vals[7])/8/1024,    # kB
                     'throughput':   int(vals[8])/1024,      # kbit/s
                     'jitter':       float(vals[9]),         # seconds

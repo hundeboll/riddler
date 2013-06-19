@@ -345,7 +345,10 @@ class controller(threading.Thread):
         self.run_info['packet_size'] = self.args.packet_size
         self.run_info['iperf_len'] = self.args.iperf_len
         self.run_info['fixed_overshoot'] = self.args.fixed_overshoot
-        self.run_info['coder_timeout'] = self.args.coder_timeout
+        self.run_info['encoder_timeout'] = self.args.encoder_timeout
+        self.run_info['decoder_timeout'] = self.args.decoder_timeout
+        self.run_info['recoder_timeout'] = self.args.recoder_timeout
+        self.run_info['helper_timeout'] = self.args.helper_timeout
         self.run_info['ack_interval'] = self.args.ack_interval
         self.run_info['fox_verbose'] = self.args.fox_verbose
         self.run_info['helper_threshold'] = self.args.helper_threshold

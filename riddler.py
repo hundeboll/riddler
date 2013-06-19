@@ -55,6 +55,7 @@ parser.add_argument("--fixed_overshoot", type=float)
 parser.add_argument("--coder_timeout", type=float)
 parser.add_argument("--ack_interval", type=int)
 parser.add_argument("--fox_verbose", type=int)
+parser.add_argument("--helper_threshold", type=float)
 parser.set_defaults(**defaults)
 args = parser.parse_args()
 

@@ -80,6 +80,7 @@ class setup:
         cmd += ["-e1", str(e1)]
         cmd += ["-e2", str(e2)]
         cmd += ["-e3", str(e3)]
+        cmd += ["-encoders", str(run_info['encoders'])]
         cmd += ["-encoder_timeout", str(run_info['encoder_timeout'])]
         cmd += ["-decoder_timeout", str(run_info['decoder_timeout'])]
         cmd += ["-recoder_timeout", str(run_info['recoder_timeout'])]

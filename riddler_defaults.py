@@ -81,6 +81,7 @@ gen_size = 64
 packet_size = 1454
 iperf_len = 1410
 fixed_overshoot = 1.7
+encoders = 2
 encoder_timeout = .9
 decoder_timeout = 2
 recoder_timeout = 2

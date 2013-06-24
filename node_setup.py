@@ -74,7 +74,7 @@ class setup:
             e2 = run_info["errors"][1]
             e3 = run_info["errors"][2]
 
-        if run_info['helper']:
+        if run_info['coding'] == 'helper' and run_info['role'] == 'helper':
             run_info['fixed_overshoot'] = .9
 
         cmd = [self.args.fox_path]
@@ -95,6 +95,9 @@ class setup:
         cmd += ["-v", str(run_info['fox_verbose'])]
         cmd += ["-logtostderr", "0"];
         cmd += ["-colorlogtostderr", "0"];
+
+        if run_info['coding'] == 'helper' and run_info['role'] == 'source':
+            cmd += ["-systematic", "0"]
 
         print("  starting fox")
         self.fox_process = subprocess.Popen(cmd)

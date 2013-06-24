@@ -207,9 +207,11 @@ class node(threading.Thread):
 
         if not self.sources and not self.dests:
             # Tell helpers that they are helpers
-            run_info['helper'] = True
-        else:
-            run_info['helper'] = False
+            run_info['role'] = 'helper'
+        elif not self.sources and self.dests:
+            run_info['role'] = 'destination'
+        elif self.sources and not self.dests:
+            run_info['role'] = 'source'
 
         self.samples = []
         self.run_info = run_info

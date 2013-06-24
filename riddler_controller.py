@@ -169,9 +169,9 @@ class controller(threading.Thread):
             for error in self.args.errors:
                 for coding in self.codings:
                     if coding in ('noloss', 'loss'):
-                        loss_rate = self.args.rate
+                        loss_rate = self.args.rlnc_rates[coding]
                     else:
-                        loss_rate = self.args.rate * (1 - error[2]/100.0)
+                        loss_rate = self.args.rlnc_rates[coding] * (1 - error[2]/100.0)
 
                     self.set_run_info(loop=loop, coding=coding, errors=error, rate=loss_rate)
                     self.execute_run()

@@ -61,6 +61,7 @@ parser.add_argument("--ack_interval", type=int)
 parser.add_argument("--fox_verbose", type=int)
 parser.add_argument("--helper_threshold", type=float)
 parser.add_argument("--packet_timeout_factor", type=int)
+parser.add_argument("--rlnc_rates", type=dict)
 parser.set_defaults(**defaults)
 args = parser.parse_args()
 

@@ -74,6 +74,9 @@ class setup:
             e2 = run_info["errors"][1]
             e3 = run_info["errors"][2]
 
+        if run_info['coding'] == 'helper' and run_info['helper']:
+            run_info['fixed_overshoot'] = .9
+
         cmd = [self.args.fox_path]
         cmd += ["-generation_size", str(run_info["gen_size"])]
         cmd += ["-packet_size", str(run_info["packet_size"])]

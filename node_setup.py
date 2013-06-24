@@ -108,7 +108,7 @@ class setup:
             self.fox_process.terminate()
             del self.fox_process
 
-        if run_info['coding'] == 'nohelper' and run_info['helper']:
+        if run_info['coding'] == 'nohelper' and run_info['role'] == 'helper':
             time.sleep(1)
             print("  killing fox due to nohelper")
             self.fox_process.terminate()

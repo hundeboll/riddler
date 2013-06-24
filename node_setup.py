@@ -74,7 +74,7 @@ class setup:
             e2 = run_info["errors"][1]
             e3 = run_info["errors"][2]
 
-        if run_info['coding'] == 'helper' and run_info['helper']:
+        if run_info['helper']:
             run_info['fixed_overshoot'] = .9
 
         cmd = [self.args.fox_path]

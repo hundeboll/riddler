@@ -187,6 +187,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     def send_sample(self, finish=False):
         try:
+            fox = ""
             sample = {'timestamp': time.time()}
 
             # Sample bat stats

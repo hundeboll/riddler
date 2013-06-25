@@ -7,6 +7,7 @@ import node_tester as tester
 #import node_sampler as sampler
 import node_setup as setup
 import subprocess
+import os.path
 
 class server:
     def __init__(self, args):
@@ -153,7 +154,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     def finish_run(self, obj):
         print("# Finish run")
-        self.send_sample()
+        self.send_sample(finish=True)
 
         for client in self.tester_clients:
             print("  Killing client")
@@ -184,7 +185,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         obj = interface.node(interface.NODE_INFO, mesh_host=args.mesh_host, mesh_port=args.mesh_port, mesh_mac=mac)
         self.report(obj)
 
-    def send_sample(self):
+    def send_sample(self, finish=False):
         try:
             sample = {'timestamp': time.time()}
 
@@ -206,8 +207,19 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             print("  Sample cpu")
             cpu = open("/proc/stat").read()
 
+            # Sample fox
+            if finish:
+                print(" Sample fox")
+                cmd = ["{}/tools/counters".format(os.path.dirname(self.args.fox_path))]
+                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+                p.wait()
+                fox,d = p.communicate()
+
+                if d:
+                    raise Exception("fox counters returned error")
+
             print("  Send sample")
-            sample = interface.node(interface.SAMPLE, sample=sample, nc=nc, iw=iw, cpu=cpu)
+            sample = interface.node(interface.SAMPLE, sample=sample, nc=nc, iw=iw, cpu=cpu, fox=fox)
             self.report(sample)
         except Exception as e:
             err = interface.node(interface.SAMPLE_ERROR, error=e)

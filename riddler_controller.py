@@ -215,9 +215,12 @@ class controller(threading.Thread):
                     self.redo = False
                     #continue
 
+                if not self.save_samples():
+                    print("Samples failed; redoing test")
+                    continue
+
                 # Successful test
                 self.save_results()
-                self.save_samples()
 
                 # Update test count
                 self.test_count -= 1
@@ -423,7 +426,10 @@ class controller(threading.Thread):
     def save_samples(self):
         for node in self.nodes:
             samples = node.get_samples()
+            if not samples:
+                return False
             self.data.add_samples(node.name, samples)
+        return True
 
     def format_time(self, total_time):
         if total_time > 60*60:

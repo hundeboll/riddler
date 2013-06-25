@@ -75,8 +75,8 @@ tcp_algo = 'westwood'
 #
 # Settings for rlnc
 #
-errors = [(10, 10, 50), (10, 10, 50)]
-rlnc_rates = {'helper': 7700, 'nohelper': 6000, 'noloss': 10000, 'loss': 10000}
+errors = [(20, 10, 50), (20, 10, 50)]
+rlnc_rates = {'helper': 7500, 'nohelper': 6000, 'noloss': 7000, 'loss': 7000}
 gen_size = 64
 packet_size = 1454
 iperf_len = 1410

@@ -105,6 +105,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
     # Prepare this node for a new test run
     def prepare_run(self, obj):
         print("# Prepare run")
+        self.run_info = obj.run_info
         # Apply received configurations
         if not self.setup.apply_setup(obj.run_info):
             self.report(interface.node(interface.PREPARE_ERROR, error=self.setup.error))
@@ -209,7 +210,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             cpu = open("/proc/stat").read()
 
             # Sample fox
-            if finish:
+            if finish and not self.run_info["role"] == "helper" and not self.run_info['coding'] == 'nohelper':
                 print(" Sample fox")
                 cmd = ["{}/tools/counters".format(os.path.dirname(self.server.args.fox_path))]
                 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)

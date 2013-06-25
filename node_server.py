@@ -220,7 +220,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
                 if d and self.run_info["coding"] not in ("loss", "noloss"):
                     raise Exception("fox counters returned error")
 
-                if d and self.run_info["role"] != "helper" and self.run_info['coding'] != 'nohelper':
+                if d and not (self.run_info["role"] == "helper" and self.run_info['coding'] != 'helper'):
                     raise Exception("fox counters returned error")
 
             print("  Send sample")

@@ -269,9 +269,10 @@ class node(threading.Thread):
         # Add name to sample
         obj.sample['node'] = self.name
 
-        #obj = self.parse_nc(obj)
-        #obj = self.parse_iw(obj)
-        #obj = self.parse_cpu(obj)
+        obj = self.parse_nc(obj)
+        obj = self.parse_iw(obj)
+        obj = self.parse_cpu(obj)
+        obj = self.parse_fox(obj)
 
         # Only store sample if a test is running
         if self.store_samples:
@@ -345,5 +346,17 @@ class node(threading.Thread):
         total = self.total_cpu - last_cpu
         idle = self.total_idle - last_idle
         obj.sample['cpu'] = int(100*(total - idle)/total)
+
+        return obj
+
+    def parse_fox(self, obj):
+        if not hasattr(obj, 'fox'):
+            return obj
+
+        for line in obj.fox.splitlines():
+            t = line.split(": ")
+            key = "rlnc " + t[0]
+            val = int(t[1])
+            obj.sample[key] = val
 
         return obj

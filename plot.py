@@ -64,7 +64,7 @@ class plot:
 
         elif self.data.profile == 'rlnc':
             for node in self.data.sources:
-                self.plot_rlnc_throughput(node)
+                self.plot_rlnc_throughput(node, "helper")
 
     def show_plots(self):
         if not self.args.hide:
@@ -180,10 +180,14 @@ class plot:
     def plot_tcp_window_relay(self, node):
         pass
 
-    def plot_rlnc_throughput(self, node):
+    def plot_rlnc_throughput(self, source, helper):
         for coding in ('noloss', 'loss', 'helper', 'nohelper'):
-            data = self.data.rlnc_source_data(node, coding)
-            self.graph.plot_rlnc_throughput(node, data, coding)
+            data = self.data.rlnc_source_data(source, coding)
+            print(data)
+            self.graph.plot_rlnc_throughput(data, coding)
+            if coding in ('helper', 'nohelper'):
+                h_data = self.data.rlnc_helper_data(helper, coding)
+                self.graph.plot_rlnc_transmissions(data, h_data, coding)
 
 
 if __name__ == "__main__":

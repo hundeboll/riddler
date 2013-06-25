@@ -32,6 +32,8 @@ class data:
         return numpy.array(map(lambda i: i[1], sorted(data.iteritems())))
 
     def result_has_key(self, rd, field):
+        if not rd or not rd[0] or not rd[0][0]:
+            return False
         if not rd[0][0].result.has_key(field):
             print("Missing result key: {}".format(field))
             return False
@@ -163,6 +165,19 @@ class data:
             val = map(lambda d: sample_diff(d, field) if d.samples else 0, r)
             avg[key] = numpy.average(val)
         # Return a list sorted by rates
+        return self.sort_data(avg)
+
+    def last_samples(self, rd, field, par):
+        if not rd[0][0].samples[-1].has_key(field):
+            print("Missing key in samples: {}".format(field))
+            return 0
+
+        avg = {}
+        for r in rd:
+            key = r[0].run_info[par]
+            val = map(lambda d: d.samples[-1][field] if d.samples else 0, r)
+            avg[key] = numpy.average(val)
+
         return self.sort_data(avg)
 
     def sum_samples(self, rd, field, par):
@@ -394,5 +409,16 @@ class data:
         data = {}
         data['errors']       = self.keys(rd, 'errors')
         data['throughput']  = self.average_result(rd, 'throughput', 'errors')
+        data['transmissions'] = self.difference_samples(rd, 'bat_rlnc_enc_tx', 'errors')
+        data['generations'] = self.last_samples(rd, 'rlnc encoder generations send', 'errors')
+
+        return data
+
+    def rlnc_helper_data(self, node, coding):
+        rd = self.data.get_run_data_node(node, {'coding': coding})
+
+        data = {}
+        data['errors']       = self.keys(rd, 'errors')
+        data['transmissions'] = self.difference_samples(rd, 'bat_rlnc_hlp_tx', 'errors')
 
         return data

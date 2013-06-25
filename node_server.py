@@ -235,6 +235,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         fox,d = p.communicate()
 
         if d:
+            print("Failed to sample fox")
             raise Exception("fox counters returned error")
 
         return fox

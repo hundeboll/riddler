@@ -290,7 +290,7 @@ class node(threading.Thread):
         if not hasattr(obj, 'nc'):
             return obj
 
-        for line in obj.nc.splitlines()[1:]:
+        for line in obj.nc.splitlines():
             t = line.split(": ")
             key = "bat_" + t[0].lstrip()
             val = int(t[1])

@@ -19,7 +19,6 @@ class setup:
     def __init__(self, args):
         self.error = None
         self.args = args
-        subprocess.call(["killall", "-q", os.path.basename(args.fox_path)])
 
     def __del__(self):
         if hasattr(self, 'fox_process'):
@@ -67,6 +66,8 @@ class setup:
         if not os.path.exists(self.args.fox_path):
             self.error = "'{}' does not exist".format(self.args.fox_path)
             return False
+
+        subprocess.call(["killall", "-q", os.path.basename(self.args.fox_path)])
 
         if hasattr(self, 'fox_process'):
             print("  Killing previous instance of fox")

@@ -165,7 +165,11 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             print("  Killing server")
             self.tester_server.kill()
 
-        if self.run_info['coding'] == 'helper' and not self.setup.fox_running:
+        if self.run_info['coding'] == 'helper' and not self.setup.fox_running():
+            err = interface.node(interface.RUN_ERROR, error="fox failed")
+            self.report(err)
+
+        if self.run_info['coding'] == 'nohelper' and not self.run_info['role'] != 'helper' and not self.setup.fox_running():
             err = interface.node(interface.RUN_ERROR, error="fox failed")
             self.report(err)
 

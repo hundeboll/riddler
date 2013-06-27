@@ -18,6 +18,7 @@ class server:
         self.server.allow_reuse_address = True
         self.server.timeout = 1
         self.server.running = True
+        self.run_info = None
         self.server.args = self.args
         self.server.server_bind()
         self.server.server_activate()
@@ -165,11 +166,11 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             print("  Killing server")
             self.tester_server.kill()
 
-        if self.run_info['coding'] == 'helper' and not self.setup.fox_running():
+        if self.run_info and self.run_info['coding'] == 'helper' and not self.setup.fox_running():
             err = interface.node(interface.RUN_ERROR, error="fox failed")
             self.report(err)
 
-        if self.run_info['coding'] == 'nohelper' and self.run_info['role'] != 'helper' and not self.setup.fox_running():
+        if self.run_info and self.run_info['coding'] == 'nohelper' and self.run_info['role'] != 'helper' and not self.setup.fox_running():
             err = interface.node(interface.RUN_ERROR, error="fox failed")
             self.report(err)
 

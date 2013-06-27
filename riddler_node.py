@@ -359,7 +359,7 @@ class node(threading.Thread):
             val = int(t[1])
             if "recoder" in key:
                 self.run_error = True
-                print("Sample error on {}: Started acting as recoder".format(self.name)
+                print("Sample error on {}: Started acting as recoder".format(self.name))
             obj.sample[key] = val
 
         return obj

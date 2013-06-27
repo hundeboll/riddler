@@ -357,7 +357,7 @@ class node(threading.Thread):
             t = line.split(": ")
             key = "rlnc " + t[0]
             val = int(t[1])
-            if "recoder" is in key:
+            if "recoder" in key:
                 self.run_error = True
                 print("Sample error on {}: Started acting as recoder".format(self.name)
             obj.sample[key] = val

@@ -18,7 +18,6 @@ class server:
         self.server.allow_reuse_address = True
         self.server.timeout = 1
         self.server.running = True
-        self.run_info = None
         self.server.args = self.args
         self.server.server_bind()
         self.server.server_activate()
@@ -46,6 +45,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         self.end = threading.Event()
         self.tester_clients = []
         self.tester_server = None
+        self.run_info = None
         self.lock = threading.Lock()
         #self.sampler = sampler.sampler(self, self.server.args)
         self.setup = setup.setup(self.server.args)

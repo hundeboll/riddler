@@ -49,7 +49,7 @@ class setup:
             return False
 
         print("  fox was started")
-        if self.fox_process.poll() < 0:
+        if self.fox_process.poll():
             return False
 
         print("  fox is running")

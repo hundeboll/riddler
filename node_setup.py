@@ -44,12 +44,15 @@ class setup:
         return True
 
     def fox_running(self):
+        print("  Check fox")
         if not hasattr(self, "fox_process"):
             return False
 
+        print("  fox was started"
         if self.fox_process.poll() < 0:
             return False
 
+        print("  fox is running")
         return True
 
     def setup_fox(self, run_info):

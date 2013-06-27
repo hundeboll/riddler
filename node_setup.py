@@ -43,6 +43,15 @@ class setup:
 
         return True
 
+    def fox_running(self):
+        if not hasattr(self, "fox_process"):
+            return False
+
+        if self.fox_process.poll() < 0:
+            return False
+
+        return True
+
     def setup_fox(self, run_info):
         if run_info['profile'] not in 'rlnc':
             return True

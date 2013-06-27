@@ -353,6 +353,7 @@ class controller(threading.Thread):
         self.run_info['decoder_timeout'] = self.args.decoder_timeout
         self.run_info['recoder_timeout'] = self.args.recoder_timeout
         self.run_info['helper_timeout'] = self.args.helper_timeout
+        self.run_info['helper_overshoot'] = self.args.helper_overshoot
         self.run_info['ack_interval'] = self.args.ack_interval
         self.run_info['fox_verbose'] = self.args.fox_verbose
         self.run_info['helper_threshold'] = self.args.helper_threshold

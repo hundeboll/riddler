@@ -86,6 +86,7 @@ encoder_timeout = 2
 decoder_timeout = 3
 recoder_timeout = 3
 helper_timeout = 2
+helper_overshoot = 1.03
 ack_interval = 5
 fox_verbose = 0
 helper_threshold = 1

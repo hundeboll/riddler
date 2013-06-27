@@ -48,7 +48,7 @@ class setup:
         if not hasattr(self, "fox_process"):
             return False
 
-        print("  fox was started"
+        print("  fox was started")
         if self.fox_process.poll() < 0:
             return False
 

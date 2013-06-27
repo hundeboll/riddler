@@ -169,7 +169,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             err = interface.node(interface.RUN_ERROR, error="fox failed")
             self.report(err)
 
-        if self.run_info['coding'] == 'nohelper' and not self.run_info['role'] != 'helper' and not self.setup.fox_running():
+        if self.run_info['coding'] == 'nohelper' and self.run_info['role'] != 'helper' and not self.setup.fox_running():
             err = interface.node(interface.RUN_ERROR, error="fox failed")
             self.report(err)
 

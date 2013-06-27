@@ -97,7 +97,7 @@ class setup:
         cmd += ["-colorlogtostderr", "0"];
 
         if run_info['coding'] == 'helper' and run_info['role'] == 'source':
-            cmd += ["-systematic", "0"]
+            cmd += ["-systematic", str(run_info['systematic'])]
 
         print("  starting fox")
         self.fox_process = subprocess.Popen(cmd)

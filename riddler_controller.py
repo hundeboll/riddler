@@ -171,7 +171,7 @@ class controller(threading.Thread):
                     if coding in ('noloss', 'loss'):
                         loss_rate = self.args.rlnc_rates[coding]
                     else:
-                        loss_rate = self.args.rlnc_rates[coding] * (1 - error[2]/100.0)
+                        loss_rate = self.args.rlnc_rates[coding] # * (1 - error[2]/100.0)
 
                     self.set_run_info(loop=loop, coding=coding, errors=error, rate=loss_rate)
                     self.execute_run()
@@ -358,6 +358,7 @@ class controller(threading.Thread):
         self.run_info['fox_verbose'] = self.args.fox_verbose
         self.run_info['helper_threshold'] = self.args.helper_threshold
         self.run_info['packet_timeout_factor'] = self.args.packet_timeout_factor
+        self.run_info['systematic'] = self.args.systematic
         self.run_info['errors'] = errors
 
         # Update the data storage with the new run info

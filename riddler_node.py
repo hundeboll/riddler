@@ -211,9 +211,9 @@ class node(threading.Thread):
             # Tell helpers that they are helpers
             run_info['role'] = 'helper'
         elif not self.sources and self.dests:
-            run_info['role'] = 'destination'
-        elif self.sources and not self.dests:
             run_info['role'] = 'source'
+        elif self.sources and not self.dests:
+            run_info['role'] = 'destination'
 
         print(self.name + " " + run_info['role'])
 

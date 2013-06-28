@@ -215,6 +215,8 @@ class node(threading.Thread):
         elif self.sources and not self.dests:
             run_info['role'] = 'source'
 
+        print(self.name + " " + run_info['role'])
+
         self.samples = []
         self.run_info = run_info
         self.run_error = False

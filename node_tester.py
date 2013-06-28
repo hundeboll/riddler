@@ -21,7 +21,7 @@ class client(threading.Thread):
         t = str(self.run_info['test_time'])
         l = str(self.run_info['iperf_len'])
         r = str(self.run_info['rate'])
-        p = os.path.basename(self.args.fox_path) + "/tools/udp_client.py"
+        p = os.path.dirname(self.args.fox_path) + "/tools/udp_client.py"
         cmd = [p, h, l, r, t, "1"]
 
         print("  Starting client: {}".format(p))
@@ -284,7 +284,7 @@ class server(threading.Thread):
 
     def run(self):
         l = str(self.iperf_len)
-        p = os.path.basename(self.args.fox_path) + "/tools/udp_server.py"
+        p = os.path.dirname(self.args.fox_path) + "/tools/udp_server.py"
         self.cmd = [p, l, "1"]
 
         print("  Starting server: {}".format(self.cmd))

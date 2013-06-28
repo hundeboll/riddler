@@ -24,7 +24,7 @@ class client(threading.Thread):
         p = os.path.dirname(self.args.fox_path) + "/tools/udp_client.py"
         cmd = [p, h, l, r, t, "1"]
 
-        print("  Starting client: {}".format(p))
+        print("  Starting client: {}".format(cmd))
         self.timer.start()
         self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         self.running = True

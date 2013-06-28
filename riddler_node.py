@@ -205,8 +205,6 @@ class node(threading.Thread):
         if self.enable_ratio and run_info['ratio']:
             run_info['rate'] = run_info['rate'] * run_info['ratio']/100
 
-        print(self.sources)
-        print(self.dests)
         if not self.sources and not self.dests:
             # Tell helpers that they are helpers
             run_info['role'] = 'helper'
@@ -214,8 +212,6 @@ class node(threading.Thread):
             run_info['role'] = 'source'
         elif self.sources and not self.dests:
             run_info['role'] = 'destination'
-
-        print(self.name + " " + run_info['role'])
 
         self.samples = []
         self.run_info = run_info

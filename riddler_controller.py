@@ -324,7 +324,7 @@ class controller(threading.Thread):
             self.protocol = 'udp'
             self.codings = ['helper', 'nohelper', 'noloss', 'loss']
             self.test_count = len(self.args.errors) * args.test_loops * len(self.codings)
-            self.result_format = "{:10s} {time:6.1f} s | {throughput:6.1f} kb/s | {transfered:6.1f} kB"
+            self.result_format = "{:10s} {time:6.1f} s | {rate:6.1f} kb/s | {bytes:6.1f} kB | {packets:6.1f}"
             self.run_info_format = "\n#{loop:2d} | {rate:4.0f} kb/s | {coding:8s} | e: {errors} | ETA: {eta:s}"
 
     # Configure the next run_info to be sent to each node

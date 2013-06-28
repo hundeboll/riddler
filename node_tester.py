@@ -285,7 +285,7 @@ class server(threading.Thread):
     def run(self):
         l = str(self.iperf_len)
         p = os.path.basename(self.args.fox_path) + "/tools/udp_server.py"
-        cmd = [p, l, "1"]
+        self.cmd = [p, l, "1"]
 
         print("  Starting {0} server".format(self.protocol))
         self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)

@@ -1,3 +1,4 @@
+import os
 import threading
 import subprocess
 import time
@@ -5,18 +6,51 @@ import re
 import riddler_interface as interface
 
 class client(threading.Thread):
-    def __init__(self, controller, dest_node, run_info):
+    def __init__(self, controller, dest_node, run_info, args):
         super(client, self).__init__(None)
         self.controller = controller
         self.dest_node = dest_node
         self.run_info = run_info
+        self.args = args
         self.running = False
         self.ping_p = None
         self.timer = threading.Timer(run_info['test_time']*2, self.kill_client)
-        self.end = threading.Event()
+
+    def run(self):
+        h = self.dest_node['host']
+        t = str(self.run_info['test_time'])
+        l = str(self.run_info['iperf_len'])
+        r = str(self.run_info['rate'])
+        p = os.path.basename(self.args.fox_path) + "/tools/udp_client.py"
+        cmd = [p, h, l, r, t, "1"]
+
+        print("  Starting {0} client".format(self.run_info['protocol']))
+        self.timer.start()
+        self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        self.running = True
+        self.p.wait()
+        self.running = False
+
+        (stdout, stderr) = self.p.communicate()
+        if stderr:
+            self.report_error("udp_client.py error: {}".format(stderr))
+            return
+        elif not stdout:
+            self.report_error("No output from command {0}".format(" ".join(cmd)))
+            return
+
+        result = {}
+        for line in stdout.splitlines():
+            key,val = line.split(": ")
+            result[key] = float(val)
+
+        if result:
+            self.report_result(result)
+        else:
+            self.report_error("Missing result")
 
     # Run the specified test in a separate thread
-    def run(self):
+    def old_run(self):
         h = self.dest_node['host']
         t = str(self.run_info['test_time'])
         p = str(self.dest_node['port'])
@@ -238,18 +272,52 @@ class client(threading.Thread):
 
 
 class server(threading.Thread):
-    def __init__(self, args, run_info):
+    def __init__(self, controller, args, run_info):
         super(server, self).__init__(None)
+        self.controller = controller
         self.args = args
         self.protocol = run_info['protocol']
         self.tcp_window = run_info['tcp_window']
         self.iperf_len = run_info['iperf_len']
         self.running = False
-        self.end = threading.Event()
         self.start()
 
-    # Run a iperf server in a separate thread
     def run(self):
+        l = str(self.iperf_len)
+        p = os.path.basename(self.args.fox_path) + "/tools/udp_server.py"
+        cmd = [p, l, "1"]
+
+        print("  Starting {0} server".format(self.protocol))
+        self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        self.running = True
+        self.p.wait()
+        self.running = False
+
+        (stdout,stderr) = self.p.communicate()
+
+        if stderr:
+            obj = interface.node(interface.RUN_ERROR, error=stderr)
+            self.controller.report(obj)
+            return
+        elif not stdout:
+            obj = interface.node(interface.RUN_ERROR, error="no server result")
+            self.controller.report(obj)
+            return
+
+        result = {}
+        for line in stdout.splitlines():
+            key,val = line.split(": ")
+            result[key] = float(val)
+
+        if result:
+            obj = interface.node(interface.RUN_RESULT, result=result)
+            self.controller.report(obj)
+        else:
+            obj = interface.node(interface.RUN_ERROR, error="empty server result")
+            self.controller.report(obj)
+
+    # Run a iperf server in a separate thread
+    def old_run(self):
         h = self.args.mesh_host
         p = str(self.args.mesh_port)
         w = str(self.tcp_window)

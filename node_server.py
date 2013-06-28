@@ -119,7 +119,9 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         # (Re)start iperf server
         if self.tester_server:
             self.tester_server.kill()
-        self.tester_server = tester.server(self.server.args, obj.run_info)
+
+        if self.run_info['role'] == "destination":
+            self.tester_server = tester.server(self, self.server.args, obj.run_info)
 
         # Wait for previous iperf clients to finish
         for client in self.tester_clients:
@@ -129,9 +131,8 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         # Prepare new iperf client threads
         self.tester_clients = []
         for node in obj.dests:
-            client = tester.client(self, node, obj.run_info)
+            client = tester.client(self, node, obj.run_info, self.server.args)
             self.tester_clients.append(client)
-
 
         # Report back to controller that we are ready
         time.sleep(1)
@@ -147,7 +148,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
         # If no clients exists, we don't want the controller to
         # wait for us, so we send an empty result immediately.
-        if not self.tester_clients:
+        if self.run_info['role'] == 'helper':
             print("  Sending dummy result")
             time.sleep(1)
             obj = interface.node(interface.RUN_RESULT, result=None)

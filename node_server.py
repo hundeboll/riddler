@@ -67,7 +67,8 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             if self.tester_server.is_alive():
                 self.tester_server.join()
 
-        del self.setup
+        if hasattr(self, "setup"):
+            del self.setup
 
         #if self.sampler:
         #    print("  Killing sampler")
@@ -168,6 +169,9 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         if self.run_info and self.run_info['coding'] == 'nohelper' and self.run_info['role'] != 'helper' and not self.setup.check_fox():
             err = interface.node(interface.RUN_ERROR, error="fox failed")
             self.report(err)
+
+        if hasattr(self, "setup"):
+            del self.setup
 
         # Report back to controller that we are done
         time.sleep(1)

@@ -21,7 +21,7 @@ class setup:
         self.args = args
 
     def __del__(self):
-        if hasattr(self, 'fox_process'):
+        if hasattr(self, 'fox_process') and self.fox_process:
             print("  Killing current instance of fox")
             self.fox_process.terminate()
             del self.fox_process
@@ -45,23 +45,21 @@ class setup:
     def check_fox(self):
         print("  Check fox")
         if not hasattr(self, "fox_process"):
+            print("  no fox process")
             return False
 
         if not self.fox_process:
+            print("  empty fox process")
             return False
 
-        print("  fox was started")
         if self.fox_process.poll():
+            print("  bad return value from fox process")
             del self.fox_process
             return False
 
         print("  fox is running")
-        self.stop_fox()
+        del self.fox_process
         return True
-
-    def stop_fox(self):
-        if hasattr(self, "fox_process"):
-            del self.fox_process
 
     def setup_fox(self, run_info):
         if run_info['profile'] not in 'rlnc':

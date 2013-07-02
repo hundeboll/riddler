@@ -76,19 +76,19 @@ tcp_algo = 'westwood'
 # Settings for rlnc
 #
 errors = [(20, 10, 50), (20, 10, 50)]
-rlnc_rates = {'helper': 5000, 'nohelper': 4000, 'noloss': 8000, 'loss': 8000}
+rlnc_rates = {'helper': 1900, 'nohelper': 2000, 'noloss': 4000, 'loss': 4000}
 gen_size = 64
 packet_size = 1454
 iperf_len = 1410
-fixed_overshoot = {'helper': 1.03, 'nohelper': 1.06, 'loss': 1, 'noloss': 1}
-encoders = 3
-encoder_timeout = 10
-decoder_timeout = 10
-recoder_timeout = 10
-helper_timeout = 10
+fixed_overshoot = {'helper': 1.05, 'nohelper': 1.05, 'loss': 1, 'noloss': 1}
+encoders = 1
+encoder_timeout = 5
+decoder_timeout = 5
+recoder_timeout = 5
+helper_timeout = 5
 helper_overshoot = 1
 ack_interval = 5
 fox_verbose = 0
 helper_threshold = 1
-packet_timeout_factor = 20
+packet_timeout_factor = 30
 systematic = 1

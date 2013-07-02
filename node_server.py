@@ -159,19 +159,11 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         print("# Finish run")
         self.send_sample(finish=True)
 
-        for client in self.tester_clients:
-            print("  Killing client")
-            client.kill_client()
-
-        if self.tester_server:
-            print("  Killing server")
-            self.tester_server.kill()
-
-        if self.run_info and self.run_info['coding'] == 'helper' and not self.setup.fox_running():
+        if self.run_info and self.run_info['coding'] == 'helper' and not self.setup.check_fox():
             err = interface.node(interface.RUN_ERROR, error="fox failed")
             self.report(err)
 
-        if self.run_info and self.run_info['coding'] == 'nohelper' and self.run_info['role'] != 'helper' and not self.setup.fox_running():
+        if self.run_info and self.run_info['coding'] == 'nohelper' and self.run_info['role'] != 'helper' and not self.setup.check_fox():
             err = interface.node(interface.RUN_ERROR, error="fox failed")
             self.report(err)
 

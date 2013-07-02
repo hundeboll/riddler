@@ -42,11 +42,10 @@ class setup:
 
         return True
 
-    def fox_running(self):
+    def check_fox(self):
         print("  Check fox")
         if not hasattr(self, "fox_process"):
             return False
-
 
         if not self.fox_process:
             return False
@@ -57,7 +56,12 @@ class setup:
             return False
 
         print("  fox is running")
+        self.stop_fox()
         return True
+
+    def stop_fox(self):
+        if hasattr(self, "fox_process"):
+            del self.fox_process
 
     def setup_fox(self, run_info):
         if run_info['profile'] not in 'rlnc':
@@ -66,8 +70,6 @@ class setup:
         if not os.path.exists(self.args.fox_path):
             self.error = "'{}' does not exist".format(self.args.fox_path)
             return False
-
-        subprocess.call(["killall", "-q", os.path.basename(self.args.fox_path)])
 
         if hasattr(self, 'fox_process'):
             print("  Killing previous instance of fox")
@@ -119,15 +121,14 @@ class setup:
 
         print("  starting fox")
         self.fox_process = subprocess.Popen(cmd)
+        time.sleep(1)
 
         if run_info['coding'] in ('loss', 'noloss'):
-            time.sleep(1)
             print("  killing fox due to (no)loss")
             self.fox_process.terminate()
             del self.fox_process
 
         if run_info['coding'] == 'nohelper' and run_info['role'] == 'helper':
-            time.sleep(1)
             print("  killing fox due to nohelper")
             self.fox_process.terminate()
             del self.fox_process

@@ -125,11 +125,13 @@ class setup:
         if run_info['coding'] in ('loss', 'noloss'):
             print("  killing fox due to (no)loss")
             self.fox_process.terminate()
+            time.sleep(1)
             del self.fox_process
 
         if run_info['coding'] == 'nohelper' and run_info['role'] == 'helper':
             print("  killing fox due to nohelper")
             self.fox_process.terminate()
+            time.sleep(1)
             del self.fox_process
 
         return True

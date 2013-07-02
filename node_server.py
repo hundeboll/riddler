@@ -146,6 +146,7 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
     def start_run(self, obj):
         print("# Start run")
+
         self.send_sample()
 
         for client in self.tester_clients:
@@ -153,12 +154,19 @@ class tcp_handler(SocketServer.BaseRequestHandler):
 
         # If no clients exists, we don't want the controller to
         # wait for us, so we send an empty result immediately.
-        if self.run_info['role'] == 'helper':
-            print("  Sending dummy result")
+        try:
+            if self.run_info['role'] == 'helper':
+                print("  Sending dummy result")
+                time.sleep(1)
+                obj = interface.node(interface.RUN_RESULT, result=None)
+                self.report(obj)
+        except AttributeError as e:
             time.sleep(1)
-            obj = interface.node(interface.RUN_RESULT, result=None)
+            obj = interface.node(interface.RUN_ERROR, error=e)
             self.report(obj)
-        print("  Run done")
+            print("  Run error: " + e)
+        else:
+            print("  Run done")
 
     def finish_run(self, obj):
         print("# Finish run")

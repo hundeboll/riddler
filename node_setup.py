@@ -58,6 +58,7 @@ class setup:
             return False
 
         print("  fox is running")
+        self.fox_process.terminate()
         del self.fox_process
         return True
 

@@ -172,9 +172,6 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             err = interface.node(interface.RUN_ERROR, error="fox failed")
             self.report(err)
 
-        if hasattr(self, "setup"):
-            del self.setup
-
         # Report back to controller that we are done
         time.sleep(1)
         self.report(interface.node(interface.FINISH_DONE))

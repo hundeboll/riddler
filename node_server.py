@@ -67,8 +67,10 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             if self.tester_server.is_alive():
                 self.tester_server.join()
 
-        if hasattr(self, "setup"):
+        try:
             del self.setup
+        except AttributeError:
+            pass
 
         #if self.sampler:
         #    print("  Killing sampler")

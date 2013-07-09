@@ -20,6 +20,9 @@ class data:
         self.nodes = self.data.nodes
         self.macs = macs
 
+    def arg(self, key):
+        return getattr(self.data.args, key)
+
     # Read specified field in sorted order
     def keys(self, rd, field):
         keys = map(lambda r: r[0].run_info[field], rd)
@@ -32,7 +35,7 @@ class data:
         return numpy.array(map(lambda i: i[1], sorted(data.iteritems())))
 
     def result_has_key(self, rd, field):
-        if not rd or not rd[0] or not rd[0][0]:
+        if not rd or not rd[0] or not rd[0][0] or not rd[0][0].result:
             return False
         if not rd[0][0].result.has_key(field):
             print("Missing result key: {}".format(field))
@@ -50,6 +53,7 @@ class data:
     # Average over a field in a result set
     def average_result(self, rd, field, par):
         if not self.result_has_key(rd, field):
+            print("key not found: {}".format(field))
             return numpy.array([])
 
         avg = {}
@@ -175,7 +179,7 @@ class data:
         avg = {}
         for r in rd:
             key = r[0].run_info[par]
-            val = map(lambda d: d.samples[-1][field] if d.samples else 0, r)
+            val = map(lambda d: d.samples[-1][field] if d.samples and d.samples[-1].has_key(field) else 0, r)
             avg[key] = numpy.average(val)
 
         return self.sort_data(avg)
@@ -408,9 +412,12 @@ class data:
 
         data = {}
         data['errors']       = self.keys(rd, 'errors')
-        data['throughput']  = self.average_result(rd, 'throughput', 'errors')
+        data['time'] = self.keys(rd, 'test_time')
         data['transmissions'] = self.difference_samples(rd, 'bat_rlnc_enc_tx', 'errors')
         data['generations'] = self.last_samples(rd, 'rlnc encoder generations send', 'errors')
+        data['send'] = self.difference_samples(rd, 'bat_tx', 'errors')
+        data['rate'] = self.average_result(rd, 'rate', 'errors')
+        data['requests'] = self.last_samples(rd, 'rlnc encoder request packets added', 'errors')
 
         return data
 
@@ -420,5 +427,19 @@ class data:
         data = {}
         data['errors']       = self.keys(rd, 'errors')
         data['transmissions'] = self.difference_samples(rd, 'bat_rlnc_hlp_tx', 'errors')
+
+        return data
+
+    def rlnc_dest_data(self, node, coding):
+        rd = self.data.get_run_data_node(node, {'coding': coding})
+
+        data = {}
+        data['errors'] = self.keys(rd, 'errors')
+        data['redundant'] = self.last_samples(rd, 'rlnc decoder redundant received', 'errors')
+        data['non-innovative'] = self.last_samples(rd, 'rlnc decoder non-innovative received', 'errors')
+        data['packets'] = self.average_result(rd, 'packets', 'errors')
+        data['rate'] = self.average_result(rd, 'rate', 'errors')
+        data['bytes'] = self.average_result(rd, 'bytes', 'errors')
+        data['requests'] = self.last_samples(rd, 'rlnc decoder request sent', 'errors')
 
         return data

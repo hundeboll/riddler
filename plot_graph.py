@@ -43,14 +43,14 @@ bar_colors = {
         False: [c["skyblue1"], c["skyblue2"], c["skyblue3"]],
         'noloss':   [c["chameleon1"], c["chameleon3"], c["chameleon2"]],
         'loss':     [c["skyblue1"], c["skyblue2"], c["skyblue3"]],
-        'helper':   [c["scarletred1"], c["scarletred2"], c["scarletred3"]],
+        'helper':   [c["scarletred1"], c["scarletred2"], c["scarletred3"], "#750000"],
         'nohelper': [c["orange1"], c["orange2"], c["orange3"]],
         }
 bar_legends = {
         True:       "{} with Coding",
         False:      "{} without Coding",
-        'noloss':   "No RLNC without Loss",
-        'loss':     "No RLNC with Loss",
+        'noloss':   "PLAIN without Loss",
+        'loss':     "PLAIN with Loss",
         'helper':   "RLNC with Helper",
         'nohelper': "RLNC without Helper",
         }
@@ -299,7 +299,6 @@ class graph:
         z = data['throughput']['z']
         self.ax.set_zlabel('Throughput [kbit/s]')
         self.ax.plot_surface(x, y, z, rstride=1, cstride=1, color=color[coding])
-        print label[coding]
         self.ax.legend((label[coding]))
 
     def plot_udp_ratio_power(self, node, data, coding):
@@ -318,7 +317,6 @@ class graph:
         z = data['power']['z']
         self.ax.set_zlabel('Power [W]')
         self.ax.plot_surface(x, y, z, rstride=1, cstride=1, color=color[coding])
-        print label[coding]
         self.ax.legend((label[coding]))
 
     def plot_udp_ratio_coded(self, node, data):
@@ -534,45 +532,68 @@ class graph:
         self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower right')
         self.update_bar_tops('system', "TCP Throughput", data['throughput'], coding)
 
-    def plot_rlnc_throughput(self, data, coding):
-        if not len(data['errors']) or not len(data['throughput']):
+    def plot_rlnc_throughput(self, s_data, d_data, coding, gs):
+        if not len(s_data['errors']) or not len(d_data['rate']):
             return
 
+        title = "Throughput (G{})".format(gs)
+        ident = 'rlnc'
+
         self.setup_fig(
-                name='rlnc',
-                title='RLNC Throughput',
+                name=ident,
+                title=title,
                 xlabel="Errors (e1, e2, e3) [%]",
                 ylabel="Measured Throughput [kbit/s]")
-        label_pos = numpy.array(range(len(data['errors'])))+.2
+        label_pos = numpy.array(range(len(s_data['errors'])))+.2
         self.ax.set_xticks(label_pos)
-        self.ax.set_xticklabels(data['errors'])
+        self.ax.set_xticklabels(s_data['errors'])
+
+        #y = d_data['bytes']*8/s_data['time']/1024
+        y = d_data['rate']
 
         # Get values for bar plot
-        bottoms = self.get_bar_tops('rlnc', "RLNC Throughput", data['throughput'], coding)
-        left,height,width,color,label = self.get_bar_args(0, coding, data['throughput'])
+        bottoms = self.get_bar_tops(ident, title, y, coding)
+        left,height,width,color,label = self.get_bar_args(0, coding, y)
 
         # Plot values and update the y-offset for next plot
         self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
         self.ax.legend(prop=dict(size=12), numpoints=1, loc='upper right')
-        self.update_bar_tops('rlnc', "RLNC Throughput", data['throughput'], coding)
+        self.update_bar_tops(ident, title, y, coding)
 
-    def plot_rlnc_transmissions(self, data, h_data, coding):
-        if not len(data['errors']) or not len(data['transmissions']) or not len(data['generations']):
+    def plot_rlnc_transmissions(self, s_data, h_data, d_data, coding, gs):
+        if not len(s_data['errors']):
             return
 
+        title = "Transmissions (G{})".format(gs)
+        ident = 'rlnc'
+
         self.setup_fig(
-                name='rlnc',
-                title='RLNC Transmissions',
+                name=ident,
+                title=title,
                 xlabel="Errors (e1, e2, e3) [%]",
                 ylabel="Transmitted Packets [#]")
-        label_pos = numpy.array(range(len(data['errors'])))+.2
+        label_pos = numpy.array(range(len(s_data['errors'])))+.2
         self.ax.set_xticks(label_pos)
-        self.ax.set_xticklabels(data['errors'])
+        self.ax.set_xticklabels(s_data['errors'])
 
-        y = (data['transmissions'])/data['generations']
+        #
+        # Source packets
+        #
+
+        if coding in ('helper', 'nohelper'):
+            scale = 1 - s_data['errors'][0][2]/100.0
+            r = (d_data['redundant']/s_data['generations'])/scale
+            i = d_data['non-innovative']/s_data['generations']/scale
+            y = s_data['transmissions']/s_data['generations'] - r
+            if i:
+                y -= i
+        else:
+            rx = d_data['packets']
+            g = rx/gs
+            y = s_data['send']/g
 
         # Get values for bar plot
-        bottoms = self.get_bar_tops('rlnc', "RLNC Transmissions", y, coding)
+        bottoms = self.get_bar_tops(ident, title, y, coding)
         left,height,width,color,label = self.get_bar_args(0, coding, y)
 
         if coding == "helper":
@@ -581,19 +602,81 @@ class graph:
         # Plot values and update the y-offset for next plot
         self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
         self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower right')
-        self.update_bar_tops('rlnc', "RLNC Transmissions", y, coding)
+        self.update_bar_tops(ident, title, y, coding)
 
-        if not h_data or coding != "helper":
+        if coding not in ('helper', 'nohelper'):
             return
 
-        y = (h_data['transmissions'])/data['generations']
+        #
+        # Helper packers
+        #
+
+        if h_data and coding == "helper":
+            y = (h_data['transmissions'])/s_data['generations']
+
+            # Get values for bar plot
+            bottoms = self.get_bar_tops(ident, title, y, coding)
+            left,height,width,color,label = self.get_bar_args(1, coding, y)
+            label = "Helper Transmissions"
+
+            # Plot values and update the y-offset for next plot
+            self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
+            self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower right')
+            self.update_bar_tops(ident, title, y, coding)
+
+        #
+        # Non-innovative packets
+        #
+        if i:
+            # Get values for bar plot
+            bottoms = self.get_bar_tops(ident, title, i, coding)
+            left,height,width,color,label = self.get_bar_args(2, coding, i)
+            label = "Non-Innovative"
+
+            # Plot values and update the y-offset for next plot
+            self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
+            self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower right')
+            self.update_bar_tops(ident, title, i, coding)
+
+
+        #
+        # Redundant packets
+        #
 
         # Get values for bar plot
-        bottoms = self.get_bar_tops('rlnc', "RLNC Transmissions", y, coding)
-        left,height,width,color,label = self.get_bar_args(1, coding, y)
-        label = "Helper Transmissions"
+        bottoms = self.get_bar_tops(ident, title, r, coding)
+        left,height,width,color,label = self.get_bar_args(3, coding, r)
+        label = "Redundant Packets"
 
         # Plot values and update the y-offset for next plot
         self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
         self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower right')
-        self.update_bar_tops('rlnc', "RLNC Transmissions", y, coding)
+        self.update_bar_tops(ident, title, r, coding)
+
+    def plot_rlnc_requests(self, node, data, coding, gs):
+        if not len(data['errors']) or not len(data['requests']):
+            return
+
+        title = "Requests (G{})".format(gs)
+        ident = 'rlnc'
+
+        self.setup_fig(
+                name=ident,
+                title=title,
+                xlabel="Errors (e1, e2, e3) [%]",
+                ylabel="Number of requests [#]")
+        label_pos = numpy.array(range(len(data['errors'])))+.2
+        self.ax.set_xticks(label_pos)
+        self.ax.set_xticklabels(data['errors'])
+
+        y = data['requests']/gs
+
+        # Get values for bar plot
+        bottoms = self.get_bar_tops(ident, title, y, coding)
+        left,height,width,color,label = self.get_bar_args(0, coding, y)
+        label += ", " + node
+
+        # Plot values and update the y-offset for next plot
+        self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
+        self.ax.legend(prop=dict(size=12), numpoints=1, loc='upper right')
+        self.update_bar_tops(ident, title, y, coding)

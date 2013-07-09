@@ -357,7 +357,7 @@ class controller(threading.Thread):
         self.run_info['ack_interval'] = self.args.ack_interval
         self.run_info['fox_verbose'] = self.args.fox_verbose
         self.run_info['helper_threshold'] = self.args.helper_threshold
-        self.run_info['packet_timeout_factor'] = self.args.packet_timeout_factor
+        self.run_info['packet_timeout'] = self.args.packet_timeout
         self.run_info['systematic'] = self.args.systematic
         self.run_info['errors'] = errors
 

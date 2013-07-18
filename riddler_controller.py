@@ -326,7 +326,7 @@ class controller(threading.Thread):
             self.run_info_format = "\n#{loop:2d} | {rate:4.0f} kb/s | {coding:8s} | e: {errors} | ETA: {eta:s}"
 
     # Configure the next run_info to be sent to each node
-    def set_run_info(self,  **kwargs):
+    def set_run_info(self,  **kwarg):
         self.update_run_no(kwarg.get('loop'))
         self.run_info['profile'] = self.args.test_profile
         self.run_info['test_time'] = self.args.test_time

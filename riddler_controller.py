@@ -333,7 +333,7 @@ class controller(threading.Thread):
         self.run_info['sample_interval'] = self.args.sample_interval
         self.run_info['protocol'] = self.protocol
         self.run_info['tcp_algo'] = kwarg.get('tcp_algo')
-        self.run_info['loop'] = loop
+        self.run_info['loop'] = kwarg.get('loop')
         self.run_info['rate'] = kwarg.get('rate')
         self.run_info['hold'] = kwarg.get('hold')
         self.run_info['purge'] = kwarg.get('purge')

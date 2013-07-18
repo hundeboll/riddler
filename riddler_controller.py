@@ -169,10 +169,11 @@ class controller(threading.Thread):
             for error in self.args.errors:
                 for ack in self.args.ack_timeout:
                     for req in self.args.req_timeout:
-                        for coding in self.codings:
-                            rate = self.args.rlnc_rates[coding]
-                            self.set_run_info(loop=loop, coding=coding, errors=error, ack=ack, req=req, rate=rate)
-                    self.execute_run()
+                        for encoder in self.args.encoders:
+                            for coding in self.codings:
+                                rate = self.args.rlnc_rates[coding]
+                                self.set_run_info(loop=loop, coding=coding, errors=error, ack=ack, req=req, rate=rate, encoders=encoder)
+                                self.execute_run()
 
                     if self.end.is_set():
                         return
@@ -356,8 +357,8 @@ class controller(threading.Thread):
         self.run_info['helper_threshold'] = self.args.helper_threshold
         self.run_info['systematic'] = self.args.systematic
         self.run_info['errors'] = kwarg.get('errors')
-        self.run_info['ack_timeout'] = kwarg.get('ack_timeout')
-        self.run_info['req_timeout'] = kwarg.get('ack_timeout')
+        self.run_info['ack_timeout'] = kwarg.get('ack')
+        self.run_info['req_timeout'] = kwarg.get('req')
 
         # Update the data storage with the new run info
         self.data.add_run_info(self.run_info)

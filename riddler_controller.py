@@ -339,7 +339,7 @@ class controller(threading.Thread):
         self.run_info['purge'] = kwarg.get('purge')
         self.run_info['coding'] = kwarg.get('coding')
         self.run_info['tcp_window'] = kwarg.get('tcp_window')
-        self.run_info['promisc'] = kwarg.get(coding)
+        self.run_info['promisc'] = kwarg.get('coding')
         self.run_info['ratio'] = kwarg.get('ratio')
         self.run_info['rts'] = self.args.rts_threshold
         self.run_info['gen_size'] = self.args.gen_size

@@ -167,13 +167,11 @@ class controller(threading.Thread):
     def test_rlnc(self):
         for loop in self.loops:
             for error in self.args.errors:
-                for coding in self.codings:
-                    if coding in ('noloss', 'loss'):
-                        loss_rate = self.args.rlnc_rates[coding]
-                    else:
-                        loss_rate = self.args.rlnc_rates[coding] # * (1 - error[2]/100.0)
-
-                    self.set_run_info(loop=loop, coding=coding, errors=error, rate=loss_rate)
+                for ack in self.args.ack_timeout:
+                    for req in self.args.req_timeout:
+                        for coding in self.codings:
+                            rate = self.args.rlnc_rates[coding]
+                            self.set_run_info(loop=loop, coding=coding, errors=error, ack=ack, req=req, rate=rate)
                     self.execute_run()
 
                     if self.end.is_set():
@@ -322,27 +320,27 @@ class controller(threading.Thread):
 
         if args.test_profile == 'rlnc':
             self.protocol = 'udp'
-            self.codings = ['helper', 'nohelper', 'noloss', 'loss']
-            self.test_count = len(self.args.errors) * args.test_loops * len(self.codings)
+            self.codings = self.args.rlnc_codings
+            self.test_count = self.args.test_loops * len(self.args.errors) * len(self.codings) * len(self.args.ack_timeout) * len(self.args.req_timeout) * len(self.args.encoders)
             self.result_format = "{:10s} {time:6.1f} s | {rate:6.1f} kb/s | {bytes:6.1f} kB | {packets:6.1f}"
             self.run_info_format = "\n#{loop:2d} | {rate:4.0f} kb/s | {coding:8s} | e: {errors} | ETA: {eta:s}"
 
     # Configure the next run_info to be sent to each node
-    def set_run_info(self, loop=None, rate=None, hold=None, purge=None, coding=None, tcp_algo=None, tcp_window=None, ratio=None, errors=None):
-        self.update_run_no(loop)
+    def set_run_info(self,  **kwargs):
+        self.update_run_no(kwarg.get('loop'))
         self.run_info['profile'] = self.args.test_profile
         self.run_info['test_time'] = self.args.test_time
         self.run_info['sample_interval'] = self.args.sample_interval
         self.run_info['protocol'] = self.protocol
-        self.run_info['tcp_algo'] = tcp_algo
+        self.run_info['tcp_algo'] = kwarg.get('tcp_algo')
         self.run_info['loop'] = loop
-        self.run_info['rate'] = rate
-        self.run_info['hold'] = hold
-        self.run_info['purge'] = purge
-        self.run_info['coding'] = coding
-        self.run_info['tcp_window'] = tcp_window
-        self.run_info['promisc'] = coding
-        self.run_info['ratio'] = ratio
+        self.run_info['rate'] = kwarg.get('rate')
+        self.run_info['hold'] = kwarg.get('hold')
+        self.run_info['purge'] = kwarg.get('purge')
+        self.run_info['coding'] = kwarg.get('coding')
+        self.run_info['tcp_window'] = kwarg.get('tcp_window')
+        self.run_info['promisc'] = kwarg.get(coding)
+        self.run_info['ratio'] = kwarg.get('ratio')
         self.run_info['rts'] = self.args.rts_threshold
         self.run_info['gen_size'] = self.args.gen_size
         self.run_info['packet_size'] = self.args.packet_size
@@ -359,7 +357,9 @@ class controller(threading.Thread):
         self.run_info['helper_threshold'] = self.args.helper_threshold
         self.run_info['packet_timeout'] = self.args.packet_timeout
         self.run_info['systematic'] = self.args.systematic
-        self.run_info['errors'] = errors
+        self.run_info['errors'] = kwarg.get('errors')
+        self.run_info['ack_timeout'] = kwarg.get('ack_timeout')
+        self.run_info['req_timeout'] = kwarg.get('ack_timeout')
 
         # Update the data storage with the new run info
         self.data.add_run_info(self.run_info)

@@ -75,20 +75,21 @@ tcp_algo = 'westwood'
 #
 # Settings for rlnc
 #
-errors = [(20, 10, 50), (20, 10, 50)]
-rlnc_rates = {'helper': 4500, 'nohelper': 3700, 'noloss': 8000, 'loss': 8000}
+errors = [(99, 99, 20), (99, 99, 50)]
+rlnc_rates = {'helper': 4000, 'nohelper': 4000, 'noloss': 4000, 'loss': 4000}
+rlnc_codings = ['nohelper']
 gen_size = 64
 packet_size = 1454
-iperf_len = 1410
-fixed_overshoot = {'helper': 1.05, 'nohelper': 1.05, 'loss': 1, 'noloss': 1}
-encoders = 3
-encoder_timeout = 5
+iperf_len = 1412
+fixed_overshoot = {'helper': 1.05, 'nohelper': 1.06, 'loss': 1, 'noloss': 1}
+encoders = [1, 2, 4, 8]
+encoder_timeout = 10
 decoder_timeout = 10
 recoder_timeout = 10
 helper_timeout = 10
 helper_overshoot = 1
-ack_interval = 3
-fox_verbose = 0
+ack_timeout=[.1, .2, .3, .4, .5, .6, .7, .8, .9]
+req_timeout=[.1, .2, .3, .4, .5, .6, .7, .8, .9]
+fox_verbose = 3
 helper_threshold = 1
-packet_timeout = .4
 systematic = 1

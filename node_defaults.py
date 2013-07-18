@@ -7,4 +7,4 @@ port = 8899
 mesh_host = "localhost"
 mesh_port = 8877
 power_dev = '/dev/ttyUSB0'
-fox_path = '/root/fox/fox'
+fox_path = '/root/rlncd/build/asan/src/source'

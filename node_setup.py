@@ -97,23 +97,22 @@ class setup:
             run_info['fixed_overshoot'] = run_info['helper_overshoot']
 
         cmd = [self.args.fox_path]
-        cmd += ["-generation_size", str(run_info["gen_size"])]
-        cmd += ["-packet_size", str(run_info["packet_size"])]
+        cmd += ["-symbols", str(run_info["gen_size"])]
+        cmd += ["-symbol_size", str(run_info["packet_size"])]
         cmd += ["-e1", str(e1)]
         cmd += ["-e2", str(e2)]
         cmd += ["-e3", str(e3)]
         cmd += ["-encoders", str(run_info['encoders'])]
         cmd += ["-encoder_timeout", str(run_info['encoder_timeout'])]
         cmd += ["-decoder_timeout", str(run_info['decoder_timeout'])]
-        cmd += ["-recoder_timeout", str(run_info['recoder_timeout'])]
-        cmd += ["-helper_timeout", str(run_info['helper_timeout'])]
+        #cmd += ["-recoder_timeout", str(run_info['recoder_timeout'])]
+        #cmd += ["-helper_timeout", str(run_info['helper_timeout'])]
         cmd += ["-fixed_overshoot", str(run_info['fixed_overshoot'])]
-        cmd += ["-ack_interval", str(run_info['ack_interval'])]
-        cmd += ["-helper_threshold", str(run_info['helper_threshold'])]
-        cmd += ["-packet_timeout", str(run_info['packet_timeout'])]
+        #cmd += ["-helper_threshold", str(run_info['helper_threshold'])]
+        cmd += ["-ack_timeout", str(run_info['ack_timeout'])]
+        cmd += ["-req_timeout", str(run_info['req_timeout'])]
         cmd += ["-v", str(run_info['fox_verbose'])]
-        cmd += ["-logtostderr", "0"];
-        cmd += ["-colorlogtostderr", "0"];
+        cmd += ["-alsologtostderr", "false"];
 
         if run_info['coding'] == 'helper' and run_info['role'] == 'source':
             cmd += ["-systematic", str(run_info['systematic'])]

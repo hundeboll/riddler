@@ -112,7 +112,7 @@ class setup:
         cmd += ["-ack_timeout", str(run_info['ack_timeout'])]
         cmd += ["-req_timeout", str(run_info['req_timeout'])]
         cmd += ["-v", str(run_info['fox_verbose'])]
-        cmd += ["-alsologtostderr", "false"];
+        cmd += ["-alsologtostderr=false"];
 
         if run_info['coding'] == 'helper' and run_info['role'] == 'source':
             cmd += ["-systematic", str(run_info['systematic'])]

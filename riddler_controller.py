@@ -347,7 +347,7 @@ class controller(threading.Thread):
         self.run_info['packet_size'] = self.args.packet_size
         self.run_info['iperf_len'] = self.args.iperf_len
         self.run_info['fixed_overshoot'] = self.args.fixed_overshoot[kwarg['coding']]
-        self.run_info['encoders'] = self.args.encoders
+        self.run_info['encoders'] = kwarg.get('encoders')
         self.run_info['encoder_timeout'] = self.args.encoder_timeout
         self.run_info['decoder_timeout'] = self.args.decoder_timeout
         self.run_info['recoder_timeout'] = self.args.recoder_timeout

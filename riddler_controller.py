@@ -324,7 +324,7 @@ class controller(threading.Thread):
             self.codings = self.args.rlnc_codings
             self.test_count = self.args.test_loops * len(self.args.errors) * len(self.codings) * len(self.args.ack_timeout) * len(self.args.req_timeout) * len(self.args.encoders)
             self.result_format = "{:10s} {time:6.1f} s | {rate:6.1f} kb/s | {bytes:6.1f} kB | {packets:6.1f}"
-            self.run_info_format = "\n#{loop:2d} | {rate:4.0f} kb/s | {coding:8s} | e: {errors} | ETA: {eta:s}"
+            self.run_info_format = "\n#{loop:2d} | {rate:4.0f} kb/s | {coding:8s} | e: {errors} | ack: {ack_timeout:3.01f} | req: {req_timeout:3.01f} | encs: {encoders:1d} | ETA: {eta:s}"
 
     # Configure the next run_info to be sent to each node
     def set_run_info(self,  **kwarg):

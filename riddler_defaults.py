@@ -75,7 +75,7 @@ tcp_algo = 'westwood'
 #
 # Settings for rlnc
 #
-errors = [(99, 99, 10), (99, 99, 20), (99, 99, 30), (99, 99, 40), (99, 99, 50)]
+errors = [(99, 99, 10), (99, 99, 30), (99, 99, 50)]
 rlnc_rates = {'helper': 4000, 'nohelper': 4000, 'noloss': 4000, 'loss': 4000}
 rlnc_codings = ['nohelper']
 gen_size = 64

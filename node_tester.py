@@ -26,7 +26,11 @@ class client(threading.Thread):
 
         print("  Starting client: {}".format(cmd))
         self.timer.start()
-        self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        try:
+            self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        except OSError as e:
+            self.report_error(e.message + ":" + cmd)
+
         self.running = True
         self.p.wait()
         self.running = False
@@ -103,7 +107,10 @@ class server(threading.Thread):
         self.cmd = [p, l, "1"]
 
         print("  Starting server: {}".format(self.cmd))
-        self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        try:
+            self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        except OSError as e:
+            self.report_error(e.message + ":" + cmd)
         self.running = True
         self.p.wait()
         self.running = False

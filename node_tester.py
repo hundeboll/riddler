@@ -29,7 +29,7 @@ class client(threading.Thread):
         try:
             self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         except OSError as e:
-            self.report_error(e.message + ":" + cmd)
+            self.report_error(e.message + ":" + " ".join(cmd))
 
         self.running = True
         self.p.wait()
@@ -103,15 +103,17 @@ class server(threading.Thread):
 
     def run(self):
         l = str(self.iperf_len)
-        p = os.path.join(self.args.udp_path, "/udp_server.py")
+        p = os.path.join(self.args.udp_path, "udp_server.py")
         self.cmd = [p, l, "1"]
 
         print("  Starting server: {}".format(self.cmd))
         try:
             self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         except OSError as e:
-            obj = interface.node(interface.RUN_ERROR, error=e.message + ":" + self.cmd)
-            self.controller.report_error(obj)
+            obj = interface.node(interface.RUN_ERROR, error=e.message + ":" + " ".join(self.cmd))
+            self.controller.report(obj)
+            return
+
         self.running = True
         self.p.wait()
         self.running = False

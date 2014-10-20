@@ -8,4 +8,4 @@ mesh_host = "localhost"
 mesh_port = 8877
 power_dev = '/dev/ttyUSB0'
 fox_path = '/root/rlncd/build/src/source'
-udp_path = '/root/fox/tools/'
+udp_path = '/home/core/dev/riddler'

@@ -21,6 +21,7 @@ parser.add_argument("--port", type=int, help="Port number to listen on")
 parser.add_argument("--mesh_host")
 parser.add_argument("--mesh_port", type=int)
 parser.add_argument("--fox_path", type=str)
+parser.add_argument("--udp_path", type=str)
 parser.set_defaults(**defaults)
 args = parser.parse_args()
 

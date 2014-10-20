@@ -110,7 +110,8 @@ class server(threading.Thread):
         try:
             self.p = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         except OSError as e:
-            self.report_error(e.message + ":" + cmd)
+            obj = interface.node(interface.RUN_ERROR, error=e.message + ":" + self.cmd)
+            self.controller.report_error(obj)
         self.running = True
         self.p.wait()
         self.running = False

@@ -226,13 +226,13 @@ class tcp_handler(SocketServer.BaseRequestHandler):
             cpu = open("/proc/stat").read()
 
             # Sample fox
-            if finish:
-                fox = self.sample_fox()
-            else:
-                fox = ""
+            #if finish:
+            #    fox = self.sample_fox()
+            #else:
+            #    fox = ""
 
             print("  Send sample")
-            sample = interface.node(interface.SAMPLE, sample=sample, nc=nc, iw=iw, cpu=cpu, fox=fox)
+            sample = interface.node(interface.SAMPLE, sample=sample, nc=nc, iw=iw, cpu=cpu)
             self.report(sample)
         except Exception as e:
             err = interface.node(interface.SAMPLE_ERROR, error=e)

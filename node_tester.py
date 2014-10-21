@@ -21,7 +21,7 @@ class client(threading.Thread):
         t = str(self.run_info['test_time'])
         l = str(self.run_info['iperf_len'])
         r = str(self.run_info['rate'])
-        p = os.path.join(self.args.udp_path, "/udp_client.py")
+        p = os.path.join(self.args.udp_path, "udp_client.py")
         cmd = [p, h, l, r, t, "1"]
 
         print("  Starting client: {}".format(cmd))
@@ -30,6 +30,7 @@ class client(threading.Thread):
             self.p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         except OSError as e:
             self.report_error(e.message + ":" + " ".join(cmd))
+            return
 
         self.running = True
         self.p.wait()

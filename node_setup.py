@@ -5,6 +5,7 @@ import riddler_interface as interface
 
 bat_path = "/sys/class/net/bat0/mesh/"
 nc_file = "network_coding"
+core_file = "random_linear_network_coding"
 hold_file = "nc_hold"
 purge_file = "nc_purge"
 loss_file = "packet_loss"
@@ -37,8 +38,8 @@ class setup:
         if not self.setup_iface(run_info):
             return False
 
-        if not self.setup_fox(run_info):
-            return False
+        #if not self.setup_fox(run_info):
+        #    return False
 
         return True
 
@@ -137,10 +138,12 @@ class setup:
 
     # Apply the received configuration for batman-adv
     def setup_batman(self, run_info):
-        if run_info['profile'] not in ('udp_rates', 'udp_ratios', 'tcp_algos', 'tcp_windows', 'hold_times', 'power_meas'):
+        if run_info['profile'] not in ('udp_rates', 'udp_ratios', 'tcp_algos', 'tcp_windows', 'hold_times', 'power_meas', 'core'):
             return True
 
-        nc = 1 if run_info['coding'] else 0
+        #nc = 1 if run_info['coding'] else 0
+        nc = 1 if run_info['coding'] in ('nc', 'core', True) else 0
+        core = 1 if run_info['coding'] in ('core', True) else 0
 
         # Make sure batman-adv is enabled
         if not os.path.exists(bat_path):
@@ -150,6 +153,8 @@ class setup:
         # Write the configuration
         if os.path.exists(bat_path + nc_file):
             self.write(bat_path + nc_file, nc)
+        if os.path.exists(bat_path + core_file):
+            self.write(bat_path + core_file, core)
         if os.path.exists(bat_path + hold_file):
             self.write(bat_path + hold_file, run_info['hold'])
         if os.path.exists(bat_path + purge_file):

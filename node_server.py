@@ -172,15 +172,15 @@ class tcp_handler(SocketServer.BaseRequestHandler):
         print("# Finish run")
         self.send_sample(finish=True)
 
-        if self.run_info and self.run_info['coding'] == 'helper' and not self.setup.check_fox():
-            err = interface.node(interface.RUN_ERROR, error="fox failed")
-            self.report(err)
-            return
-
-        if self.run_info and self.run_info['coding'] == 'nohelper' and self.run_info['role'] != 'helper' and not self.setup.check_fox():
-            err = interface.node(interface.RUN_ERROR, error="fox failed")
-            self.report(err)
-            return
+#        if self.run_info and self.run_info['coding'] == 'helper' and not self.setup.check_fox():
+#            err = interface.node(interface.RUN_ERROR, error="fox failed")
+#            self.report(err)
+#            return
+#
+#        if self.run_info and self.run_info['coding'] == 'nohelper' and self.run_info['role'] != 'helper' and not self.setup.check_fox():
+#            err = interface.node(interface.RUN_ERROR, error="fox failed")
+#            self.report(err)
+#            return
 
         # Report back to controller that we are done
         time.sleep(1)

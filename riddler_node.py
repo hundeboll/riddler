@@ -182,6 +182,17 @@ class node(threading.Thread):
             return None
         return self.samples
 
+    def get_samples_diff(self):
+        if self.run_error:
+            print("Sample error from {}".format(self.name))
+            return None
+
+        samples = {}
+        for key,val in self.samples[1].items():
+            samples[key] = val - self.samples[0][key]
+
+        return samples
+
     # Wait for node to answer last command
     def wait(self):
         while not self.end.is_set():
@@ -267,7 +278,7 @@ class node(threading.Thread):
     # Save received measurement sample for later extraction
     def handle_sample(self, obj):
         # Add name to sample
-        obj.sample['node'] = self.name
+        #obj.sample['node'] = self.name
 
         obj = self.parse_nc(obj)
         obj = self.parse_iw(obj)

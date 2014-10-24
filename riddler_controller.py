@@ -79,6 +79,9 @@ class controller(threading.Thread):
         elif profile == "rlnc":
             self.test_rlnc()
 
+        elif profile == "core":
+            self.test_rates()
+
         else:
             print("Profile '{0}' not supported.".format(profile))
             return
@@ -287,6 +290,14 @@ class controller(threading.Thread):
             self.run_info_format = "\n# Loop: {loop:2d}/{loops:<2d} | Rate: {rate:4d} kb/s | Coding: {coding:1b} | ETA: {eta:s}"
             self.result_format = "{:10s} {throughput:6.1f} kb/s {lost:4d}/{total:<4d} {ratio:4.1f}% {ping_avg:4.1f}ms"
 
+        if args.test_profile == 'core':
+            self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
+            self.codings = self.args.core_codings
+            self.test_count = len(self.rates) * args.test_loops * len(self.codings)
+            self.protocol = 'udp'
+            self.run_info_format = "\n# Loop: {loop:2d}/{loops:<2d} | Rate: {rate:4d} kb/s | Coding: {coding:4s} | ETA: {eta:s}"
+            self.result_format = "{:10s} {time:6.1f} s | {rate:6.1f} kb/s | {bytes:6.1f} kB | {packets:6.1f} pkts"
+
         if args.test_profile == "udp_ratios":
             self.codings = [True, False]
             self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
@@ -346,7 +357,7 @@ class controller(threading.Thread):
         self.run_info['gen_size'] = self.args.gen_size
         self.run_info['packet_size'] = self.args.packet_size
         self.run_info['iperf_len'] = self.args.iperf_len
-        self.run_info['fixed_overshoot'] = self.args.fixed_overshoot[kwarg['coding']]
+        self.run_info['fixed_overshoot'] = self.args.fixed_overshoot.get(kwarg['coding'])
         self.run_info['encoders'] = kwarg.get('encoders')
         self.run_info['encoder_timeout'] = self.args.encoder_timeout
         self.run_info['decoder_timeout'] = self.args.decoder_timeout
@@ -417,14 +428,29 @@ class controller(threading.Thread):
     def save_results(self):
         for node in self.nodes:
             result = node.get_result()
-            # Some nodes don't measure results
-            if not result:
-                continue
-            self.data.add_result(node.name, result)
-            self.print_result(node, result)
+            samples = node.get_samples_diff()
+            data = {}
+
+            if (result):
+                for key,val in result.items():
+                    data['rslt_' + key] = val
+
+            if (samples):
+                for key,val in samples.items():
+                    data['smpl_' + key] = val
+
+            for key,val in self.run_info.items():
+                data['info_' + key] = val
+
+            data['node'] = node.name
+            self.data.add_result(node.name, data)
+
+            if (result):
+                self.print_result(node, result)
 
     # Save sample measurements received during the test
     def save_samples(self):
+        return True
         for node in self.nodes:
             samples = node.get_samples()
             if not samples:

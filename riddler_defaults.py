@@ -11,8 +11,8 @@ client_port = 6677
 # Test settings
 #
 test_profile = 'udp_rates'  # Profiles to run (udp_rates, udp_ratios, tcp_algos, tcp_windows, hold_times, or power_meas, rlnc).
-test_time  = 30          # Time for each loop to run
-test_sleep = 30          # Time to sleep between runs
+test_time  = 20          # Time for each loop to run
+test_sleep = 10          # Time to sleep between runs
 test_loops = 3         # Number of repetitions for each run
 sample_interval = 1     # Seconds between each node sample
 
@@ -27,9 +27,9 @@ rts_threshold = "off"
 #
 # Settings for udp_rates, hold_times, power_meas
 #
-rate_start = 100       # Initial rate of each swipe in kbit/s
-rate_stop  = 1000        # Last rate of each swipe in kbit/s
-rate_step  = 100         # Rate increment for each run in kbit/s
+rate_start = 1000       # Initial rate of each swipe in kbit/s
+rate_stop  = 5000        # Last rate of each swipe in kbit/s
+rate_step  = 500         # Rate increment for each run in kbit/s
 
 #
 # Settings for udp_ratio
@@ -81,7 +81,7 @@ rlnc_codings = ['nohelper']
 gen_size = 64
 packet_size = 1454
 iperf_len = 1410
-fixed_overshoot = {'helper': 1.05, 'nohelper': 1.06, 'loss': 1, 'noloss': 1}
+fixed_overshoot = {'helper': 1.05, 'nohelper': 1.06, 'loss': 1, 'noloss': 1, True: 1, False: 1}
 encoders = [1, 2, 4, 8]
 encoder_timeout = 10
 decoder_timeout = 10
@@ -93,3 +93,8 @@ req_timeout=[.1, .2, .3, .4, .5, .6, .7, .8, .9, 1, 1.1]
 fox_verbose = 3
 helper_threshold = 1
 systematic = 1
+
+#
+# Setting for core
+#
+core_codings = ['plain', 'nc', 'core']

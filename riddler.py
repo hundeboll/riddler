@@ -64,6 +64,7 @@ parser.add_argument("--systematic", type=bool)
 parser.add_argument("--fox_verbose", type=int)
 parser.add_argument("--helper_threshold", type=float)
 parser.add_argument("--rlnc_rates", type=dict)
+parser.add_argument("--core_codings", type=list)
 parser.set_defaults(**defaults)
 args = parser.parse_args()
 

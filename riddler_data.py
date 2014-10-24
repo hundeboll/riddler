@@ -1,6 +1,7 @@
 import time
 import copy
 import cPickle as pickle
+import pandas as pd
 
 """
 Data structure:
@@ -23,7 +24,6 @@ Node dictionaries contain a list for each run_no. These lists contain
 run_data objects for each loop in the test. When retrieving data,
 each run_data contains a run_info dictionary, which can be used to
 determine relevant parameters.
-"""
 
 class run_data:
     def __init__(self, run_info):
@@ -73,6 +73,9 @@ class data:
         d = self.rd[node][self.run_no][-1]
         d.result = result
 
+    def get_sample_keys(self):
+        return list(self.rd.itervalues())[0][0][0].samples[-1].keys()
+
     def get_run_data_node(self, node, conditions):
         d = self.rd[node]
         test = lambda rd, k, v: rd[0].run_info[k] == v
@@ -80,9 +83,25 @@ class data:
         for key,val in conditions.items():
             d = filter(lambda rd: test(rd, key, val), d)
         return d
+"""
 
+class data:
+    def __init__(self, args):
+        self.args = args
+        self.data = []
+
+    def add_nodes(self, nodes):
+        pass
+
+    def add_run_info(self, run_info):
+        pass
+
+    def add_samples(self, node, sampels):
+        pass
+
+    def add_result(self, node, result):
+        self.data.append(result)
 
 def dump_data(data, filename):
-    f = open(filename, 'w')
-    pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
-    f.close()
+    d = pd.DataFrame(data.data)
+    d.to_json(filename)

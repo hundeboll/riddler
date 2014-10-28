@@ -4,10 +4,11 @@ import time
 import riddler_interface as interface
 
 bat_path = "/sys/class/net/bat0/mesh/"
+bat_dbg = "/sys/kernel/debug/batman_adv/bat0/nc/"
 nc_file = "network_coding"
 core_file = "random_linear_network_coding"
-hold_file = "nc_hold"
-purge_file = "nc_purge"
+hold_file = "max_fwd_delay"
+purge_file = "max_buffer_time"
 loss_file = "packet_loss"
 
 ipv4_path = "/proc/sys/net/ipv4/"
@@ -155,10 +156,10 @@ class setup:
             self.write(bat_path + nc_file, nc)
         if os.path.exists(bat_path + core_file):
             self.write(bat_path + core_file, core)
-        if os.path.exists(bat_path + hold_file):
-            self.write(bat_path + hold_file, run_info['hold'])
-        if os.path.exists(bat_path + purge_file):
-            self.write(bat_path + purge_file, run_info['purge'])
+        if os.path.exists(bat_dbg + hold_file):
+            self.write(bat_dbg + hold_file, run_info['hold'])
+        if os.path.exists(bat_dbg + purge_file):
+            self.write(bat_dbg + purge_file, run_info['purge'])
 
         return True
 

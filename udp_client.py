@@ -60,8 +60,8 @@ while True:
 
 t1 = time.time()
 
-for j in range(10):
-    time.sleep(.5)
+for j in range(20):
+    time.sleep(.2)
     sock.sendto(bytes(stop, 'UTF-8'), (dest, udp_port))
 
 

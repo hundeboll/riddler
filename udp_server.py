@@ -23,6 +23,7 @@ if not csv:
 i = 0
 b = 0
 t0 = 0
+t1 = 0
 while True:
     try:
         d, a = s.recvfrom(length) # buffer size is 1024 bytes
@@ -31,6 +32,9 @@ while True:
                 print("Received first datagram", flush=True)
             t0 = time.time()
         if d == bytes(stop, 'UTF-8'):
+            if not t1:
+                continue
+
             break
         t1 = time.time()
         b += len(d)

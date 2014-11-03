@@ -61,6 +61,7 @@ while True:
 t1 = time.time()
 
 for j in range(10):
+    time.sleep(.5)
     sock.sendto(bytes(stop, 'UTF-8'), (dest, udp_port))
 
 

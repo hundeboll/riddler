@@ -341,6 +341,7 @@ class controller(threading.Thread):
     def set_run_info(self,  **kwarg):
         self.update_run_no(kwarg.get('loop'))
         self.run_info['profile'] = self.args.test_profile
+        self.run_info['core_bs'] = self.args.core_bs
         self.run_info['test_time'] = self.args.test_time
         self.run_info['sample_interval'] = self.args.sample_interval
         self.run_info['protocol'] = self.protocol

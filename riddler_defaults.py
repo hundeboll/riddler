@@ -98,3 +98,4 @@ systematic = 1
 # Setting for core
 #
 core_codings = ['plain', 'nc', 'core']
+core_bs = 8

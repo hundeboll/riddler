@@ -443,6 +443,9 @@ class controller(threading.Thread):
             for key,val in self.run_info.items():
                 data['info_' + key] = val
 
+            for key,val in vars(self.args).items():
+                data['args_' + key] = val
+
             data['node'] = node.name
             self.data.add_result(node.name, data)
 

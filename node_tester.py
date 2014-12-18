@@ -44,7 +44,7 @@ class client(threading.Thread):
             self.report_error("No output from command {0}".format(" ".join(cmd)))
             return
 
-        result = {}
+        result = {"role": "src"}
         for line in stdout.splitlines():
             key,val = line.split(": ")
             result[key] = float(val)
@@ -130,7 +130,7 @@ class server(threading.Thread):
             self.controller.report(obj)
             return
 
-        result = {}
+        result = {"role": "dst"}
         for line in stdout.splitlines():
             key,val = line.split(": ")
             result[key] = float(val)

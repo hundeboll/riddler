@@ -45,6 +45,8 @@ hold_start = 10
 hold_stop = 20
 hold_step = 2
 
+catwoman_prio = 5
+
 #
 # Settings for tcp_algos
 #
@@ -97,5 +99,5 @@ systematic = 1
 #
 # Setting for core
 #
-core_codings = ['plain', 'nc', 'core']
+core_codings = ['plain', 'plain_prio', 'nc', 'nc_prio']
 core_bs = 8

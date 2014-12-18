@@ -10,6 +10,7 @@ core_file = "random_linear_network_coding"
 hold_file = "max_fwd_delay"
 purge_file = "max_buffer_time"
 loss_file = "packet_loss"
+prio_file = "relay_priority"
 
 ipv4_path = "/proc/sys/net/ipv4/"
 current_algo = "tcp_congestion_control"
@@ -139,12 +140,17 @@ class setup:
 
     # Apply the received configuration for batman-adv
     def setup_batman(self, run_info):
-        if run_info['profile'] not in ('udp_rates', 'udp_ratios', 'tcp_algos', 'tcp_windows', 'hold_times', 'power_meas', 'core'):
+        if run_info['profile'] not in ('udp_rates', 'udp_ratios', 'tcp_algos', 'tcp_windows', 'hold_times', 'power_meas', 'core', 'prio'):
             return True
 
         #nc = 1 if run_info['coding'] else 0
-        nc = 1 if run_info['coding'] in ('nc', 'core', True) else 0
+        nc = 1 if run_info['coding'] in ('nc', 'core', 'nc_prio', True) else 0
         core = 1 if run_info['coding'] in ('core', True) else 0
+
+        if run_info['coding'] in ('nc_prio', 'plain_prio'):
+            prio = run_info['catwoman_prio']
+        else:
+            prio = 0;
 
         # Make sure batman-adv is enabled
         if not os.path.exists(bat_path):
@@ -160,6 +166,8 @@ class setup:
             self.write(bat_dbg + hold_file, run_info['hold'])
         if os.path.exists(bat_dbg + purge_file):
             self.write(bat_dbg + purge_file, run_info['purge'])
+        if os.path.exists(bat_dbg + prio_file):
+            self.write(bat_dbg + prio_file, prio)
 
         return True
 

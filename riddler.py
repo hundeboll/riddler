@@ -66,6 +66,7 @@ parser.add_argument("--helper_threshold", type=float)
 parser.add_argument("--rlnc_rates", type=dict)
 parser.add_argument("--core_codings", type=list)
 parser.add_argument("--core_bs", type=int)
+parser.add_argument("--catwoman_prio", type=int)
 parser.set_defaults(**defaults)
 args = parser.parse_args()
 

@@ -82,6 +82,9 @@ class controller(threading.Thread):
         elif profile == "core":
             self.test_rates()
 
+        elif profile == "prio":
+            self.test_rates()
+
         else:
             print("Profile '{0}' not supported.".format(profile))
             return
@@ -298,6 +301,14 @@ class controller(threading.Thread):
             self.run_info_format = "\n# Loop: {loop:2d}/{loops:<2d} | Rate: {rate:4d} kb/s | Coding: {coding:4s} | ETA: {eta:s}"
             self.result_format = "{:10s} {time:6.1f} s | {rate:6.1f} kb/s | {bytes:6.1f} kB | {packets:6.1f} pkts"
 
+        if args.test_profile == 'prio':
+            self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
+            self.codings = self.args.core_codings
+            self.test_count = len(self.rates) * args.test_loops * len(self.codings)
+            self.protocol = 'udp'
+            self.run_info_format = "\n# Loop: {loop:2d}/{loops:<2d} | Rate: {rate:4d} kb/s | Coding: {coding:4s} | ETA: {eta:s}"
+            self.result_format = "{:10s} {time:6.1f} s | {rate:6.1f} kb/s | {bytes:6.1f} kB | {packets:6.1f} pkts"
+
         if args.test_profile == "udp_ratios":
             self.codings = [True, False]
             self.rates = range(args.rate_start, args.rate_stop+1, args.rate_step)
@@ -371,6 +382,7 @@ class controller(threading.Thread):
         self.run_info['errors'] = kwarg.get('errors')
         self.run_info['ack_timeout'] = kwarg.get('ack')
         self.run_info['req_timeout'] = kwarg.get('req')
+        self.run_info['catwoman_prio'] = self.args.catwoman_prio
 
         # Update the data storage with the new run info
         self.data.add_run_info(self.run_info)

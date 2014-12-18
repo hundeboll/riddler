@@ -4,6 +4,7 @@ import argparse
 import cPickle as pickle
 import plot_data as data
 import plot_graph as graph
+import numpy
 
 parser = argparse.ArgumentParser(description="Riddler Plotting Tools")
 parser.add_argument("--config", default="plot_defaults")
@@ -29,6 +30,8 @@ class plot:
         self.aggregated_throughput = {}
         self.data = data.data(args.data)
         self.graph = graph.graph()
+        #for sample in self.data.samples():
+        #    print(sample)
 
     def plot(self):
         if self.data.profile == 'udp_rates':
@@ -63,8 +66,8 @@ class plot:
                 self.plot_tcp_window_relay(node)
 
         elif self.data.profile == 'rlnc':
-            for node in self.data.sources:
-                self.plot_rlnc_throughput(node, "helper", "dest")
+            self.plot_rlnc_throughput("source", "helper", "dest")
+            #self.plot_rlnc_timeouts("source", "dest")
 
     def show_plots(self):
         if not self.args.hide:
@@ -190,6 +193,49 @@ class plot:
             if coding in ("helper", "nohelper"):
                 self.graph.plot_rlnc_requests(source, s_data, coding, gs)
                 self.graph.plot_rlnc_requests(dest, d_data, coding, gs)
+
+    def plot_rlnc_timeouts(self, source, dest):
+        for error in self.data.arg("errors"):
+            maximum = numpy.array([])
+            minimum = numpy.array([])
+            encoder_num = []
+            throughput = []
+            d = {}
+            for encs in self.data.arg("encoders"):
+                d_3d = self.data.rlnc_to_dest_3d(dest, error, encs)
+                self.graph.plot_rlnc_to_3d(d_3d, error, encs)
+                d[encs] = d_3d['rate_raw']
+                if maximum.size == 0:
+                    maximum = d[encs][:,2]
+                    minimum = d[encs][:,2]
+                else:
+                    maximum = numpy.maximum(maximum, d[encs][:,2])
+                    minimum = numpy.minimum(minimum, d[encs][:,2])
+
+                for timeout in ("ack_timeout", "req_timeout"):
+                    if self.args.plots not in ('all', 'rlnc'):
+                        break
+
+                    s_data = self.data.rlnc_to_source_data(source, timeout, error, encs)
+                    d_data = self.data.rlnc_to_dest_data(dest, timeout, error, encs)
+
+                    self.graph.plot_rlnc_timeout(s_data, d_data, timeout, error, encs)
+
+            if self.args.plots not in ('all', 'contour'):
+                continue
+
+            for encs,data in d.items():
+                tmp = zip(*filter(lambda i: i[0][2] >= i[1], zip(data, maximum)))
+                if not tmp:
+                    continue
+                x,y,z = zip(*tmp[0])
+                throughput += tmp[0]
+                encoder_num += zip(x,y, [encs]*len(z))
+                e = {'points': tmp[0], 'min': min(minimum), 'max': max(maximum)}
+                self.graph.plot_rlnc_to_scatter(e, error, encs)
+
+            self.graph.plot_rlnc_to_throughput(throughput, encoder_num, error)
+            self.graph.plot_rlnc_to_contour(encoder_num, error)
 
 
 if __name__ == "__main__":

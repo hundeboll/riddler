@@ -1,8 +1,9 @@
 import os
 import time
-import pylab
 import numpy
 import threading
+from matplotlib import pyplot
+from matplotlib.mlab import griddata
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_pdf import PdfPages
 import riddler_interface as interface
@@ -62,9 +63,44 @@ bar_pos = {
     'helper':   2,
     'nohelper': 3,
     }
-label = {True: "With Coding", False: "Without Coding"}
-color = {True: c["chameleon2"], False: c["skyblue2"]}
-marker = {True: 'o', False: 'v'}
+label = {
+        True: "With Coding",
+        False: "Without Coding",
+        'helper': "Helper",
+        'nohelper': "No Helper",
+        'ack_timeout': "ACK Timeout",
+        'req_timeout': "REQ Timeout",
+        1: "1 Encoder",
+        2: "2 Encoders",
+        4: "4 Encoders",
+        8: "8 Encoders",
+        }
+
+color = {
+        True: c["chameleon2"],
+        False: c["skyblue2"],
+        'helper': c["scarletred1"],
+        'nohelper': c["orange1"],
+        'ack_timeout': c["chameleon2"],
+        'req_timeout': c["skyblue2"],
+        1: c["chameleon1"],
+        2: c["skyblue1"],
+        4: c["scarletred1"],
+        8: c["orange1"],
+        }
+
+marker = {
+        True: 'o',
+        False: 'v',
+        "helper": 'o',
+        "nohelper": 'v',
+        'ack_timeout': 'o',
+        'req_timeout': 'v',
+        1: 'o',
+        2: 'v',
+        4: '+',
+        8: 's',
+        }
 
 class graph:
     def __init__(self):
@@ -76,13 +112,13 @@ class graph:
     def show(self, plots):
         self.t = threading.Thread(None, self.hide)
         self.t.start()
-        pylab.show()
+        pyplot.show()
         print("Show done")
 
     def hide(self):
         ch = interface.get_keypress()
-        pylab.close('all')
-        time.sleep(1)
+        pyplot.close('all')
+        #time.sleep(.1)
         print("Closed")
 
     def save_figs(self, path):
@@ -116,7 +152,7 @@ class graph:
             self.ax = self.axes[title][name]
             return self.fig
 
-        self.fig = pylab.figure()
+        self.fig = pyplot.figure(title)
         if projection:
             self.ax = self.fig.add_subplot(111, projection=projection)
         else:
@@ -601,7 +637,7 @@ class graph:
 
         # Plot values and update the y-offset for next plot
         self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
-        self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower right')
+        self.ax.legend(loc='best')
         self.update_bar_tops(ident, title, y, coding)
 
         if coding not in ('helper', 'nohelper'):
@@ -680,3 +716,121 @@ class graph:
         self.ax.bar(left, height, width, bottoms, ecolor='black', color=color, label=label)
         self.ax.legend(prop=dict(size=12), numpoints=1, loc='upper right')
         self.update_bar_tops(ident, title, y, coding)
+
+    def plot_rlnc_timeout(self, s_data, d_data, key, error, encs):
+        title = "Throughput vs. {} (e: {})".format(key, error)
+        ident = "rlnc"
+
+        self.setup_fig(
+                name=ident,
+                title=title,
+                xlabel="Timeout [s]",
+                ylabel="Throughput [kbps]")
+
+        self.plot_coding(d_data[key], d_data['rate'], encs)
+        self.ax.legend(prop=dict(size=12), numpoints=1, loc='lower right')
+        self.finish_fig()
+
+    def plot_rlnc_to_3d(self, data, error, encs):
+        title = "Throughput vs. timeout (e: {})".format(error)
+        ident = "rlnc"
+
+        self.setup_fig(
+                name=ident,
+                title=title,
+                xlabel="ACK Timeout",
+                ylabel="REQ Timeout",
+                projection='3d')
+
+        x = data['rate']['x']
+        y = data['rate']['y']
+        z = data['rate']['z']
+        self.ax.set_zlabel('Throughput [kbit/s]')
+        self.ax.plot_surface(x, y, z, rstride=1, cstride=1, color=color[encs])
+        self.ax.legend((label[encs]))
+
+    def plot_rlnc_to_scatter(self, data, error, encs):
+        title = "Encoder Top (e: {})".format(error)
+        ident = "rlnc"
+
+        self.setup_fig(
+                name=ident,
+                title=title,
+                xlabel="ACK Timeout",
+                ylabel="REQ Timeout")
+
+        x,y,z = zip(*data['points'])
+        w = ((numpy.array(z)-data['min'])/100)**2
+        self.ax.scatter(x, y, s=w, color=color[encs])
+
+    def plot_rlnc_to_contour(self, data, error):
+        title = "Best #encoders (e: {})".format(error)
+        ident = "contour"
+
+        self.setup_fig(
+                name=ident,
+                title=title,
+                xlabel="ACK Timeout [s]",
+                ylabel="REQ Timeout [s]")
+
+        X,Y,Z = zip(*data)
+        extra = []
+        for point in data:
+            if point[0] == min(X):
+                extra.append((0, point[1], point[2]))
+            if point[1] == min(Y):
+                extra.append((point[0], 0, point[2]))
+            if point[0] == max(X):
+                extra.append((point[0] + .1, point[1], point[2]))
+            if point[0] == max(Y):
+                extra.append((point[0], point[1] + .1, point[2]))
+            if point[0] == min(X) and point[1] == min(Y):
+                extra.append((0, 0, point[2]))
+            if point[0] == max(X) and point[1] == max(Y):
+                extra.append((max(X) + .1, max(Y) + .1, point[2]))
+            if point[0] == max(X) and point[1] == min(Y):
+                extra.append((point[0] + .1, 0, point[2]))
+            if point[0] == min(Y) and point[1] == max(Y):
+                extra.append((0, point[1] + .1, point[2]))
+
+        data += extra
+
+        X,Y,Z = zip(*data)
+        xi = numpy.linspace(min(X), max(X))
+        yi = numpy.linspace(min(Y), max(Y))
+        zi = griddata(X, Y, Z, xi, yi)
+        colors = [color[1], color[2], color[4], color[8]]
+        cs = self.ax.contourf(xi, yi, zi, [.5,1.5,3,6,9], colors=colors, extend='both')
+        cs.cmap.set_under(color[1])
+        cs.cmap.set_over(color[8])
+        d = self.ax.contour(xi, yi, zi,  [.5, 1.5, 3, 6, 9], colors='k')
+        proxy = [pyplot.Rectangle((0,0), 1, 1, fc=c) for c in colors]
+        pyplot.legend(proxy, [label[1], label[2], label[4], label[8]], loc="lower right")
+
+    def plot_rlnc_to_throughput(self, data, encs, error):
+        title = "Throughput (e: {})".format(error)
+        ident = "throughput_contour"
+
+        self.setup_fig(
+                name=ident,
+                title=title,
+                xlabel="ACK Timeout [s]",
+                ylabel="REQ Timeout [s]")
+
+        X,Y,Z = zip(*data)
+        xi = numpy.linspace(min(X), max(X))
+        yi = numpy.linspace(min(Y), max(Y))
+        zi = griddata(X, Y, Z, xi, yi)
+        cs = self.ax.contourf(xi, yi, zi)
+        cb = pyplot.colorbar(cs, extend='both')
+
+        X,Y,Z = zip(*encs)
+        xi = numpy.linspace(min(X), max(X))
+        yi = numpy.linspace(min(Y), max(Y))
+        zi = griddata(X, Y, Z, xi, yi)
+        d = self.ax.contour(xi, yi, zi,  [.5, 1.5, 3, 6, 9], colors='k')
+        #cs.cmap.set_under(color[1])
+        #cs.cmap.set_over(color[8])
+        #d = self.ax.contour(xi, yi, zi,  [.5, 1.5, 3, 6, 9], colors='k')
+        #proxy = [pyplot.Rectangle((0,0), 1, 1, fc=c) for c in colors]
+        #pyplot.legend(proxy, [label[1], label[2], label[4], label[8]], loc="lower right")

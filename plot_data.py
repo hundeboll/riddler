@@ -50,6 +50,9 @@ class data:
         else:
             return True
 
+    def samples(self):
+        return self.data.get_sample_keys()
+
     # Average over a field in a result set
     def average_result(self, rd, field, par):
         if not self.result_has_key(rd, field):
@@ -83,7 +86,7 @@ class data:
 
         return {'x': x_, 'y': y_, 'z': z_}
 
-    def average_result_3d(self, rd, field, x_par, y_par):
+    def average_result_3d(self, rd, field, x_par, y_par, raw=False):
         if not self.result_has_key(rd, field):
             return numpy.array([])
 
@@ -95,7 +98,10 @@ class data:
             z = numpy.average(z)
             c.append((x, y, z))
 
-        return self.prepare_grids(c)
+        if raw:
+            return numpy.array(c)
+        else:
+            return self.prepare_grids(c)
 
     def average_samples_3d(self, rd, field, x_par, y_par):
         if not self.sample_has_key(rd, field):
@@ -442,4 +448,30 @@ class data:
         data['bytes'] = self.average_result(rd, 'bytes', 'errors')
         data['requests'] = self.last_samples(rd, 'rlnc decoder request sent', 'errors')
 
+        return data
+
+    def rlnc_to_source_data(self, node, key, error, encs):
+        rd = self.data.get_run_data_node(node, {'errors': error, 'encoders': encs})
+
+        data = {}
+        data[key] = self.keys(rd, key)
+        data['rate'] = self.average_result(rd, 'rate', key)
+
+        return data
+
+    def rlnc_to_dest_data(self, node, key, error, encs):
+        rd = self.data.get_run_data_node(node, {'errors': error, 'encoders': encs})
+
+        data = {}
+        data[key] = self.keys(rd, key)
+        data['rate'] = self.average_result(rd, 'rate', key)
+        data['packets'] = self.last_samples(rd, 'rlnc decoder enc', key)
+
+        return data
+
+    def rlnc_to_dest_3d(self, node, error, encs):
+        rd = self.data.get_run_data_node(node, {'errors': error, 'encoders': encs})
+        data = {}
+        data['rate'] = self.average_result_3d(rd, 'rate', 'ack_timeout', 'req_timeout')
+        data['rate_raw'] = self.average_result_3d(rd, 'rate', 'ack_timeout', 'req_timeout', raw=True)
         return data

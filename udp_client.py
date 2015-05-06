@@ -5,29 +5,21 @@ import sys
 import socket
 import time
 
-if len(sys.argv) < 4:
-    print("Usage: {} <dest> <pkt-len> <rate> [time]".format(sys.argv[0]))
+if len(sys.argv) < 5:
+    print("Usage: {} <dest> <pkt-len> <rate> <time> <csv> <count>".format(sys.argv[0]))
     sys.exit(0)
 
 udp_port = 6349
-dest = sys.argv[1]
-length = int(sys.argv[2])
-rate = int(sys.argv[3])
+dest    = sys.argv[1]
+length  = int(sys.argv[2])
+rate    = int(sys.argv[3])
+timeout = int(sys.argv[4])
+csv     = int(sys.argv[5])
+count   = int(sys.argv[6])
+ack = "ACK"
 stop = "STOP"
 interval = 1/(1024*rate/length/8)
-
-if len(sys.argv) >= 5:
-    timeout = int(sys.argv[4])
-else:
-    timeout = 0
-
-if len(sys.argv) >= 6:
-    csv = True
-else:
-    csv = False
-
 message = os.urandom(length)
-
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 i = 0
 
@@ -36,16 +28,26 @@ if not csv:
 
 t0 = time.time()
 s = interval
+end = False
 while True:
     try:
-        s0 = time.time()
-        sock.sendto(message, (dest, udp_port))
-        i += 1
-        time.sleep(max(0, interval + s))
-        s = interval - (time.time() - s0)
+        for j in range(count):
+            s0 = time.time()
+            sock.sendto(message, (dest, udp_port))
+            i += 1
+            time.sleep(max(0, interval + s))
+            s = interval - (time.time() - s0)
 
-        if timeout and time.time() > t0 + timeout:
+            if timeout and time.time() > t0 + timeout:
+                end = True
+                break
+
+        if end:
             break
+
+        d,a = sock.recvfrom(length)
+        if d != bytes(ack, 'UTF-8'):
+            raise Exception("unexpected ack: '{}'".format(d))
 
     except KeyboardInterrupt:
         break

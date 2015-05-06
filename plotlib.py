@@ -164,8 +164,9 @@ class plotlib(object):
     def handle_keyerror(self, e, i):
         # loop until last stack trace line from this file
         tb = e.__traceback__
+        fn = sys.argv[0] if sys.argv else __file__
         while tb:
-            if __file__ not in tb.tb_next.tb_frame.f_code.co_filename:
+            if fn not in tb.tb_next.tb_frame.f_code.co_filename:
                 break
             tb = tb.tb_next
 
@@ -175,7 +176,7 @@ class plotlib(object):
 
         # print error info
         print("KeyError in plot {} ({}):".format(i, self.plot_funcs[i].__name__))
-        print("    {}:{}: {}".format(__file__, tb.tb_frame.f_lineno, source[offset].strip()))
+        print("    {}:{}: {}".format(fn, tb.tb_frame.f_lineno, source[offset].strip()))
 
     def save_plots(self):
         if not self.args.out and not self.args.out_only:

@@ -21,8 +21,9 @@ class client(threading.Thread):
         t = str(self.run_info['test_time'])
         l = str(self.run_info['iperf_len'])
         r = str(self.run_info['rate'])
+        c = str(self.run_info['gen_size'])
         p = os.path.join(self.args.udp_path, "udp_client.py")
-        cmd = [p, h, l, r, t, "1"]
+        cmd = [p, h, l, r, t, "1", c]
 
         print("  Starting client: {}".format(cmd))
         self.timer.start()
@@ -104,8 +105,9 @@ class server(threading.Thread):
 
     def run(self):
         l = str(self.iperf_len)
+        c = str(self.run_info['gen_size'])
         p = os.path.join(self.args.udp_path, "udp_server.py")
-        self.cmd = [p, l, "1"]
+        self.cmd = [p, l, c, "1"]
 
         print("  Starting server: {}".format(self.cmd))
         try:

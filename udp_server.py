@@ -7,6 +7,9 @@ import socket
 
 udp_port = 6349
 length = int(sys.argv[1])
+count  = int(sys.argv[2])
+csv    = int(sys.argv[3])
+ack = "ACK".encode("utf-8")
 stop = "STOP"
 
 if len(sys.argv) == 3:
@@ -24,23 +27,31 @@ i = 0
 b = 0
 t0 = 0
 t1 = 0
+end = False
 while True:
     try:
-        d, a = s.recvfrom(length) # buffer size is 1024 bytes
-        if d == bytes(stop, 'UTF-8'):
-            if not t1:
-                continue
+        for j in range(count):
+            d, a = s.recvfrom(length)
+            if d == bytes(stop, 'UTF-8'):
+                if not t1:
+                    continue
 
+                end = True
+                break
+
+            if not t0:
+                if not csv:
+                    print("Received first datagram", flush=True)
+                t0 = time.time()
+
+            t1 = time.time()
+            b += len(d)
+            i += 1
+
+        if end:
             break
 
-        if not t0:
-            if not csv:
-                print("Received first datagram", flush=True)
-            t0 = time.time()
-
-        t1 = time.time()
-        b += len(d)
-        i += 1
+        s.sendto(ack, a)
     except KeyboardInterrupt:
         break
 

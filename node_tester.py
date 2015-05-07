@@ -100,6 +100,7 @@ class server(threading.Thread):
         self.protocol = run_info['protocol']
         self.tcp_window = run_info['tcp_window']
         self.iperf_len = run_info['iperf_len']
+        self.run_info = run_info
         self.running = False
         self.start()
 

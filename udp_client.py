@@ -21,6 +21,7 @@ stop = "STOP"
 interval = 1/(1024*rate/length/8)
 message = os.urandom(length)
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.settimeout(.2)
 i = 0
 
 if not csv:
@@ -45,9 +46,13 @@ while True:
         if end:
             break
 
-        d,a = sock.recvfrom(length)
-        if d != bytes(ack, 'UTF-8'):
-            raise Exception("unexpected ack: '{}'".format(d))
+        try:
+            d,a = sock.recvfrom(length)
+        except socket.timeout as e:
+            pass
+        else:
+            if d != bytes(ack, 'UTF-8'):
+                raise Exception("unexpected ack: '{}'".format(d))
 
     except KeyboardInterrupt:
         break

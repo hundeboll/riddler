@@ -12,11 +12,6 @@ csv    = int(sys.argv[3])
 ack = "ACK".encode("utf-8")
 stop = "STOP"
 
-if len(sys.argv) == 3:
-    csv = True
-else:
-    csv = False
-
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.bind(('', udp_port))
 

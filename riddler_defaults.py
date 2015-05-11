@@ -99,5 +99,5 @@ systematic = 1
 #
 # Setting for core
 #
-core_codings = ['plain', 'plain_prio', 'nc', 'nc_prio']
+core_codings = ['plain_prio', 'nc_prio', 'core']
 core_bs = 8
